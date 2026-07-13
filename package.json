@@ -1,0 +1,41 @@
+{
+  "name": "dossier-immo-workspace",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @dossier-immo/web",
+    "build": "npm run typecheck && npm run test:unit && npm run build --workspace @dossier-immo/web",
+    "typecheck": "tsc -b",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "npm run build && node tools/run-e2e.mjs",
+    "test:e2e:update": "npm run build && node tools/run-e2e.mjs --update-snapshots",
+    "contracts:export": "vite-node tools/export-contracts.ts",
+    "validate:file": "vite-node tools/validate-dossier.ts",
+    "generate:pdf": "vite-node tools/generate-pdf.ts",
+    "check:layout": "vite-node tools/check-document-layout.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^22.18.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "fast-check": "^4.3.0",
+    "pdfjs-dist": "^5.4.0",
+    "prettier": "^3.9.5",
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0",
+    "vite-plugin-pwa": "^1.0.0",
+    "vitest": "^3.2.0"
+  }
+}

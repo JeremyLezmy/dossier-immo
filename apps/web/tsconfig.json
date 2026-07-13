@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "jsx": "react-jsx",
+    "noEmit": true
+  },
+  "references": [
+    { "path": "../../packages/schema" },
+    { "path": "../../packages/domain" },
+    { "path": "../../packages/calculations" },
+    { "path": "../../packages/document" },
+    { "path": "../../packages/fixtures" }
+  ],
+  "include": ["src", "vite.config.ts"]
+}

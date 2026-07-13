@@ -1,0 +1,104 @@
+# Données locales et justificatifs sensibles
+private/
+output/
+PIECES_JUSTIFICATIVES_PRIVEES/
+*.dossier-immo.json
+**/*CNI*
+**/*identite*
+**/*identité*
+**/*passeport*
+**/*RIB*
+**/*avis_imposition*
+**/*releve*
+**/*relevé*
+**/*bulletin*
+**/*contrat*
+**/*facture*
+**/*encaissement*
+
+# Documents binaires ou exports potentiellement sensibles
+*.pdf
+*.jpg
+*.jpeg
+*.png
+!tests/e2e/**/*.png
+*.heic
+*.xlsx
+*.xls
+*.docx
+*.zip
+*.csv
+*.html
+!apps/web/index.html
+
+# Secrets et configuration locale
+.env
+.env.*
+!.env.example
+.npmrc
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# Dépendances, builds et caches JavaScript
+node_modules/
+dist/
+dev-dist/
+coverage/
+*.tsbuildinfo
+.vite/
+.cache/
+.npm/
+.pnpm-store/
+.yarn/
+.turbo/
+.nx/
+.eslintcache
+
+# Tests navigateur
+playwright-report/
+test-results/
+blob-report/
+
+# Journaux et fichiers temporaires
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+*.swp
+*.swo
+
+# Éditeurs et système
+.idea/
+.vscode/
+.fleet/
+.history/
+.zed/
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+
+# États d'outils de déploiement local
+.vercel/
+.netlify/
+.firebase/
+.wrangler/
+
+# Stockages locaux non canoniques
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+
+# Exports calculés
+*.derived.json

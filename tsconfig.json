@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/schema" },
+    { "path": "packages/domain" },
+    { "path": "packages/calculations" },
+    { "path": "packages/document" },
+    { "path": "packages/fixtures" },
+    { "path": "apps/web" }
+  ]
+}

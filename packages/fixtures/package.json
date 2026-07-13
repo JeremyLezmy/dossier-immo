@@ -1,0 +1,9 @@
+{
+  "name": "@dossier-immo/fixtures",
+  "version": "0.2.0",
+  "type": "module",
+  "exports": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": { "@dossier-immo/schema": "0.2.0" }
+}
+

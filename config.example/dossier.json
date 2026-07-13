@@ -1,0 +1,1088 @@
+{
+  "schemaVersion": 1,
+  "metadata": {
+    "dossierId": "demo-foyer-rennais-fictif",
+    "title": "Dossier bancaire immobilier — exemple entièrement fictif",
+    "createdAt": "2026-07-01",
+    "updatedAt": "2026-07-01",
+    "observationDate": "2026-07-01",
+    "currency": "EUR",
+    "locale": "fr-FR",
+    "documentStage": "review",
+    "editionCity": "Rennes"
+  },
+  "household": {
+    "people": [
+      {
+        "id": "nora-leclerc",
+        "displayName": "Nora Leclerc",
+        "birthDate": "1987-02-18",
+        "role": "borrower",
+        "qualificationNote": "Boulangère-pâtissière, commerce de proximité exploité depuis plus de cinq ans."
+      },
+      {
+        "id": "samir-diallo",
+        "displayName": "Samir Diallo",
+        "birthDate": "1989-10-27",
+        "role": "co-borrower",
+        "qualificationNote": "Professeur des écoles titulaire dans l'enseignement public."
+      },
+      {
+        "id": "enfant-foyer",
+        "displayName": "Enfant du foyer",
+        "role": "dependent"
+      }
+    ],
+    "relationshipStatus": "civil-union",
+    "matrimonialRegime": "separation-of-property",
+    "dependents": 1,
+    "housingStatus": "tenant",
+    "currentMonthlyRentCents": 89000,
+    "relationshipSince": "2014-11-01",
+    "currentHousingSince": "2022-08-01",
+    "currentHousingDescription": "Appartement familial de 68 m² en location dans l'agglomération rennaise.",
+    "rentHistoryNote": "Loyer de 890 € charges comprises, réglé sans incident.",
+    "paymentIncidentsNote": "Aucun incident de paiement déclaré dans cet exemple fictif.",
+    "plannedHouseholdEvents": [
+      {
+        "id": "installation-logement",
+        "label": "Installation dans la résidence principale",
+        "expectedDate": "2027-09-01",
+        "impact": "housing",
+        "note": "Le budget tient compte du déménagement et de l'installation."
+      },
+      {
+        "id": "entree-college",
+        "label": "Entrée au collège de l'enfant",
+        "expectedDate": "2028-09-01",
+        "impact": "household",
+        "note": "Une marge dédiée aux dépenses scolaires est conservée."
+      }
+    ]
+  },
+  "professionalActivities": [
+    {
+      "id": "nora-boulangerie",
+      "personId": "nora-leclerc",
+      "label": "Exploitation d'une boulangerie de quartier",
+      "occupation": "Boulangère-pâtissière",
+      "status": "self-employed",
+      "engagementType": "business-owner",
+      "legalRegime": "entreprise individuelle au réel",
+      "startDate": "2021-03-01",
+      "compensationModel": {
+        "kind": "turnover",
+        "annualTurnoverCents": 16800000,
+        "collectionDelayDays": 3,
+        "note": "Activité de commerce au comptant, évaluée sur trois exercices fictifs."
+      },
+      "entries": [
+        {
+          "id": "nora-cap",
+          "kind": "education",
+          "label": "CAP boulanger",
+          "evidenceLabels": [
+            "Diplôme professionnel"
+          ]
+        },
+        {
+          "id": "nora-reprise",
+          "kind": "business",
+          "label": "Reprise du fonds de commerce",
+          "startDate": "2021-03-01",
+          "evidenceLabels": [
+            "Acte de cession",
+            "Extrait d'immatriculation"
+          ]
+        },
+        {
+          "id": "nora-exploitation",
+          "kind": "business",
+          "label": "Exploitation continue du commerce",
+          "startDate": "2021-03-01",
+          "evidenceLabels": [
+            "Bilans",
+            "Relevés professionnels"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "samir-education-nationale",
+      "personId": "samir-diallo",
+      "label": "Enseignement primaire public",
+      "occupation": "Professeur des écoles",
+      "status": "civil-servant",
+      "engagementType": "civil-service",
+      "startDate": "2018-09-01",
+      "compensationModel": {
+        "kind": "salary",
+        "contractualGrossAnnualCents": 3450000,
+        "workTimeBasisPoints": 10000,
+        "note": "Traitement indiciaire fictif à temps complet."
+      },
+      "entries": [
+        {
+          "id": "samir-concours",
+          "kind": "education",
+          "label": "Concours de recrutement",
+          "evidenceLabels": [
+            "Arrêté de titularisation"
+          ]
+        },
+        {
+          "id": "samir-titularisation",
+          "kind": "employment",
+          "label": "Titularisation dans l'enseignement public",
+          "startDate": "2019-09-01",
+          "evidenceLabels": [
+            "Arrêté",
+            "Bulletins de traitement"
+          ]
+        }
+      ]
+    }
+  ],
+  "incomeStreams": [
+    {
+      "id": "nora-commerce-income",
+      "personId": "nora-leclerc",
+      "activityId": "nora-boulangerie",
+      "kind": "self-employed",
+      "label": "Revenu professionnel retenu",
+      "monthlyBankCents": 315000,
+      "monthlyPrudentCents": 280000,
+      "monthlyAfterTaxEstimateCents": 250000,
+      "recurring": true,
+      "includedInBorrowingCapacity": true,
+      "note": "Moyenne prudente issue de trois exercices fictifs."
+    },
+    {
+      "id": "samir-salary-income",
+      "personId": "samir-diallo",
+      "activityId": "samir-education-nationale",
+      "kind": "public-service",
+      "label": "Traitement de fonctionnaire",
+      "monthlyBankCents": 235000,
+      "monthlyPrudentCents": 235000,
+      "monthlyAfterTaxEstimateCents": 210000,
+      "recurring": true,
+      "includedInBorrowingCapacity": true
+    }
+  ],
+  "revenueHistory": [
+    {
+      "id": "nora-2023",
+      "incomeStreamId": "nora-commerce-income",
+      "period": "2023",
+      "turnoverCents": 12800000,
+      "expensesCents": 8900000,
+      "resultCents": 3900000,
+      "collectedCents": 12760000,
+      "observed": true,
+      "sourceLabel": "Exercice fictif 2023"
+    },
+    {
+      "id": "nora-2024",
+      "incomeStreamId": "nora-commerce-income",
+      "period": "2024",
+      "turnoverCents": 14200000,
+      "expensesCents": 9700000,
+      "resultCents": 4500000,
+      "collectedCents": 14180000,
+      "observed": true,
+      "sourceLabel": "Exercice fictif 2024"
+    },
+    {
+      "id": "nora-2025",
+      "incomeStreamId": "nora-commerce-income",
+      "period": "2025",
+      "turnoverCents": 15800000,
+      "expensesCents": 10700000,
+      "resultCents": 5100000,
+      "collectedCents": 15760000,
+      "observed": true,
+      "sourceLabel": "Exercice fictif 2025"
+    }
+  ],
+  "assets": [
+    {
+      "id": "joint-current",
+      "ownerIds": [
+        "nora-leclerc",
+        "samir-diallo"
+      ],
+      "label": "Compte courant joint",
+      "category": "current-account",
+      "amountCents": 850000,
+      "observedAt": "2026-07-01",
+      "liquid": true,
+      "availableForContribution": true,
+      "contributionAmountCents": 500000,
+      "contributionPriority": "available"
+    },
+    {
+      "id": "nora-savings",
+      "ownerIds": [
+        "nora-leclerc"
+      ],
+      "label": "Épargne réglementée Nora",
+      "category": "regulated-savings",
+      "amountCents": 2400000,
+      "observedAt": "2026-07-01",
+      "liquid": true,
+      "availableForContribution": true,
+      "contributionAmountCents": 1800000,
+      "contributionPriority": "preferred"
+    },
+    {
+      "id": "samir-savings",
+      "ownerIds": [
+        "samir-diallo"
+      ],
+      "label": "Épargne réglementée Samir",
+      "category": "regulated-savings",
+      "amountCents": 1850000,
+      "observedAt": "2026-07-01",
+      "liquid": true,
+      "availableForContribution": true,
+      "contributionAmountCents": 1200000,
+      "contributionPriority": "preferred"
+    },
+    {
+      "id": "business-reserve",
+      "ownerIds": [
+        "nora-leclerc"
+      ],
+      "label": "Trésorerie professionnelle",
+      "category": "other",
+      "amountCents": 1700000,
+      "observedAt": "2026-07-01",
+      "liquid": true,
+      "availableForContribution": false,
+      "contributionPriority": "excluded",
+      "note": "Conservée intégralement dans l'activité."
+    },
+    {
+      "id": "family-car",
+      "ownerIds": [
+        "nora-leclerc",
+        "samir-diallo"
+      ],
+      "label": "Véhicule familial",
+      "category": "vehicle",
+      "amountCents": 900000,
+      "observedAt": "2026-07-01",
+      "liquid": false,
+      "availableForContribution": false,
+      "contributionPriority": "excluded"
+    }
+  ],
+  "liabilities": [
+    {
+      "id": "car-loan",
+      "borrowerIds": [
+        "nora-leclerc",
+        "samir-diallo"
+      ],
+      "label": "Prêt automobile",
+      "category": "auto",
+      "outstandingCents": 680000,
+      "monthlyPaymentCents": 19000,
+      "startDate": "2024-02-01",
+      "endDate": "2029-01-01",
+      "annualRateBasisPoints": 410,
+      "includedInEffortRate": true,
+      "note": "Dette fictive soldée dans le scénario alternatif."
+    }
+  ],
+  "monthlySnapshots": [
+    {
+      "id": "snapshot-2026-05",
+      "month": "2026-05",
+      "assetAmountsCents": {
+        "joint-current": 790000,
+        "nora-savings": 2320000,
+        "samir-savings": 1790000,
+        "business-reserve": 1620000,
+        "family-car": 900000
+      },
+      "incomeAmountsCents": {
+        "nora-commerce-income": 300000,
+        "samir-salary-income": 235000
+      },
+      "monthlySavingsCents": 120000,
+      "liabilityPaymentsCents": {
+        "car-loan": 19000
+      },
+      "note": "Photographie mensuelle fictive."
+    },
+    {
+      "id": "snapshot-2026-06",
+      "month": "2026-06",
+      "assetAmountsCents": {
+        "joint-current": 820000,
+        "nora-savings": 2360000,
+        "samir-savings": 1820000,
+        "business-reserve": 1660000,
+        "family-car": 900000
+      },
+      "incomeAmountsCents": {
+        "nora-commerce-income": 315000,
+        "samir-salary-income": 235000
+      },
+      "monthlySavingsCents": 120000,
+      "liabilityPaymentsCents": {
+        "car-loan": 19000
+      },
+      "note": "Photographie mensuelle fictive."
+    },
+    {
+      "id": "snapshot-2026-07",
+      "month": "2026-07",
+      "assetAmountsCents": {
+        "joint-current": 850000,
+        "nora-savings": 2400000,
+        "samir-savings": 1850000,
+        "business-reserve": 1700000,
+        "family-car": 900000
+      },
+      "incomeAmountsCents": {
+        "nora-commerce-income": 330000,
+        "samir-salary-income": 235000
+      },
+      "monthlySavingsCents": 120000,
+      "liabilityPaymentsCents": {
+        "car-loan": 19000
+      },
+      "note": "Photographie mensuelle fictive."
+    }
+  ],
+  "project": {
+    "id": "primary-home",
+    "projectType": "primary-residence",
+    "targetPurchaseDate": "2027-09-01",
+    "targetPriceCents": 24500000,
+    "minimumPriceCents": 22000000,
+    "comfortableMaximumPriceCents": 25500000,
+    "maximumPriceCents": 27500000,
+    "contributionCents": 3500000,
+    "installationCents": 400000,
+    "renovationCents": 800000,
+    "acquisitionFeeBasisPoints": 800,
+    "expectedLiquidityAtPurchaseCents": 6100000,
+    "monthlySavingsProjectionCents": 120000,
+    "criteria": {
+      "propertyType": "Appartement familial ancien en copropriété",
+      "minimumSurfaceSquareMeters": 75,
+      "idealSurfaceLabel": "80 à 90 m²",
+      "minimumBedrooms": 3,
+      "office": "Un espace de travail ponctuel est apprécié.",
+      "pool": "Sans objet.",
+      "energyRating": "DPE C ou D, avec charges maîtrisées.",
+      "works": "Rafraîchissement et cuisine à moderniser acceptés.",
+      "services": "Écoles, commerces et transports en commun accessibles à pied.",
+      "commute": "Moins de 35 minutes vers le centre de Rennes.",
+      "preferredAreas": [
+        "Rennes sud",
+        "Saint-Jacques-de-la-Lande",
+        "Chantepie"
+      ],
+      "excludedFeatures": [
+        "rez-de-chaussée sur rue",
+        "copropriété sans travaux votés documentés",
+        "DPE F ou G"
+      ],
+      "additionalCriteria": [
+        {
+          "id": "local-velo",
+          "label": "Local vélo",
+          "value": "Sécurisé et facilement accessible",
+          "importance": "preferred"
+        },
+        {
+          "id": "transport",
+          "label": "Transports",
+          "value": "Arrêt de bus ou métro à moins de 10 minutes",
+          "importance": "required"
+        }
+      ]
+    }
+  },
+  "financingScenarios": [
+    {
+      "id": "acceptable-reference",
+      "label": "Accessible",
+      "annualRateBasisPoints": 345,
+      "durationMonths": 300,
+      "insuranceAnnualBasisPoints": 16,
+      "priceOverrideCents": 22500000,
+      "contributionOverrideCents": 3500000,
+      "negotiationBasisPoints": 0,
+      "additionalLoanComponents": [],
+      "highlighted": false,
+      "displayInMainTable": true,
+      "note": "Hypothèse entièrement fictive destinée à la démonstration."
+    },
+    {
+      "id": "acceptable-optimized",
+      "label": "Accessible — taux optimiste",
+      "annualRateBasisPoints": 330,
+      "durationMonths": 300,
+      "insuranceAnnualBasisPoints": 16,
+      "priceOverrideCents": 22500000,
+      "contributionOverrideCents": 3500000,
+      "negotiationBasisPoints": 0,
+      "additionalLoanComponents": [],
+      "highlighted": false,
+      "displayInMainTable": true,
+      "note": "Hypothèse entièrement fictive destinée à la démonstration."
+    },
+    {
+      "id": "central-reference",
+      "label": "Central prudent",
+      "annualRateBasisPoints": 345,
+      "durationMonths": 300,
+      "insuranceAnnualBasisPoints": 16,
+      "priceOverrideCents": 24500000,
+      "contributionOverrideCents": 3500000,
+      "negotiationBasisPoints": 0,
+      "additionalLoanComponents": [],
+      "highlighted": true,
+      "displayInMainTable": true,
+      "note": "Hypothèse entièrement fictive destinée à la démonstration."
+    },
+    {
+      "id": "central-optimized",
+      "label": "Central — taux optimiste",
+      "annualRateBasisPoints": 330,
+      "durationMonths": 300,
+      "insuranceAnnualBasisPoints": 16,
+      "priceOverrideCents": 24500000,
+      "contributionOverrideCents": 3500000,
+      "negotiationBasisPoints": 0,
+      "additionalLoanComponents": [],
+      "highlighted": false,
+      "displayInMainTable": true,
+      "note": "Hypothèse entièrement fictive destinée à la démonstration."
+    },
+    {
+      "id": "exceptional-reference",
+      "label": "Confort",
+      "annualRateBasisPoints": 345,
+      "durationMonths": 300,
+      "insuranceAnnualBasisPoints": 16,
+      "priceOverrideCents": 26000000,
+      "contributionOverrideCents": 3500000,
+      "negotiationBasisPoints": 0,
+      "additionalLoanComponents": [],
+      "highlighted": false,
+      "displayInMainTable": true,
+      "note": "Hypothèse entièrement fictive destinée à la démonstration."
+    },
+    {
+      "id": "exceptional-optimized",
+      "label": "Confort — taux optimiste",
+      "annualRateBasisPoints": 330,
+      "durationMonths": 300,
+      "insuranceAnnualBasisPoints": 16,
+      "priceOverrideCents": 26000000,
+      "contributionOverrideCents": 3500000,
+      "negotiationBasisPoints": 0,
+      "additionalLoanComponents": [],
+      "highlighted": false,
+      "displayInMainTable": true,
+      "note": "Hypothèse entièrement fictive destinée à la démonstration."
+    },
+    {
+      "id": "central-energy-efficient",
+      "label": "Central — bien DPE A/B",
+      "annualRateBasisPoints": 335,
+      "durationMonths": 300,
+      "insuranceAnnualBasisPoints": 16,
+      "priceOverrideCents": 24500000,
+      "contributionOverrideCents": 3500000,
+      "negotiationBasisPoints": 0,
+      "additionalLoanComponents": [],
+      "highlighted": false,
+      "displayInMainTable": false,
+      "note": "Hypothèse entièrement fictive destinée à la démonstration."
+    },
+    {
+      "id": "central-stress",
+      "label": "Central — stress de taux",
+      "annualRateBasisPoints": 385,
+      "durationMonths": 300,
+      "insuranceAnnualBasisPoints": 16,
+      "priceOverrideCents": 24500000,
+      "contributionOverrideCents": 3500000,
+      "negotiationBasisPoints": 0,
+      "additionalLoanComponents": [],
+      "highlighted": false,
+      "displayInMainTable": false,
+      "note": "Hypothèse entièrement fictive destinée à la démonstration."
+    }
+  ],
+  "budgetScenarios": [
+    {
+      "id": "current-budget",
+      "label": "Budget de vie actuel",
+      "kind": "current",
+      "assumptions": {
+        "afterTaxIncomeCents": 460000,
+        "note": "Budget construit à partir de valeurs fictives arrondies."
+      },
+      "items": [
+        {
+          "id": "current-rent",
+          "label": "Loyer",
+          "group": "housing",
+          "amountCents": 71300,
+          "sankeyLabel": "Loyer",
+          "showInSankey": true,
+          "adjustable": false,
+          "note": "Montant fictif de démonstration."
+        },
+        {
+          "id": "current-food",
+          "label": "Courses",
+          "group": "living",
+          "amountCents": 32200,
+          "sankeyLabel": "Courses",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration."
+        },
+        {
+          "id": "current-transport",
+          "label": "Transports hors crédit",
+          "group": "transport",
+          "amountCents": 18600,
+          "sankeyLabel": "Transports",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration."
+        },
+        {
+          "id": "current-telecom",
+          "label": "Télécommunications",
+          "group": "living",
+          "amountCents": 3700,
+          "sankeyLabel": "Télécom",
+          "showInSankey": true,
+          "adjustable": false,
+          "note": "Montant fictif de démonstration."
+        },
+        {
+          "id": "current-sport",
+          "label": "Sport",
+          "group": "leisure",
+          "amountCents": 3700,
+          "sankeyLabel": "Sport",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration."
+        },
+        {
+          "id": "current-travel",
+          "label": "Voyages",
+          "group": "leisure",
+          "amountCents": 31000,
+          "sankeyLabel": "Voyages",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration."
+        },
+        {
+          "id": "current-other",
+          "label": "Divers",
+          "group": "other",
+          "amountCents": 12400,
+          "sankeyLabel": "Divers",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration."
+        }
+      ]
+    },
+    {
+      "id": "central-budget",
+      "label": "Central maîtrisé",
+      "kind": "central",
+      "assumptions": {
+        "afterTaxIncomeCents": 460000,
+        "financingScenarioId": "central-reference",
+        "note": "Budget construit à partir de valeurs fictives arrondies."
+      },
+      "items": [
+        {
+          "id": "central-property-tax",
+          "label": "Taxe foncière mensualisée",
+          "group": "tax",
+          "amountCents": 12400,
+          "sankeyLabel": "Taxe foncière",
+          "showInSankey": true,
+          "adjustable": false,
+          "note": "Montant fictif de démonstration."
+        },
+        {
+          "id": "central-home-insurance",
+          "label": "Assurance habitation",
+          "group": "housing",
+          "amountCents": 2800,
+          "sankeyLabel": "Assurance habitation",
+          "showInSankey": true,
+          "adjustable": false,
+          "note": "Montant fictif de démonstration."
+        },
+        {
+          "id": "central-energy",
+          "label": "Énergie et eau",
+          "group": "housing",
+          "amountCents": 14900,
+          "sankeyLabel": "Énergie / eau",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration."
+        },
+        {
+          "id": "central-maintenance",
+          "label": "Petits travaux intérieurs",
+          "group": "housing",
+          "amountCents": 12400,
+          "sankeyLabel": "Petits travaux",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration."
+        },
+        {
+          "id": "central-pool",
+          "label": "Charges de copropriété",
+          "group": "housing",
+          "amountCents": 13600,
+          "sankeyLabel": "Copropriété",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration."
+        },
+        {
+          "id": "central-food",
+          "label": "Courses",
+          "group": "living",
+          "amountCents": 32200,
+          "sankeyLabel": "Courses",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration."
+        },
+        {
+          "id": "central-transport",
+          "label": "Transports hors crédit",
+          "group": "transport",
+          "amountCents": 18600,
+          "sankeyLabel": "Transports",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration."
+        },
+        {
+          "id": "central-telecom",
+          "label": "Télécommunications",
+          "group": "living",
+          "amountCents": 3700,
+          "sankeyLabel": "Télécom",
+          "showInSankey": true,
+          "adjustable": false,
+          "note": "Montant fictif de démonstration."
+        },
+        {
+          "id": "central-sport",
+          "label": "Sport",
+          "group": "leisure",
+          "amountCents": 3700,
+          "sankeyLabel": "Sport",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration."
+        },
+        {
+          "id": "central-personal",
+          "label": "Extras personnels",
+          "group": "leisure",
+          "amountCents": 6200,
+          "sankeyLabel": "Extras personnels",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration."
+        },
+        {
+          "id": "central-travel",
+          "label": "Voyages modulables",
+          "group": "leisure",
+          "amountCents": 31000,
+          "sankeyLabel": "Voyages",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration."
+        },
+        {
+          "id": "central-other",
+          "label": "Divers quotidien",
+          "group": "other",
+          "amountCents": 6200,
+          "sankeyLabel": "Divers",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration."
+        }
+      ]
+    },
+    {
+      "id": "stress-budget",
+      "label": "Prudent / stress",
+      "kind": "stress",
+      "assumptions": {
+        "afterTaxIncomeCents": 400000,
+        "financingScenarioId": "central-stress",
+        "note": "Revenus minorés et dépenses majorées dans un cas fictif."
+      },
+      "items": [
+        {
+          "id": "stress-property-tax",
+          "label": "Taxe foncière mensualisée",
+          "group": "tax",
+          "amountCents": 15500,
+          "sankeyLabel": "Taxe foncière",
+          "showInSankey": true,
+          "adjustable": false,
+          "note": "Montant fictif de démonstration.",
+          "sourceItemId": "central-property-tax"
+        },
+        {
+          "id": "stress-home-insurance",
+          "label": "Assurance habitation",
+          "group": "housing",
+          "amountCents": 4300,
+          "sankeyLabel": "Assurance habitation",
+          "showInSankey": true,
+          "adjustable": false,
+          "note": "Montant fictif de démonstration.",
+          "sourceItemId": "central-home-insurance"
+        },
+        {
+          "id": "stress-energy",
+          "label": "Énergie et eau",
+          "group": "housing",
+          "amountCents": 18600,
+          "sankeyLabel": "Énergie / eau",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration.",
+          "sourceItemId": "central-energy"
+        },
+        {
+          "id": "stress-maintenance",
+          "label": "Petits travaux intérieurs",
+          "group": "housing",
+          "amountCents": 17400,
+          "sankeyLabel": "Petits travaux",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration.",
+          "sourceItemId": "central-maintenance"
+        },
+        {
+          "id": "stress-pool",
+          "label": "Charges de copropriété",
+          "group": "housing",
+          "amountCents": 19800,
+          "sankeyLabel": "Copropriété",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration.",
+          "sourceItemId": "central-pool"
+        },
+        {
+          "id": "stress-food",
+          "label": "Courses",
+          "group": "living",
+          "amountCents": 38400,
+          "sankeyLabel": "Courses",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration.",
+          "sourceItemId": "central-food"
+        },
+        {
+          "id": "stress-transport",
+          "label": "Transports hors crédit",
+          "group": "transport",
+          "amountCents": 20500,
+          "sankeyLabel": "Transports",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration.",
+          "sourceItemId": "central-transport"
+        },
+        {
+          "id": "stress-telecom",
+          "label": "Télécommunications",
+          "group": "living",
+          "amountCents": 3700,
+          "sankeyLabel": "Télécom",
+          "showInSankey": true,
+          "adjustable": false,
+          "note": "Montant fictif de démonstration.",
+          "sourceItemId": "central-telecom"
+        },
+        {
+          "id": "stress-sport",
+          "label": "Sport",
+          "group": "leisure",
+          "amountCents": 3700,
+          "sankeyLabel": "Sport",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration.",
+          "sourceItemId": "central-sport"
+        },
+        {
+          "id": "stress-personal",
+          "label": "Extras personnels",
+          "group": "leisure",
+          "amountCents": 9300,
+          "sankeyLabel": "Extras personnels",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration.",
+          "sourceItemId": "central-personal"
+        },
+        {
+          "id": "stress-travel",
+          "label": "Voyages modulables",
+          "group": "leisure",
+          "amountCents": 31000,
+          "sankeyLabel": "Voyages",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration.",
+          "sourceItemId": "central-travel"
+        },
+        {
+          "id": "stress-other",
+          "label": "Divers quotidien",
+          "group": "other",
+          "amountCents": 9300,
+          "sankeyLabel": "Divers",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant fictif de démonstration.",
+          "sourceItemId": "central-other"
+        }
+      ]
+    }
+  ],
+  "stressCases": [
+    {
+      "id": "stress-commerce",
+      "label": "Baisse temporaire d'activité du commerce",
+      "description": "Teste une baisse fictive du revenu professionnel pendant six mois.",
+      "enabled": true,
+      "assumptions": [
+        {
+          "id": "income-drop",
+          "label": "Revenu commerce minoré",
+          "target": "incomeStreams.nora-commerce-income.monthlyPrudentCents",
+          "operation": "subtract",
+          "value": 60000,
+          "unit": "cents"
+        },
+        {
+          "id": "cost-rise",
+          "label": "Charges du foyer majorées",
+          "target": "budgetScenarios.stress.items",
+          "operation": "add",
+          "value": 20000,
+          "unit": "cents"
+        }
+      ],
+      "note": "Cas pédagogique sans lien avec une situation réelle."
+    }
+  ],
+  "reservePolicy": {
+    "minimumCents": 1500000,
+    "targetCents": 2000000,
+    "allocations": [
+      {
+        "id": "family-safety",
+        "label": "Sécurité du foyer",
+        "amountCents": 1000000,
+        "note": "Réserve familiale fictive."
+      },
+      {
+        "id": "moving",
+        "label": "Déménagement",
+        "amountCents": 400000
+      },
+      {
+        "id": "renovation-buffer",
+        "label": "Marge travaux",
+        "amountCents": 300000
+      },
+      {
+        "id": "school-costs",
+        "label": "Dépenses scolaires",
+        "amountCents": 200000
+      }
+    ]
+  },
+  "estimatedHouseholdAfterTaxIncomeCents": 460000,
+  "supportingDocuments": [
+    {
+      "id": "identity-nora",
+      "ownerId": "nora-leclerc",
+      "label": "Pièce d'identité de Nora",
+      "category": "identity",
+      "status": "available",
+      "sensitive": true,
+      "responsibleParty": "Nora Leclerc",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "identity-samir",
+      "ownerId": "samir-diallo",
+      "label": "Pièce d'identité de Samir",
+      "category": "identity",
+      "status": "available",
+      "sensitive": true,
+      "responsibleParty": "Samir Diallo",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "civil-union",
+      "label": "Justificatif de PACS",
+      "category": "household",
+      "status": "available",
+      "sensitive": true,
+      "responsibleParty": "Foyer",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "tax-notices",
+      "label": "Avis d'imposition fictifs",
+      "category": "tax",
+      "status": "verified",
+      "sensitive": true,
+      "responsibleParty": "Foyer",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "business-statements",
+      "ownerId": "nora-leclerc",
+      "label": "Bilans de la boulangerie fictive",
+      "category": "professional",
+      "status": "available",
+      "sensitive": true,
+      "responsibleParty": "Nora Leclerc",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "salary-slips",
+      "ownerId": "samir-diallo",
+      "label": "Bulletins de traitement fictifs",
+      "category": "income",
+      "status": "verified",
+      "sensitive": true,
+      "responsibleParty": "Samir Diallo",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "savings-statements",
+      "label": "Relevés d'épargne fictifs",
+      "category": "asset",
+      "status": "available",
+      "sensitive": true,
+      "responsibleParty": "Foyer",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "car-loan-statement",
+      "label": "Tableau d'amortissement automobile fictif",
+      "category": "liability",
+      "status": "available",
+      "sensitive": true,
+      "responsibleParty": "Foyer",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "draft-purchase-offer",
+      "label": "Projet d'offre d'achat fictif",
+      "category": "project",
+      "status": "missing",
+      "sensitive": true,
+      "responsibleParty": "Foyer",
+      "deliveryChannel": "secure-portal"
+    }
+  ],
+  "editorial": {
+    "presentationLetter": "Nora Leclerc et Samir Diallo présentent un projet fictif d'acquisition d'un appartement familial dans l'agglomération rennaise. Le dossier associe une activité commerciale établie et un emploi public titulaire.",
+    "householdSummary": "Foyer fictif pacsé avec un enfant, locataire depuis 2022 et sans incident de paiement déclaré.",
+    "professionalStabilityItems": [
+      {
+        "id": "commerce-history",
+        "title": "Commerce établi",
+        "body": "Trois exercices fictifs illustrent une progression régulière de l'activité de boulangerie."
+      },
+      {
+        "id": "public-service",
+        "title": "Emploi public titulaire",
+        "body": "Le traitement de Samir constitue la composante stable des revenus du foyer."
+      }
+    ],
+    "projectSummary": "Appartement familial de 75 à 90 m², proche des écoles et transports, avec un budget cible de 245 000 €.",
+    "reserveStrategy": "L'apport de 35 000 € préserve une réserve minimale fictive de 15 000 € après installation.",
+    "independentIncomeIntroduction": "L'activité commerciale est présentée sur trois exercices fictifs et retenue selon une moyenne prudente.",
+    "finalDisclaimer": "Toutes les identités, professions, localisations, dates et valeurs de cet exemple sont fictives. Ce document ne constitue ni un conseil financier ni un accord de crédit.",
+    "sectionSlots": {
+      "cover": {
+        "callout": "Exemple de démonstration — aucune donnée réelle"
+      },
+      "riskManagement": {
+        "introduction": "Le scénario stress simule une baisse temporaire d'activité sans préjuger d'un événement réel."
+      },
+      "supportingDocuments": {
+        "conclusion": "Les intitulés de pièces sont pédagogiques ; aucun justificatif réel n'est inclus."
+      }
+    }
+  },
+  "presentation": {
+    "theme": "banking-clean",
+    "density": "comfortable",
+    "pageSize": "A4",
+    "title": "Dossier bancaire immobilier — exemple fictif",
+    "subtitle": "Acquisition d'un appartement familial dans l'agglomération rennaise",
+    "footer": "Démonstration fictive — aucune donnée personnelle réelle",
+    "sections": {
+      "cover": true,
+      "presentationLetter": true,
+      "household": true,
+      "income": true,
+      "riskManagement": true,
+      "assets": true,
+      "cashReserve": true,
+      "project": true,
+      "financing": true,
+      "sankey": true,
+      "postPurchaseBudget": true,
+      "supportingDocuments": true,
+      "independentIncomeAnnex": true
+    },
+    "colors": {
+      "navy": "#17324d",
+      "blue": "#1f77b4",
+      "green": "#2f855a",
+      "gold": "#b7791f",
+      "muted": "#667085"
+    }
+  }
+}
