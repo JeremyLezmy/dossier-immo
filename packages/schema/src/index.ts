@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const CURRENT_SCHEMA_VERSION = 3 as const;
+
 const id = z
   .string()
   .min(1)
@@ -243,7 +245,7 @@ const PresentationBaseSchema = z.strictObject({
 
 const DossierCoreSchema = z
   .strictObject({
-    schemaVersion: z.literal(1),
+    schemaVersion: z.literal(CURRENT_SCHEMA_VERSION),
     metadata: z.strictObject({
       dossierId: id,
       title: z.string().min(1),
@@ -646,7 +648,7 @@ export const StressCaseSchema = z.strictObject({
 });
 
 const DossierObjectSchema = z.strictObject({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(CURRENT_SCHEMA_VERSION),
   metadata: z.strictObject({
     dossierId: id,
     title: z.string().min(1),
@@ -699,7 +701,7 @@ export const DossierSchema = DossierObjectSchema.superRefine((dossier, context) 
   const { stressCases: _stressCases, ...coreBase } = dossier;
   const coreProjection = {
     ...coreBase,
-    schemaVersion: 1 as const,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     metadata: (({ documentStage: _stage, editionCity: _city, ...metadata }) => metadata)(dossier.metadata),
     household: (({ plannedHouseholdEvents: _events, ...household }) => household)(dossier.household),
     professionalActivities: dossier.professionalActivities.map((activity) => ({

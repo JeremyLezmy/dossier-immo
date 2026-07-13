@@ -1,11 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { completeDemoDossier } from "@dossier-immo/fixtures";
-import { CompensationModelSchema, dossierJsonSchema, normalizeDossierInput, validateDossier } from "./index";
+import { CompensationModelSchema, CURRENT_SCHEMA_VERSION, dossierJsonSchema, normalizeDossierInput, validateDossier } from "./index";
 
 describe("DossierSchema", () => {
   it("valide le dossier fictif complet", () => {
+    expect(completeDemoDossier.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     const result = validateDossier(completeDemoDossier);
     expect(result.success).toBe(true);
+  });
+
+  it("rejette explicitement une version de contrat différente", () => {
+    const invalid = { ...completeDemoDossier, schemaVersion: 1 };
+    const result = validateDossier(invalid);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.issues).toContainEqual({ path: "schemaVersion", message: "Invalid input: expected 3" });
+    }
   });
 
   it("rejette les références orphelines avec un chemin exploitable par la GUI", () => {

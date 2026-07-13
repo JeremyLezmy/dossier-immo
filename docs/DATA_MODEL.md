@@ -2,7 +2,7 @@
 
 ## Format canonique
 
-La sauvegarde est un JSON UTF-8 portant `schemaVersion: 1`. Le contrat publié est [dossier.json](schema/dossier.json).
+La sauvegarde est un JSON UTF-8 portant `schemaVersion: 3`. Le contrat publié est [dossier.json](schema/dossier.json).
 
 Le modèle couvre notamment :
 
