@@ -123,7 +123,7 @@ Pour une modification ciblée, lire aussi le `package.json`, les tests et les mo
 
 ## Commandes de référence
 
-Utiliser `corepack pnpm ...` depuis un terminal neuf. À l'intérieur des scripts ou d'un environnement où Corepack a déjà sélectionné le gestionnaire du projet, `pnpm ...` est acceptable.
+Utiliser toujours `corepack pnpm ...`, y compris dans les scripts chaînés du `package.json`. Ne jamais supposer qu'un exécutable `pnpm` nu est présent dans le `PATH` : la CI n'active volontairement aucun shim global avec `corepack enable`.
 
 ```powershell
 corepack install
