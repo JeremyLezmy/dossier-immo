@@ -5,8 +5,8 @@
   "exports": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
-    "@dossier-immo/calculations": "0.2.0",
-    "@dossier-immo/domain": "0.2.0",
-    "@dossier-immo/schema": "0.2.0"
+    "@dossier-immo/calculations": "workspace:*",
+    "@dossier-immo/domain": "workspace:*",
+    "@dossier-immo/schema": "workspace:*"
   }
 }

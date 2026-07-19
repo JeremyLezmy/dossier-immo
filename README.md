@@ -1,48 +1,47 @@
 # Dossier Immo
 
-Application local-first de création d’un dossier bancaire immobilier français. Elle guide la saisie du foyer, des revenus, du patrimoine, des dettes, du projet et des budgets, puis produit une synthèse PDF de treize pages.
+Application local-first de création d'un dossier bancaire immobilier français. Elle guide la saisie du foyer, des revenus, du patrimoine, des dettes, du projet et des budgets, puis produit une synthèse PDF déterministe de treize pages.
 
-Les données restent dans le navigateur. Le fichier `.dossier-immo.json` téléchargé par l’utilisateur est la sauvegarde officielle ; IndexedDB fournit uniquement un brouillon de récupération.
+Les données restent dans le navigateur. Le fichier `.dossier-immo.json` téléchargé par l'utilisateur est la sauvegarde officielle ; IndexedDB fournit uniquement un brouillon de récupération. Il n'existe ni compte, backend, télémétrie ni stockage distant.
 
-## Démarrage
+## Démarrage rapide
 
-Prérequis : Node.js 22 ou plus récent.
-
-```powershell
-npm install
-npm run dev
-```
-
-Le build statique est produit avec :
+Prérequis : Git, un Node hôte `>=22.13` incluant Corepack, et Microsoft Edge pour les tests E2E locaux. Le dépôt isole pnpm 11.13.1 et le runtime Node 24.18.0 ; aucune installation globale de pnpm n'est nécessaire.
 
 ```powershell
-npm run build
+corepack install
+corepack pnpm install --frozen-lockfile
+corepack pnpm runtime:check
+corepack pnpm dev
 ```
+
+Sous PowerShell, utiliser `corepack.cmd` si la stratégie d'exécution bloque les scripts `.ps1`. Le guide complet pour un laptop vierge, un `git pull`, les tests et le dépannage se trouve dans [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md).
 
 ## Fonctionnalités
 
-- onze étapes de saisie et aide contextuelle ;
+- onze étapes de saisie avec aide contextuelle ;
 - exemple fictif complet et dossier vierge ;
 - validation Zod avec erreurs localisées ;
 - calculs TypeScript purs, montants en centimes et taux en points de base ;
-- comparaison de scénarios prix, taux, durée et apport ;
-- budgets central et stress reliés par identifiants stables ;
-- autosauvegarde IndexedDB et reprise après rechargement ;
-- import strict des sauvegardes au format courant ;
-- export JSON portable, aperçu de treize pages et génération PDF ;
-- PWA hors ligne, sans télémétrie ni stockage de justificatifs.
+- scénarios de financement et budgets central/stress ;
+- autosauvegarde IndexedDB, reprise et import strict du contrat courant ;
+- export JSON portable, aperçu et PDF de treize pages ;
+- actions et état d'autosauvegarde accessibles sur mobile, tablette et desktop ;
+- PWA hors ligne sans télémétrie ni stockage de justificatifs.
 
-## Vérifications
+## Vérifications principales
 
 ```powershell
-npm run contracts:export
-npm run typecheck
-npm run test:unit
-npm run build
-npm run test:e2e
+corepack pnpm typecheck
+corepack pnpm test:unit
+corepack pnpm build
+corepack pnpm test:e2e
+corepack pnpm deps:policy
+corepack pnpm deps:trust-exclusions
+corepack pnpm deps:audit
 ```
 
-Les contrôles couvrent le schéma, les références croisées, les calculs, les fixtures, l’ordre documentaire, le PDF, les captures visuelles, l’import/export, la reprise IndexedDB, l’accessibilité de base et le mode hors ligne.
+La résolution impose une fenêtre de maturité glissante de 72 heures, une politique de non-régression de provenance et une allowlist explicite des scripts de build. Deux exceptions transitives exactes, approuvées et re-sondées chaque semaine, sont documentées dans [docs/DEPENDENCY_SECURITY.md](docs/DEPENDENCY_SECURITY.md).
 
 ## Architecture
 
@@ -54,23 +53,26 @@ packages/calculations     moteur métier pur TypeScript
 packages/document         HTML/CSS/SVG print et graphiques
 packages/fixtures         dossiers fictifs et cas de conformité
 tests/contracts           conformité des schémas et artefacts
-tests/e2e                 parcours navigateur, PDF et snapshots
-tools                     validation, génération PDF et contrôle de mise en page
+tests/e2e                 parcours, responsive, PDF et snapshots
+tools                     validation, génération et politiques de dépendances
 ```
 
-Le modèle, les calculs et le document ne dépendent pas de React. L’interface orchestre la saisie, mais ne constitue jamais une source de vérité métier.
+Le modèle, les calculs et le document ne dépendent pas de React. L'interface orchestre la saisie, mais ne constitue jamais une source de vérité métier.
 
-## Configuration et confidentialité
+## Confidentialité
 
-- [Exemple complet](config.example/dossier.json)
-- [JSON Schema](docs/schema/dossier.json)
+- Exemple fictif : [config.example/dossier.json](config.example/dossier.json)
+- JSON Schema : [docs/schema/dossier.json](docs/schema/dossier.json)
 
-Ne jamais committer `private/`, `output/`, les justificatifs, PDF ou exports réels. L’exemple inclus est volontairement fictif et ne doit jamais être remplacé par un dossier réel.
+Ne jamais committer `private/`, `output/`, les justificatifs, PDF ou exports réels. L'exemple inclus est volontairement fictif et ne doit jamais être remplacé par un dossier réel.
 
-## Documentation
+## Documentation essentielle
 
+- [Consignes pour les agents IA](AGENTS.md)
 - [Spécification produit](docs/PRODUCT_SPEC.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Modèle de données](docs/DATA_MODEL.md)
+- [Guide développeur](docs/DEVELOPER_GUIDE.md)
 - [Guide de maintenance](docs/MAINTENANCE_GUIDE.md)
-- [Direction de l’application web](docs/WEB_APP_DIRECTION.md)
+- [Sécurité des dépendances](docs/DEPENDENCY_SECURITY.md)
+- [Direction de l'application web](docs/WEB_APP_DIRECTION.md)

@@ -36,7 +36,7 @@ test.beforeEach(async ({ page }) => {
   await page.evaluate(
     async () =>
       await new Promise<void>((resolve) => {
-        const request = indexedDB.deleteDatabase("dossier-immo-local");
+        const request = indexedDB.deleteDatabase("dossier-immo-local-v1");
         request.onsuccess = () => resolve();
         request.onerror = () => resolve();
         request.onblocked = () => resolve();
@@ -91,9 +91,7 @@ test("télécharge directement le PDF local", async ({ page }) => {
   const downloadPromise = page.waitForEvent("download", { timeout: 110_000 });
   await page.getByRole("button", { name: "Télécharger le PDF" }).click();
   const download = await downloadPromise;
-  expect(download.suggestedFilename()).toBe(
-    "demo-foyer-rennais-fictif.pdf",
-  );
+  expect(download.suggestedFilename()).toBe("demo-foyer-rennais-fictif.pdf");
   expect(await download.path()).toBeTruthy();
 });
 
@@ -142,9 +140,14 @@ test("importe un dossier courant sans créer d'erreurs sur les champs optionnels
   ).toHaveCount(13);
 });
 
-test("neutralise le HTML actif d'un dossier importé avant de l'afficher", async ({ page }) => {
-  const dossier = JSON.parse(readFileSync("config.example/dossier.json", "utf8"));
-  dossier.editorial.presentationLetter = '<img src="invalid" onerror="document.body.dataset.xss=\'yes\'"><strong>Texte sûr</strong>';
+test("neutralise le HTML actif d'un dossier importé avant de l'afficher", async ({
+  page,
+}) => {
+  const dossier = JSON.parse(
+    readFileSync("config.example/dossier.json", "utf8"),
+  );
+  dossier.editorial.presentationLetter =
+    '<img src="invalid" onerror="document.body.dataset.xss=\'yes\'"><strong>Texte sûr</strong>';
   await page.getByLabel("Importer un fichier Dossier Immo").setInputFiles({
     name: "dossier-non-fiable.dossier-immo.json",
     mimeType: "application/json",

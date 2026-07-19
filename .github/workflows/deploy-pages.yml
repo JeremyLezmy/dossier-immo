@@ -26,15 +26,30 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: package-lock.json
+          node-version: 22.18.0
+
+      - name: Prepare project package manager
+        run: corepack install
+
+      - name: Verify toolchain
+        run: |
+          node --version
+          corepack pnpm --version
 
       - name: Install dependencies
-        run: npm ci
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Verify project runtime
+        run: corepack pnpm runtime:check
+
+      - name: Audit dependency metadata
+        run: |
+          corepack pnpm deps:policy
+          corepack pnpm deps:audit
+          corepack pnpm deps:tree
 
       - name: Build application
-        run: npm run build
+        run: corepack pnpm build
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6

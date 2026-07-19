@@ -22,7 +22,8 @@ Permettre à un particulier français de constituer, comprendre, sauvegarder et 
 - validation avant export ;
 - rendu bancaire déterministe et testé ;
 - exemple fictif complet couvrant toutes les sections ;
-- accessibilité clavier et responsive desktop/tablette.
+- accessibilité clavier et responsive mobile/tablette/desktop ;
+- accès permanent à l'ouverture, à la sauvegarde officielle et à l'état d'autosauvegarde, quelle que soit la taille d'écran.
 
 ## Parcours principal
 
