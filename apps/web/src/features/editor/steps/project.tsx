@@ -8,6 +8,7 @@ import {
   SelectField,
   TextField,
 } from "../../../components/fields";
+import { EditorDisclosure } from "../../../components/EditorDisclosure";
 import { StringListField, TextareaField } from "./shared";
 
 export function ProjectStep({
@@ -30,7 +31,7 @@ export function ProjectStep({
         description="Définissez la fourchette de prix, la stratégie d'apport, la réserve et les critères du bien. Les hypothèses exceptionnelles restent séparées du scénario central."
         help="Ces valeurs alimentent la couverture, la page Projet, les scénarios de financement et le calcul de trésorerie après achat."
       />
-      <details className="editor-subsection" open>
+      <EditorDisclosure disclosureId="project-financing-frame">
         <summary>
           <div>
             <strong>Cadrage financier</strong>
@@ -123,8 +124,8 @@ export function ProjectStep({
             help="Montant ajouté chaque mois jusqu'à la date cible lorsque les liquidités attendues ne sont pas saisies explicitement."
           />
         </div>
-      </details>
-      <details className="editor-subsection">
+      </EditorDisclosure>
+      <EditorDisclosure disclosureId="project-property-criteria">
         <summary>
           <div>
             <strong>Critères du bien</strong>
@@ -210,8 +211,8 @@ export function ProjectStep({
             help="Défauts rédhibitoires servant à démontrer une recherche structurée et prudente."
           />
         </div>
-      </details>
-      <details className="editor-subsection">
+      </EditorDisclosure>
+      <EditorDisclosure disclosureId="project-additional-criteria">
         <summary>
           <div>
             <strong>Critères complémentaires</strong>
@@ -223,6 +224,7 @@ export function ProjectStep({
             {criteria.fields.map((criterion, index) => (
               <ArrayCard
                 key={criterion.id}
+                disclosureId={`criterion-${form.watch(`project.criteria.additionalCriteria.${index}.id`)}`}
                 title={
                   form.watch(
                     `project.criteria.additionalCriteria.${index}.label`,
@@ -274,8 +276,8 @@ export function ProjectStep({
             Ajouter un critère
           </button>
         </div>
-      </details>
-      <details className="editor-subsection">
+      </EditorDisclosure>
+      <EditorDisclosure disclosureId="project-reserve-policy">
         <summary>
           <div>
             <strong>Politique de réserve après achat</strong>
@@ -299,6 +301,7 @@ export function ProjectStep({
             {allocations.fields.map((allocation, index) => (
               <ArrayCard
                 key={allocation.id}
+                disclosureId={`reserve-${form.watch(`reservePolicy.allocations.${index}.id`)}`}
                 title={
                   form.watch(`reservePolicy.allocations.${index}.label`) ||
                   `Poche ${index + 1}`
@@ -337,7 +340,7 @@ export function ProjectStep({
             Ajouter une poche de réserve
           </button>
         </div>
-      </details>
+      </EditorDisclosure>
     </>
   );
 }

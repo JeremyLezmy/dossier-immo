@@ -30,6 +30,10 @@ async function waitForDraftSaved(page: Page) {
   );
 }
 
+async function selectStep(page: Page, step: string) {
+  await page.getByRole("combobox", { name: "Étape du dossier" }).selectOption(step);
+}
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(window, "showSaveFilePicker", {
@@ -53,6 +57,9 @@ test.beforeEach(async ({ page }) => {
 test("les actions essentielles et l'autosauvegarde restent visibles sur mobile", async ({
   page,
 }) => {
+  await expect(page.getByRole("navigation", { name: "Navigation compacte des étapes" })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Étape du dossier" })).toHaveValue("help");
+  await expect(page.locator(".sidebar")).toBeHidden();
   await expect(page.locator(".save-state")).toBeVisible();
   await expect(page.locator(".save-state")).toContainText(
     "Brouillon local à jour",
@@ -119,6 +126,8 @@ test("le menu remplace les actions secondaires sur tablette", async ({
   ).toBeVisible();
   await expect(page.locator(".topbar__desktop-action").first()).toBeHidden();
   await expect(page.locator(".step-footer__tools")).toBeHidden();
+  await expect(page.getByRole("combobox", { name: "Étape du dossier" })).toBeVisible();
+  await expect(page.locator(".sidebar")).toBeHidden();
   await expect(
     page.locator(".topbar").getByRole("button", { name: "Télécharger le PDF" }),
   ).toBeVisible();
@@ -134,7 +143,7 @@ test("le menu remplace les actions secondaires sur tablette", async ({
 test("l'aperçu final ajuste les thèmes et la page A4 à un écran mobile", async ({
   page,
 }) => {
-  await page.locator(".step-link").last().click();
+  await selectStep(page, "preview");
 
   const themeRail = page.getByRole("complementary", {
     name: "Changer le thème",
@@ -244,7 +253,8 @@ test("l'effacement des brouillons exige une confirmation", async ({ page }) => {
   await page.getByRole("button", { name: /^Effacer les brouillons/ }).click();
   await expect.poll(() => readDraftCount(page)).toBeGreaterThan(0);
 
-  await page.locator(".step-link").nth(2).click();
+  await selectStep(page, "household");
+  await page.locator(".array-card--collapsible summary").first().click();
   await page.getByLabel("Nom affiché").first().fill("Brouillon à effacer");
   await openDossierActions(page);
   page.once("dialog", (dialog) => dialog.accept());
@@ -275,3 +285,124 @@ test("la génération du PDF verrouille l'action jusqu'à son terme", async ({
     "PDF téléchargé.",
   );
 });
+
+test("la navigation compacte expose les libellés et reste utilisable au clavier", async ({
+  page,
+}) => {
+  const navigation = page.getByRole("navigation", {
+    name: "Navigation compacte des étapes",
+  });
+  const selector = page.getByRole("combobox", { name: "Étape du dossier" });
+  await expect(navigation).toContainText("Étape 1 sur 12");
+  await selector.focus();
+  await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
+  await expect(selector).toHaveValue("preview");
+  await expect(
+    page.getByRole("button", { name: "Étape suivante" }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "Étape précédente" }).click();
+  await expect(selector).toHaveValue("presentation");
+});
+
+test("les infobulles restent ancrées à leur bouton sur mobile", async ({
+  page,
+}) => {
+  await selectStep(page, "household");
+  const trigger = page.getByRole("button", { name: "Aide — Foyer" });
+  await trigger.click();
+  const tooltip = page.getByRole("tooltip");
+  await expect(tooltip).toBeVisible();
+
+  const [triggerBox, tooltipBox] = await Promise.all([
+    trigger.boundingBox(),
+    tooltip.boundingBox(),
+  ]);
+  expect(triggerBox).not.toBeNull();
+  expect(tooltipBox).not.toBeNull();
+  const distanceBelow = Math.abs(
+    tooltipBox!.y - (triggerBox!.y + triggerBox!.height),
+  );
+  const distanceAbove = Math.abs(
+    triggerBox!.y - (tooltipBox!.y + tooltipBox!.height),
+  );
+  expect(Math.min(distanceBelow, distanceAbove)).toBeLessThanOrEqual(10);
+  expect(tooltipBox!.x).toBeGreaterThanOrEqual(12);
+  expect(tooltipBox!.x + tooltipBox!.width).toBeLessThanOrEqual(378);
+});
+
+test("le guide détaillé reste lisible avec une rubrique ouverte sur mobile", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  const financing = page.locator('[data-disclosure-id="guide-financing"]');
+  await financing.locator("summary").click();
+  await expect(
+    financing.getByRole("heading", { name: "Composition multi-prêts" }),
+  ).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(360);
+  await expect(financing).toHaveScreenshot("guide-financing-card-mobile.png", {
+    animations: "disabled",
+  });
+});
+
+for (const viewport of [
+  { width: 360, height: 800 },
+  { width: 390, height: 844 },
+  { width: 768, height: 1024 },
+  { width: 1920, height: 1080 },
+  { width: 2560, height: 1440 },
+]) {
+  test(`aucun contrôle critique ne déborde à ${viewport.width} × ${viewport.height}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await expect(page.locator(".save-state")).toBeVisible();
+    await expect(page.locator(".topbar .button--primary")).toBeVisible();
+    expect(
+      await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth -
+          document.documentElement.clientWidth,
+      ),
+    ).toBe(0);
+    if (viewport.width <= 1050) {
+      await expect(
+        page.getByRole("combobox", { name: "Étape du dossier" }),
+      ).toBeVisible();
+    } else {
+      await expect(page.locator(".sidebar")).toBeVisible();
+    }
+  });
+}
+
+for (const viewport of [
+  { width: 360, height: 800 },
+  { width: 768, height: 1024 },
+]) {
+  test(`le budget est empilé sans grille hors écran à ${viewport.width} px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await selectStep(page, "budgets");
+    const comparison = page.locator(".budget-comparison");
+    const firstItem = page.locator(".budget-comparison__item").first();
+    await expect(comparison).toBeVisible();
+    await expect(firstItem.getByText("Central", { exact: true })).toBeVisible();
+    const [comparisonBox, itemBox] = await Promise.all([
+      comparison.boundingBox(),
+      firstItem.boundingBox(),
+    ]);
+    expect(comparisonBox).not.toBeNull();
+    expect(itemBox).not.toBeNull();
+    expect(itemBox!.width).toBeLessThanOrEqual(comparisonBox!.width + 1);
+    expect(
+      await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth -
+          document.documentElement.clientWidth,
+      ),
+    ).toBe(0);
+  });
+}

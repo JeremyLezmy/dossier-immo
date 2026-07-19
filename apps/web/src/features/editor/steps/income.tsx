@@ -13,6 +13,7 @@ import {
   SelectField,
   TextField,
 } from "../../../components/fields";
+import { EditorDisclosure } from "../../../components/EditorDisclosure";
 import { CheckboxField, ReferenceSelect, TextareaField, euro } from "./shared";
 
 const personOptions = (form: UseFormReturn<Dossier>) =>
@@ -255,6 +256,7 @@ function ActivityCard({
     `Activité ${index + 1}`;
   return (
     <ArrayCard
+      disclosureId={`activity-${form.watch(`professionalActivities.${index}.id`)}`}
       title={title}
       subtitle="Une activité correspond à un engagement professionnel homogène. Créez une seconde activité pour un exercice institutionnel et libéral."
       onRemove={onRemove}
@@ -327,7 +329,18 @@ function ActivityCard({
           est une information possible, pas un champ imposé.
         </p>
         {entries.fields.map((entry, entryIndex) => (
-          <div className="nested-card" key={entry.id}>
+          <EditorDisclosure
+            className="nested-card nested-card--collapsible"
+            disclosureId={`activity-entry-${form.watch(`professionalActivities.${index}.entries.${entryIndex}.id`)}`}
+            key={entry.id}
+          >
+            <summary>
+              <strong>
+                {form.watch(
+                  `professionalActivities.${index}.entries.${entryIndex}.label`,
+                ) || `Étape ${entryIndex + 1}`}
+              </strong>
+            </summary>
             <div className="form-grid">
               <TextField
                 label="Étape"
@@ -373,7 +386,7 @@ function ActivityCard({
                 Supprimer l'étape
               </button>
             </div>
-          </div>
+          </EditorDisclosure>
         ))}
         <button
           type="button"
@@ -410,12 +423,27 @@ function HistoryCard({
       shouldValidate: true,
     });
   }, [expenses, form, index, turnover]);
-  const incomeOptions = form
-    .watch("incomeStreams")
-    .map((income) => ({ value: income.id, label: income.label || income.id }));
+  const people = form.watch("household.people");
+  const incomeStreams = form.watch("incomeStreams");
+  const incomeOptions = incomeStreams.map((income) => {
+    const person = people.find((candidate) => candidate.id === income.personId);
+    return {
+      value: income.id,
+      label: `${income.label || income.id} — ${person?.displayName || person?.id || "Personne inconnue"}`,
+    };
+  });
+  const selectedIncome = incomeStreams.find(
+    (income) => income.id === form.watch(`revenueHistory.${index}.incomeStreamId`),
+  );
+  const selectedPerson = people.find(
+    (person) => person.id === selectedIncome?.personId,
+  );
+  const selectedPersonLabel = selectedPerson?.displayName || selectedPerson?.id;
+  const period = form.watch(`revenueHistory.${index}.period`);
   return (
     <ArrayCard
-      title={`Historique ${form.watch(`revenueHistory.${index}.period`) || index + 1}`}
+      disclosureId={`revenue-history-${form.watch(`revenueHistory.${index}.id`)}`}
+      title={`Historique ${period || index + 1}${selectedPersonLabel ? ` — ${selectedPersonLabel}` : ""}`}
       onRemove={onRemove}
     >
       <ReferenceSelect
@@ -492,7 +520,7 @@ export function IncomeStep({
         title="Activités et revenus"
         description="Séparez les activités, leur mode de rémunération et les revenus retenus. L'interface n'affiche que les indicateurs adaptés au modèle choisi."
       />
-      <details className="editor-subsection" open>
+      <EditorDisclosure disclosureId="income-activities">
         <summary>
           <div>
             <strong>Activités professionnelles</strong>
@@ -530,8 +558,8 @@ export function IncomeStep({
             Ajouter une activité
           </button>
         </div>
-      </details>
-      <details className="editor-subsection">
+      </EditorDisclosure>
+      <EditorDisclosure disclosureId="income-streams">
         <summary>
           <div>
             <strong>Flux de revenus</strong>
@@ -543,6 +571,7 @@ export function IncomeStep({
             {incomes.fields.map((income, index) => (
               <ArrayCard
                 key={income.id}
+                disclosureId={`income-${form.watch(`incomeStreams.${index}.id`)}`}
                 title={
                   form.watch(`incomeStreams.${index}.label`) ||
                   `Revenu ${index + 1}`
@@ -639,8 +668,8 @@ export function IncomeStep({
             Ajouter un revenu
           </button>
         </div>
-      </details>
-      <details className="editor-subsection">
+      </EditorDisclosure>
+      <EditorDisclosure disclosureId="income-history">
         <summary>
           <div>
             <strong>Historique documenté</strong>
@@ -677,7 +706,7 @@ export function IncomeStep({
             Ajouter une période
           </button>
         </div>
-      </details>
+      </EditorDisclosure>
     </>
   );
 }

@@ -1,6 +1,7 @@
 import { useFieldArray, type FieldPath, type UseFormReturn } from "react-hook-form";
 import type { Dossier } from "@dossier-immo/schema";
 import { ArrayCard, SectionIntro, SelectField, TextField } from "../../../components/fields";
+import { EditorDisclosure } from "../../../components/EditorDisclosure";
 import { CheckboxField, RichTextField } from "./shared";
 
 const path = (value: string) => value as FieldPath<Dossier>;
@@ -190,7 +191,7 @@ export function PresentationStep({ form }: { readonly form: UseFormReturn<Dossie
         description="Chaque contenu est rattaché une seule fois à une section métier. L'ordre et le nombre de pages peuvent évoluer sans casser cette structure."
         help="La barre de mise en forme permet le gras, l'italique, les listes, la taille et la police sans saisir de Markdown."
       />
-      <details className="editor-subsection" open>
+      <EditorDisclosure disclosureId="presentation-document-settings">
         <summary>
           <div>
             <strong>Paramètres du document</strong>
@@ -225,9 +226,9 @@ export function PresentationStep({ form }: { readonly form: UseFormReturn<Dossie
             ]}
           />
         </div>
-      </details>
+      </EditorDisclosure>
 
-      <details className="editor-subsection">
+      <EditorDisclosure disclosureId="presentation-theme">
         <summary>
           <div>
             <strong>Thème visuel</strong>
@@ -261,25 +262,27 @@ export function PresentationStep({ form }: { readonly form: UseFormReturn<Dossie
             })}
           </div>
         </div>
-      </details>
+      </EditorDisclosure>
 
       <div className="text-section-list">
         {sections.map((section) => (
-          <details className="editor-subsection text-section" key={section.key}>
+          <EditorDisclosure
+            className="editor-subsection text-section"
+            disclosureId={`presentation-section-${section.key}`}
+            key={section.key}
+          >
             <summary>
               <div>
                 <strong>{section.title}</strong>
                 <span>{section.description}</span>
               </div>
-              <CheckboxField label="Inclure" name={path(`presentation.sections.${section.key}`)} register={form.register} />
             </summary>
             <div className="editor-subsection__content form-grid">
-              {section.key === "cover" && (
-                <>
-                  <TextField label="Titre de couverture" name="presentation.title" register={form.register} wide />
-                  <TextField label="Sous-titre de couverture" name="presentation.subtitle" register={form.register} wide />
-                </>
-              )}
+              <CheckboxField
+                label="Inclure cette section dans le PDF"
+                name={path(`presentation.sections.${section.key}`)}
+                register={form.register}
+              />
               {section.mainField && (
                 <RichTextField
                   label={section.mainLabel ?? "Texte principal"}
@@ -317,6 +320,7 @@ export function PresentationStep({ form }: { readonly form: UseFormReturn<Dossie
                     {strengths.fields.map((strength, index) => (
                       <ArrayCard
                         key={strength.id}
+                        disclosureId={`strength-${form.watch(`editorial.professionalStabilityItems.${index}.id`)}`}
                         title={form.watch(`editorial.professionalStabilityItems.${index}.title`) || `Facteur ${index + 1}`}
                         onRemove={() => strengths.remove(index)}
                       >
@@ -341,7 +345,7 @@ export function PresentationStep({ form }: { readonly form: UseFormReturn<Dossie
                 </div>
               )}
             </div>
-          </details>
+          </EditorDisclosure>
         ))}
       </div>
     </>

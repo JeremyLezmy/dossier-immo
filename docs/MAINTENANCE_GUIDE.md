@@ -77,12 +77,21 @@ Le contrôle automatisé de mise en page s’exécute avec `corepack pnpm check:
 - l’import valide strictement la structure courante ;
 - une erreur est affichée avec son chemin, sans écraser le brouillon courant ;
 - l’autosauvegarde IndexedDB reprend l’édition après rechargement ;
-- l’état de l’autosauvegarde reste visible sur mobile, tablette et desktop ;
+- l'état de l'autosauvegarde reste visible sur mobile, tablette et desktop ;
+- sous 1050 px, la navigation compacte conserve le libellé complet de l'étape, sa position, les commandes précédent/suivant et le nombre de points à corriger ;
+- la synthèse de validation ouvre l'étape concernée, déplie sa sous-section et place le focus sur le contrôle invalide ;
+- chaque contrôle invalide expose sémantiquement son état et le message associé ;
 - « Sauvegarder le dossier » produit le fichier canonique transportable ;
 - le menu « Actions du dossier » garde l’ouverture et la sauvegarde accessibles sur les écrans étroits ;
 - « Effacer les brouillons » demande confirmation avant de supprimer l’état local de l’application ;
 - succès, avertissements et erreurs utilisent des retours visuels et sémantiques distincts ;
-- la génération du PDF verrouille son action jusqu’à la fin de l’opération.
+- la génération du PDF verrouille son action jusqu'à la fin de l'opération.
+
+Les vues métier longues doivent se replier sans masquer leurs actions. Leurs cartes accordéon et chaque fiche créée par l'utilisateur sont fermées par défaut, puis mémorisent leur état ouvert ou fermé pendant toute la session d'édition, y compris après un changement d'étape. Utiliser un identifiant métier stable pour cette mémoire ; un libellé modifiable ne doit jamais servir de clé. Le comparatif budgétaire utilise une grille sur grand écran et des cartes empilées sous 900 px ; il ne doit jamais imposer un défilement horizontal à l'ensemble de la page.
+
+Un scénario de financement peut être dupliqué depuis sa fiche dépliée. La copie reçoit de nouveaux identifiants pour le scénario et ses prêts complémentaires, conserve les hypothèses éditables et n'est jamais marquée automatiquement comme scénario principal.
+
+Les infobulles d'aide restent ancrées à leur déclencheur, basculent au-dessus lorsque l'espace inférieur manque et demeurent contenues dans le viewport. Ne pas réintroduire de position verticale fixe commune à toutes les infobulles mobiles.
 
 Une évolution future du stockage doit préserver la récupération sûre des brouillons. Le fichier exporté demeure l’autorité indépendante du navigateur.
 
