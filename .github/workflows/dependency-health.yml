@@ -1,0 +1,50 @@
+name: Dependency health
+
+on:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify lockfile and registry metadata
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22.18.0
+
+      - name: Prepare project package manager
+        run: corepack install
+
+      - name: Install locked dependencies
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Verify project runtime and policy
+        run: |
+          corepack pnpm runtime:check
+          corepack pnpm deps:policy
+
+      - name: Re-probe exact trust exclusions
+        run: corepack pnpm deps:trust-exclusions
+
+      - name: Audit vulnerabilities
+        run: corepack pnpm deps:audit
+
+      - name: Report outdated dependencies
+        continue-on-error: true
+        run: corepack pnpm deps:outdated
+
+      - name: Validate dependency tree
+        run: corepack pnpm deps:tree
+
+      - name: Build with the locked graph
+        run: corepack pnpm build

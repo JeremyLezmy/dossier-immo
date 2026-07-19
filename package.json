@@ -3,31 +3,52 @@
   "private": true,
   "version": "0.2.0",
   "type": "module",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "packageManager": "pnpm@11.13.1",
   "scripts": {
-    "dev": "npm run dev --workspace @dossier-immo/web",
-    "build": "npm run typecheck && npm run test:unit && npm run build --workspace @dossier-immo/web",
+    "dev": "corepack pnpm --filter @dossier-immo/web dev",
+    "runtime:check": "node -e \"const expected = 'v24.18.0'; if (process.version !== expected) { console.error('Runtime Node attendu : ' + expected + ', obtenu : ' + process.version); process.exit(1); } console.log('Runtime Node projet : ' + process.version);\"",
+    "build": "corepack pnpm typecheck && corepack pnpm test:unit && corepack pnpm --filter @dossier-immo/web build",
     "typecheck": "tsc -b",
-    "test": "npm run test:unit && npm run test:dev && npm run test:e2e",
+    "test": "corepack pnpm test:unit && corepack pnpm test:dev && corepack pnpm test:e2e",
     "test:dev": "node tools/check-dev-server.mjs",
     "test:unit": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "npm run build && node tools/run-e2e.mjs",
-    "test:e2e:update": "npm run build && node tools/run-e2e.mjs --update-snapshots",
+    "test:e2e": "corepack pnpm build && node tools/run-e2e.mjs",
+    "test:e2e:update": "corepack pnpm build && node tools/run-e2e.mjs --update-snapshots",
     "contracts:export": "vite-node tools/export-contracts.ts",
     "validate:file": "vite-node tools/validate-dossier.ts",
     "generate:pdf": "vite-node tools/generate-pdf.ts",
-    "check:layout": "vite-node tools/check-document-layout.ts"
+    "check:layout": "vite-node tools/check-document-layout.ts",
+    "deps:audit": "corepack pnpm audit --audit-level=moderate",
+    "deps:tree": "corepack pnpm list --depth Infinity",
+    "deps:outdated": "corepack pnpm outdated --long",
+    "deps:sbom": "corepack pnpm sbom --format cyclonedx",
+    "deps:policy": "node tools/check-dependency-policy.mjs",
+    "deps:trust-exclusions": "node tools/check-dependency-policy.mjs --probe"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.13"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "24.18.0",
+      "onFail": "download"
+    },
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.13.1",
+      "onFail": "error"
+    }
   },
   "devDependencies": {
+    "@dossier-immo/calculations": "workspace:*",
+    "@dossier-immo/document": "workspace:*",
+    "@dossier-immo/domain": "workspace:*",
+    "@dossier-immo/fixtures": "workspace:*",
+    "@dossier-immo/schema": "workspace:*",
     "@playwright/test": "^1.55.0",
-    "@types/node": "^22.18.0",
+    "@types/node": "^24.13.3",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^5.0.0",

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "policy": {
+    "maturityWindowMinutes": 4320,
+    "trustPolicy": "no-downgrade",
+    "maximumReviewCadenceDays": 7,
+    "owner": "maintainers of Dossier Immo"
+  },
+  "exclusions": [
+    {
+      "specifier": "semver@6.3.1",
+      "introducedOn": "2026-07-19",
+      "lastReviewedOn": "2026-07-19",
+      "nextReviewOn": "2026-07-26",
+      "reviewCadenceDays": 7,
+      "requiredBy": ["@babel/core@7.29.7"],
+      "reason": "Babel 7 impose semver ^6.3.1. Cette version maintenue ne fournit pas un niveau de provenance suffisant pour la politique no-downgrade, mais son remplacement isolé sortirait de la plage déclarée par Babel.",
+      "integrity": "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==",
+      "removalCondition": "Supprimer dès qu'une résolution Babel compatible ne déclenche plus ERR_PNPM_TRUST_DOWNGRADE, puis régénérer et valider le lockfile sans cette exclusion."
+    },
+    {
+      "specifier": "@trickfilm400/rollup-plugin-off-main-thread@3.0.0-pre1",
+      "introducedOn": "2026-07-19",
+      "lastReviewedOn": "2026-07-19",
+      "nextReviewOn": "2026-07-26",
+      "reviewCadenceDays": 7,
+      "requiredBy": ["workbox-build@7.4.1", "vite-plugin-pwa@1.3.0"],
+      "reason": "workbox-build 7.4.1 impose exactement ce fork prerelease. La PWA dépend de cette chaîne et aucun remplacement direct compatible n'est disponible dans le graphe verrouillé.",
+      "integrity": "sha512-/67zpWDBLV+oYAEL682s1ktXL0HgqX76f6gaVGkGnVZlBbm1zd0v4Bz8MFF2GGhoX9rvfq3KSQHubFHwa6w6/Q==",
+      "removalCondition": "Supprimer dès que Workbox abandonne ce fork ou qu'une version de vite-plugin-pwa validée permet une chaîne qui ne déclenche plus ERR_PNPM_TRUST_DOWNGRADE."
+    }
+  ],
+  "deprecatedTransitives": [
+    {
+      "specifier": "glob@11.1.0",
+      "requiredBy": ["workbox-build@7.4.1", "vite-plugin-pwa@1.3.0"],
+      "firstObservedOn": "2026-07-19",
+      "action": "Surveiller la prochaine chaîne Workbox compatible ; ne pas forcer une override hors contrat."
+    },
+    {
+      "specifier": "source-map@0.8.0-beta.0",
+      "requiredBy": ["workbox-build@7.4.1", "vite-plugin-pwa@1.3.0"],
+      "firstObservedOn": "2026-07-19",
+      "action": "Surveiller la prochaine chaîne Workbox compatible ; ne pas forcer une override hors contrat."
+    }
+  ]
+}

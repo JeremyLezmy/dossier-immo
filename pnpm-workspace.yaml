@@ -1,0 +1,24 @@
+packages:
+  - apps/*
+  - packages/*
+
+minimumReleaseAge: 4320
+minimumReleaseAgeStrict: true
+trustPolicy: no-downgrade
+trustPolicyExclude:
+  # Temporary, exact exceptions only. Their evidence and removal criteria live
+  # in docs/dependency-trust-exclusions.json and are checked by CI every week.
+  - semver@6.3.1
+  - "@trickfilm400/rollup-plugin-off-main-thread@3.0.0-pre1"
+blockExoticSubdeps: true
+strictDepBuilds: true
+verifyStoreIntegrity: true
+verifyDepsBeforeRun: error
+linkWorkspacePackages: true
+preferWorkspacePackages: true
+saveExact: true
+disallowWorkspaceCycles: true
+
+allowBuilds:
+  esbuild: true
+  core-js: false

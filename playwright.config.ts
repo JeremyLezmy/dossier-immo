@@ -5,7 +5,10 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
-  reporter: [["list"], ["html", { outputFolder: "output/playwright-report", open: "never" }]],
+  reporter: [
+    ["list"],
+    ["html", { outputFolder: "output/playwright-report", open: "never" }],
+  ],
   use: {
     baseURL: "http://127.0.0.1:4173",
     trace: "retain-on-failure",
@@ -14,7 +17,22 @@ export default defineConfig({
     timezoneId: "Europe/Paris",
   },
   projects: [
-    { name: "edge-desktop", use: { ...devices["Desktop Chrome"], channel: "msedge" } },
+    {
+      name: "edge-desktop",
+      testIgnore: /responsive\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"], channel: "msedge" },
+    },
+    {
+      name: "edge-mobile",
+      testMatch: /responsive\.spec\.ts/,
+      use: {
+        channel: "msedge",
+        viewport: { width: 390, height: 844 },
+        deviceScaleFactor: 2,
+        hasTouch: true,
+        isMobile: true,
+      },
+    },
   ],
   outputDir: "output/playwright-results",
 });

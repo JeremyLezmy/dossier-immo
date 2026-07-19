@@ -10,16 +10,23 @@ import { validateDossier, type Dossier } from "@dossier-immo/schema";
 import {
   BookOpen,
   Check,
+  CircleAlert,
   ChevronLeft,
   ChevronRight,
   Download,
   FilePlus2,
   FolderOpen,
+  LoaderCircle,
   LockKeyhole,
   PanelRightOpen,
   Save,
   X,
 } from "lucide-react";
+import { DossierActionsMenu } from "../../components/DossierActionsMenu";
+import {
+  FeedbackBanner,
+  type FeedbackMessage,
+} from "../../components/FeedbackBanner";
 import {
   clearLocalDrafts,
   loadLatestDraft,
@@ -57,10 +64,17 @@ export function Editor() {
   });
   const [currentStep, setCurrentStep] = useState<StepId>("help");
   const [saveState, setSaveState] = useState<SaveState>("idle");
-  const [message, setMessage] = useState<string>();
+  const [message, setMessage] = useState<FeedbackMessage>();
   const [hydrated, setHydrated] = useState(false);
   const [floatingPreview, setFloatingPreview] = useState(false);
+  const [isClearingDrafts, setIsClearingDrafts] = useState(false);
+  const [isExportingDossier, setIsExportingDossier] = useState(false);
+  const [isImportingDossier, setIsImportingDossier] = useState(false);
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+  const autosaveRevision = useRef(0);
+  const autosaveTimer = useRef<number | undefined>(undefined);
   const fileInput = useRef<HTMLInputElement>(null);
+  const pendingAutosaves = useRef(new Set<Promise<void>>());
   const dossier = useWatch({ control: form.control }) as Dossier;
   const validation = useMemo(() => validateDossier(dossier), [dossier]);
   const derived = useMemo(
@@ -82,75 +96,173 @@ export function Editor() {
       .then((draft) => {
         if (draft) {
           form.reset(draft.dossier);
-          setMessage("Brouillon local repris.");
+          setMessage({ tone: "info", text: "Brouillon local repris." });
         }
       })
-      .catch(() => setMessage("Le brouillon local n'a pas pu être relu."))
+      .catch(() =>
+        setMessage({
+          tone: "error",
+          text: "Le brouillon local n'a pas pu être relu.",
+        }),
+      )
       .finally(() => setHydrated(true));
   }, [form]);
 
   useEffect(() => {
     if (!hydrated) return;
+    const revision = ++autosaveRevision.current;
     setSaveState("saving");
     const timer = window.setTimeout(() => {
-      void saveDraft(dossier)
-        .then(() => setSaveState("saved"))
-        .catch(() => setSaveState("error"));
+      const operation = saveDraft(dossier);
+      pendingAutosaves.current.add(operation);
+      void operation
+        .then(() => {
+          if (autosaveRevision.current === revision) setSaveState("saved");
+        })
+        .catch(() => {
+          if (autosaveRevision.current === revision) setSaveState("error");
+        })
+        .finally(() => pendingAutosaves.current.delete(operation));
     }, 700);
-    return () => window.clearTimeout(timer);
+    autosaveTimer.current = timer;
+    return () => {
+      window.clearTimeout(timer);
+      if (autosaveTimer.current === timer) autosaveTimer.current = undefined;
+    };
   }, [dossier, hydrated]);
 
-  const resetTo = (next: Dossier, text: string) => {
+  const resetTo = (next: Dossier, feedback: FeedbackMessage) => {
     form.reset(structuredClone(next));
     setCurrentStep("overview");
-    setMessage(text);
+    setMessage(feedback);
   };
 
   const openFile = async (file: File) => {
+    if (isImportingDossier) return;
+    setIsImportingDossier(true);
     try {
       const imported = await importDossierFile(file);
-      resetTo(imported.dossier, "Dossier ouvert.");
+      resetTo(imported.dossier, {
+        tone: "success",
+        text: "Dossier ouvert.",
+      });
     } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "Impossible d'ouvrir le dossier.",
-      );
+      setMessage({
+        tone: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Impossible d'ouvrir le dossier.",
+      });
     } finally {
+      setIsImportingDossier(false);
       if (fileInput.current) fileInput.current.value = "";
     }
   };
 
   const saveFile = async () => {
+    if (isExportingDossier) return;
     if (!validation.success) {
-      setMessage(
-        "Corrigez les erreurs avant de créer une sauvegarde officielle.",
-      );
+      setMessage({
+        tone: "warning",
+        text: "Corrigez les erreurs avant de créer une sauvegarde officielle.",
+      });
       return;
     }
+    setIsExportingDossier(true);
     try {
       await saveDossierFile(validation.dossier);
-      setMessage("Sauvegarde locale créée.");
+      setMessage({ tone: "success", text: "Sauvegarde officielle créée." });
     } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Sauvegarde impossible.",
-      );
+      setMessage({
+        tone: "error",
+        text: error instanceof Error ? error.message : "Sauvegarde impossible.",
+      });
+    } finally {
+      setIsExportingDossier(false);
     }
   };
 
-  const downloadPdf = () => {
+  const downloadPdf = async () => {
+    if (isPdfGenerating) return;
     if (!documentHtml) {
-      setMessage("Le dossier doit être valide avant le téléchargement.");
+      setMessage({
+        tone: "warning",
+        text: "Le dossier doit être valide avant le téléchargement.",
+      });
       return;
     }
-    setMessage("Génération du PDF en cours…");
-    void downloadPdfDocument(documentHtml, `${dossier.metadata.dossierId}.pdf`)
-      .then(() => setMessage("PDF téléchargé."))
-      .catch((error) => {
-        setMessage(
+    setIsPdfGenerating(true);
+    setMessage({ tone: "info", text: "Génération du PDF en cours…" });
+    try {
+      await downloadPdfDocument(
+        documentHtml,
+        `${dossier.metadata.dossierId}.pdf`,
+      );
+      setMessage({ tone: "success", text: "PDF téléchargé." });
+    } catch (error) {
+      setMessage({
+        tone: "error",
+        text:
           error instanceof Error ? error.message : "Téléchargement impossible.",
-        );
       });
+    } finally {
+      setIsPdfGenerating(false);
+    }
+  };
+
+  const createNewDossier = () => {
+    if (
+      window.confirm(
+        "Créer un dossier vierge ? Le brouillon actuel restera dans l'autosauvegarde locale.",
+      )
+    )
+      resetTo(createBlankDossier(), {
+        tone: "success",
+        text: "Nouveau dossier créé.",
+      });
+  };
+
+  const loadExample = () => {
+    if (
+      window.confirm(
+        "Charger le dossier fictif Nora Leclerc et Samir Diallo ? Les valeurs affichées dans le formulaire seront remplacées.",
+      )
+    )
+      resetTo(completeDemoDossier, {
+        tone: "success",
+        text: "Dossier fictif Nora Leclerc et Samir Diallo chargé.",
+      });
+  };
+
+  const clearDrafts = async () => {
+    if (isClearingDrafts) return;
+    if (
+      !window.confirm(
+        "Effacer tous les brouillons enregistrés sur cet appareil ? Le dossier actuellement affiché restera ouvert, mais les autres brouillons seront supprimés. Cette action est irréversible.",
+      )
+    )
+      return;
+
+    setIsClearingDrafts(true);
+    try {
+      if (autosaveTimer.current !== undefined) {
+        window.clearTimeout(autosaveTimer.current);
+        autosaveTimer.current = undefined;
+      }
+      autosaveRevision.current += 1;
+      await Promise.allSettled([...pendingAutosaves.current]);
+      await clearLocalDrafts();
+      setSaveState("idle");
+      setMessage({ tone: "success", text: "Brouillons locaux effacés." });
+    } catch {
+      setMessage({
+        tone: "error",
+        text: "Les brouillons locaux n'ont pas pu être effacés.",
+      });
+    } finally {
+      setIsClearingDrafts(false);
+    }
   };
 
   const next = () =>
@@ -173,25 +285,51 @@ export function Editor() {
             <span>Pré-analyse bancaire locale</span>
           </div>
         </div>
-        <div className="topbar__actions">
-          <span className={`save-state save-state--${saveState}`}>
+        <span
+          className={`save-state save-state--${saveState}`}
+          role={saveState === "error" ? "alert" : "status"}
+          aria-live={saveState === "error" ? "assertive" : "polite"}
+        >
+          {saveState === "saving" ? (
+            <LoaderCircle className="spinner" size={15} aria-hidden="true" />
+          ) : saveState === "error" ? (
+            <CircleAlert size={15} aria-hidden="true" />
+          ) : (
+            <Check size={15} aria-hidden="true" />
+          )}
+          <span>
             {saveState === "saving"
-              ? "Sauvegarde…"
+              ? "Enregistrement du brouillon…"
               : saveState === "saved"
                 ? "Brouillon local à jour"
                 : saveState === "error"
                   ? "Autosauvegarde indisponible"
                   : "Brouillon local"}
           </span>
+        </span>
+        <div className="topbar__actions">
+          <DossierActionsMenu
+            canPreview={Boolean(documentHtml)}
+            clearingDrafts={isClearingDrafts}
+            exportingDossier={isExportingDossier}
+            importingDossier={isImportingDossier}
+            onClearDrafts={() => void clearDrafts()}
+            onCreateDossier={createNewDossier}
+            onImportDossier={() => fileInput.current?.click()}
+            onLoadExample={loadExample}
+            onOpenGuide={() => setCurrentStep("help")}
+            onSaveDossier={() => void saveFile()}
+            onTogglePreview={() => setFloatingPreview((value) => !value)}
+          />
           <button
-            className="button button--ghost"
+            className="button button--ghost topbar__desktop-action"
             type="button"
             onClick={() => setCurrentStep("help")}
           >
             <BookOpen size={17} /> Guide
           </button>
           <button
-            className="button button--ghost"
+            className="button button--ghost topbar__desktop-action"
             type="button"
             disabled={!documentHtml}
             onClick={() => setFloatingPreview((value) => !value)}
@@ -199,12 +337,14 @@ export function Editor() {
             <PanelRightOpen size={17} /> Aperçu en direct
           </button>
           <button
-            className="button button--ghost"
+            className="button button--ghost topbar__desktop-action"
             type="button"
             title="Importer une configuration JSON"
+            disabled={isImportingDossier}
             onClick={() => fileInput.current?.click()}
           >
-            <FolderOpen size={17} /> Importer
+            <FolderOpen size={17} />{" "}
+            {isImportingDossier ? "Ouverture…" : "Importer"}
           </button>
           <input
             ref={fileInput}
@@ -218,20 +358,37 @@ export function Editor() {
             }}
           />
           <button
-            className="button button--secondary"
+            className="button button--secondary topbar__desktop-action"
             type="button"
             title="Exporter la configuration JSON sur cet appareil"
+            disabled={isExportingDossier}
             onClick={() => void saveFile()}
           >
-            <Save size={17} /> Exporter la config
+            {isExportingDossier ? (
+              <LoaderCircle className="spinner" size={17} aria-hidden="true" />
+            ) : (
+              <Save size={17} aria-hidden="true" />
+            )}
+            {isExportingDossier ? "Sauvegarde…" : "Exporter la config"}
           </button>
           <button
             className="button button--primary"
             type="button"
-            disabled={!documentHtml}
-            onClick={downloadPdf}
+            disabled={!documentHtml || isPdfGenerating}
+            aria-busy={isPdfGenerating}
+            onClick={() => void downloadPdf()}
           >
-            <Download size={17} /> Télécharger le PDF
+            {isPdfGenerating ? (
+              <LoaderCircle className="spinner" size={17} aria-hidden="true" />
+            ) : (
+              <Download size={17} aria-hidden="true" />
+            )}
+            <span className="pdf-label pdf-label--long">
+              {isPdfGenerating ? "Génération…" : "Télécharger le PDF"}
+            </span>
+            <span className="pdf-label pdf-label--short">
+              {isPdfGenerating ? "Patientez…" : "PDF"}
+            </span>
           </button>
         </div>
       </header>
@@ -265,17 +422,10 @@ export function Editor() {
         className={`workspace ${currentStep === "preview" ? "workspace--preview" : ""}`}
       >
         {message && (
-          <div className="message" role="status">
-            <Check size={17} />
-            <span>{message}</span>
-            <button
-              type="button"
-              onClick={() => setMessage(undefined)}
-              aria-label="Fermer"
-            >
-              ×
-            </button>
-          </div>
+          <FeedbackBanner
+            message={message}
+            onDismiss={() => setMessage(undefined)}
+          />
         )}
         <div className="workspace__content">
           {currentStep === "overview" && (
@@ -316,14 +466,7 @@ export function Editor() {
             <button
               className="button button--ghost"
               type="button"
-              onClick={() => {
-                if (
-                  window.confirm(
-                    "Créer un dossier vierge ? Le brouillon actuel restera dans l'autosauvegarde locale.",
-                  )
-                )
-                  resetTo(createBlankDossier(), "Nouveau dossier créé.");
-              }}
+              onClick={createNewDossier}
             >
               <FilePlus2 size={16} /> Nouveau dossier
             </button>
@@ -331,30 +474,17 @@ export function Editor() {
               className="button button--ghost"
               title="Remplace le formulaire courant par un dossier entièrement fictif"
               type="button"
-              onClick={() => {
-                if (
-                  window.confirm(
-                    "Charger le dossier fictif Nora Leclerc et Samir Diallo ? Les valeurs affichées dans le formulaire seront remplacées.",
-                  )
-                )
-                  resetTo(
-                    completeDemoDossier,
-                    "Dossier fictif Nora Leclerc et Samir Diallo chargé.",
-                  );
-              }}
+              onClick={loadExample}
             >
               <Download size={16} /> Charger l’exemple fictif
             </button>
             <button
               className="button button--ghost button--danger"
               type="button"
-              onClick={() =>
-                void clearLocalDrafts().then(() =>
-                  setMessage("Brouillons locaux effacés."),
-                )
-              }
+              disabled={isClearingDrafts}
+              onClick={() => void clearDrafts()}
             >
-              Effacer les brouillons
+              {isClearingDrafts ? "Effacement…" : "Effacer les brouillons"}
             </button>
           </div>
           <button
@@ -384,7 +514,7 @@ function FloatingPreview({
   readonly html: string;
   readonly onClose: () => void;
 }) {
-  const [zoom, setZoom] = useState(0.65);
+  const [zoom, setZoom] = useState(() => getPreviewFitZoom(0.65));
   const [position, setPosition] = useState(() => ({
     x: Math.max(12, window.innerWidth - 732),
     y: 78,
@@ -398,6 +528,13 @@ function FloatingPreview({
       }
     | undefined
   >(undefined);
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
   return (
     <aside
       className="floating-preview"
@@ -407,6 +544,7 @@ function FloatingPreview({
       <header
         onPointerDown={(event) => {
           if ((event.target as HTMLElement).closest("button")) return;
+          if (window.matchMedia("(max-width: 760px)").matches) return;
           drag.current = {
             x: event.clientX,
             y: event.clientY,
@@ -474,7 +612,7 @@ function PreviewStep({
   readonly issues: readonly { path: string; message: string }[];
   readonly form: UseFormReturn<Dossier>;
 }) {
-  const [zoom, setZoom] = useState(0.8);
+  const [zoom, setZoom] = useState(() => getPreviewFitZoom(0.8));
   const pageCount = html?.match(/<section class="page\b/g)?.length ?? 0;
   return (
     <div className="preview-layout">
@@ -502,7 +640,10 @@ function PreviewStep({
             >
               +
             </button>
-            <button type="button" onClick={() => setZoom(0.8)}>
+            <button
+              type="button"
+              onClick={() => setZoom(getPreviewFitZoom(0.8))}
+            >
               Ajuster
             </button>
           </div>
@@ -547,6 +688,13 @@ function PreviewStep({
       )}
     </div>
   );
+}
+
+const A4_WIDTH_CSS_PIXELS = (210 / 25.4) * 96;
+
+function getPreviewFitZoom(maximum: number): number {
+  const availableWidth = Math.max(320, window.innerWidth) - 32;
+  return Math.min(maximum, Math.max(0.4, availableWidth / A4_WIDTH_CSS_PIXELS));
 }
 
 function DocumentFrame({

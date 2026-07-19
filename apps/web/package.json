@@ -9,11 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@dossier-immo/calculations": "0.2.0",
-    "@dossier-immo/document": "0.2.0",
-    "@dossier-immo/domain": "0.2.0",
-    "@dossier-immo/fixtures": "0.2.0",
-    "@dossier-immo/schema": "0.2.0",
+    "@dossier-immo/calculations": "workspace:*",
+    "@dossier-immo/document": "workspace:*",
+    "@dossier-immo/domain": "workspace:*",
+    "@dossier-immo/fixtures": "workspace:*",
+    "@dossier-immo/schema": "workspace:*",
     "dexie": "^4.2.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
