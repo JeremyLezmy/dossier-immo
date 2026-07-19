@@ -20,6 +20,7 @@ Sous PowerShell, utiliser `corepack.cmd` si la stratégie d'exécution bloque le
 ## Fonctionnalités
 
 - onze étapes de saisie avec aide contextuelle ;
+- guide détaillé en rubriques repliables couvrant chaque étape, ses impacts et ses contrôles utiles ;
 - exemple fictif complet et dossier vierge ;
 - validation Zod avec erreurs localisées ;
 - calculs TypeScript purs, montants en centimes et taux en points de base ;
@@ -27,6 +28,9 @@ Sous PowerShell, utiliser `corepack.cmd` si la stratégie d'exécution bloque le
 - autosauvegarde IndexedDB, reprise et import strict du contrat courant ;
 - export JSON portable, aperçu et PDF de treize pages ;
 - actions et état d'autosauvegarde accessibles sur mobile, tablette et desktop ;
+- navigation responsive libellée, progression et erreurs actionnables jusqu'au champ concerné ;
+- écrans métier adaptatifs, dont un comparatif budgétaire empilé sur mobile et tablette ;
+- fiches créées par l'utilisateur repliables avec état mémorisé et duplication contrôlée des scénarios de financement ;
 - PWA hors ligne sans télémétrie ni stockage de justificatifs.
 
 ## Vérifications principales

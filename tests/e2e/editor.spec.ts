@@ -71,6 +71,7 @@ test("permet de modifier le foyer puis prévisualise treize pages", async ({
   page,
 }) => {
   await page.getByRole("button", { name: /Foyer/ }).click();
+  await page.locator(".array-card--collapsible summary").first().click();
   const names = page.getByLabel("Nom affiché");
   await names.first().fill("Alex Exemple");
   await page
@@ -104,6 +105,176 @@ test("un dossier vierge reste éditable mais bloque l'export", async ({
   await expect(
     page.getByRole("button", { name: "Télécharger le PDF" }),
   ).toBeDisabled();
+});
+
+test("le guide détaillé est replié par défaut et mémorise la rubrique ouverte", async ({
+  page,
+}) => {
+  const cards = page.locator(".guide-card");
+  await expect(cards).toHaveCount(13);
+  expect(await cards.evaluateAll((items) =>
+    items.every((item) => !(item as HTMLDetailsElement).open),
+  )).toBe(true);
+
+  const financing = page.locator('[data-disclosure-id="guide-financing"]');
+  await financing.locator("summary").click();
+  await expect(financing).toHaveAttribute("open", "");
+  await expect(
+    financing.getByRole("heading", { name: "Composition multi-prêts" }),
+  ).toBeVisible();
+  await expect(financing).toContainText("Limite actuelle du différé");
+  await expect(page).toHaveScreenshot("guide-detailed-financing.png", {
+    animations: "disabled",
+    fullPage: true,
+  });
+
+  await page.getByRole("button", { name: /Foyer/ }).click();
+  await page
+    .locator(".sidebar")
+    .getByRole("button", { name: /Guide/ })
+    .click();
+  await expect(financing).toHaveAttribute("open", "");
+});
+
+test("un point de validation ouvre son étape et place le focus sur le champ", async ({
+  page,
+}) => {
+  await page
+    .locator(".sidebar")
+    .getByRole("button", { name: /Projet/ })
+    .click();
+  await page
+    .locator('[data-disclosure-id="project-financing-frame"] summary')
+    .click();
+  await page
+    .getByRole("spinbutton", { name: "Plafond exceptionnel" })
+    .fill("1");
+  await page
+    .locator(".sidebar")
+    .getByRole("button", { name: /Synthèse/ })
+    .click();
+
+  const issue = page
+    .locator(".validation-summary li")
+    .filter({ hasText: "project.maximumPriceCents" });
+  await issue.getByRole("button").click();
+
+  const maximumPrice = page.getByRole("spinbutton", {
+    name: "Plafond exceptionnel",
+  });
+  await expect(
+    page.getByRole("heading", { name: "Projet immobilier" }),
+  ).toBeVisible();
+  await expect(maximumPrice).toBeFocused();
+  await expect(maximumPrice).toHaveAttribute("aria-invalid", "true");
+  await expect(maximumPrice).toHaveAttribute(
+    "aria-describedby",
+    "field-project-maximumPriceCents-description",
+  );
+  await expect(
+    page.locator("#field-project-maximumPriceCents-description"),
+  ).toBeVisible();
+  await expect(
+    page.locator('[data-disclosure-id="project-financing-frame"]'),
+  ).toHaveAttribute("open", "");
+});
+
+test("les cartes sont repliées par défaut et mémorisent leur état entre les étapes", async ({
+  page,
+}) => {
+  await page
+    .locator(".sidebar")
+    .getByRole("button", { name: /Revenus/ })
+    .click();
+  const activities = page.locator(
+    '[data-disclosure-id="income-activities"]',
+  );
+  await expect(activities).not.toHaveAttribute("open", "");
+  await activities.locator("summary").first().click();
+  await expect(activities).toHaveAttribute("open", "");
+
+  await page
+    .locator(".sidebar")
+    .getByRole("button", { name: /Foyer/ })
+    .click();
+  await page
+    .locator(".sidebar")
+    .getByRole("button", { name: /Revenus/ })
+    .click();
+  await expect(activities).toHaveAttribute("open", "");
+
+  await page
+    .locator(".sidebar")
+    .getByRole("button", { name: /Foyer/ })
+    .click();
+  const firstPerson = page.locator(".array-card--collapsible").first();
+  await expect(firstPerson).not.toHaveAttribute("open", "");
+  await firstPerson.locator("summary").click();
+  await expect(firstPerson).toHaveAttribute("open", "");
+  await page
+    .locator(".sidebar")
+    .getByRole("button", { name: /Revenus/ })
+    .click();
+  await page
+    .locator(".sidebar")
+    .getByRole("button", { name: /Foyer/ })
+    .click();
+  await expect(firstPerson).toHaveAttribute("open", "");
+});
+
+test("l'historique documenté identifie la personne associée au flux de revenu", async ({
+  page,
+}) => {
+  await page
+    .locator(".sidebar")
+    .getByRole("button", { name: /Revenus/ })
+    .click();
+  const history = page.locator('[data-disclosure-id="income-history"]');
+  await history.locator("summary").first().click();
+
+  const firstHistory = history.locator(".array-card--collapsible").first();
+  await expect(firstHistory.locator("summary")).toContainText(
+    "Historique 2023 — Nora Leclerc",
+  );
+  await firstHistory.locator("summary").click();
+  await expect(
+    firstHistory.getByLabel("Flux de revenu").locator("option:checked"),
+  ).toHaveText("Revenu professionnel retenu — Nora Leclerc");
+});
+
+test("duplique un scénario sans créer un second scénario principal", async ({
+  page,
+}) => {
+  await page
+    .locator(".sidebar")
+    .getByRole("button", { name: /Financement/ })
+    .click();
+  await expect(page).toHaveScreenshot("financing-collapsible-scenarios.png", {
+    animations: "disabled",
+    fullPage: true,
+  });
+  const cards = page.locator(".array-card--collapsible");
+  const initialCount = await cards.count();
+  const source = cards.first();
+  await expect(source).not.toHaveAttribute("open", "");
+  await source.locator("summary").click();
+  await source
+    .getByRole("button", { name: "Dupliquer ce scénario" })
+    .click();
+
+  await expect(cards).toHaveCount(initialCount + 1);
+  const copy = cards.last();
+  await expect(copy).not.toHaveAttribute("open", "");
+  await copy.locator("summary").click();
+  await expect(copy.getByRole("textbox", { name: "Libellé" })).toHaveValue(
+    /— copie$/,
+  );
+  await expect(
+    copy.getByRole("radio", { name: "Scénario principal" }),
+  ).not.toBeChecked();
+  await expect(
+    page.getByRole("button", { name: "Télécharger le PDF" }),
+  ).toBeEnabled();
 });
 
 test("sauvegarde et réimporte le fichier canonique", async ({ page }) => {
@@ -170,12 +341,14 @@ test("reprend automatiquement le brouillon après rechargement", async ({
   page,
 }) => {
   await page.getByRole("button", { name: /Foyer/ }).click();
+  await page.locator(".array-card--collapsible summary").first().click();
   await page.getByLabel("Nom affiché").first().fill("Alex Brouillon");
   await page.waitForTimeout(900);
   expect(await readStoredDraftName(page)).toBe("Alex Brouillon");
   await page.reload();
   expect(await readStoredDraftName(page)).toBe("Alex Brouillon");
   await page.getByRole("button", { name: /Foyer/ }).click();
+  await page.locator(".array-card--collapsible summary").first().click();
   await expect(page.getByLabel("Nom affiché").first()).toHaveValue(
     "Alex Brouillon",
   );
@@ -227,6 +400,54 @@ test("les contrôles interactifs exposent tous un nom accessible", async ({
   expect(unnamed).toBe(0);
 });
 
+test("la page Textes conserve des identifiants et des résumés HTML valides", async ({
+  page,
+}) => {
+  await page
+    .locator(".sidebar")
+    .getByRole("button", { name: /Textes/ })
+    .click();
+
+  const diagnostics = await page.evaluate(() => {
+    const allIds = Array.from(document.querySelectorAll<HTMLElement>("[id]"))
+      .map((element) => element.id)
+      .filter(Boolean);
+    const duplicateIds = [...new Set(allIds.filter(
+      (id, index) => allIds.indexOf(id) !== index,
+    ))];
+    const invalidLabels = Array.from(
+      document.querySelectorAll<HTMLLabelElement>("label[for]"),
+    ).filter((label) => {
+      const target = document.getElementById(label.htmlFor);
+      return !target || !target.matches("button, input, meter, output, progress, select, textarea");
+    }).map((label) => label.htmlFor);
+    const interactiveSummaries = Array.from(
+      document.querySelectorAll("summary"),
+    ).filter((summary) => summary.querySelector(
+      "a, button, input, select, textarea, [contenteditable='true'], [tabindex]:not([tabindex='-1'])",
+    )).length;
+    const unidentifiedRichTextControls = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        ".rich-text__toolbar button, .rich-text__toolbar select, .rich-text__editor",
+      ),
+    ).filter((element) => !element.id && !element.getAttribute("name")).length;
+
+    return {
+      duplicateIds,
+      invalidLabels,
+      interactiveSummaries,
+      unidentifiedRichTextControls,
+    };
+  });
+
+  expect(diagnostics).toEqual({
+    duplicateIds: [],
+    invalidLabels: [],
+    interactiveSummaries: 0,
+    unidentifiedRichTextControls: 0,
+  });
+});
+
 test("les nouveaux parcours guidés restent utilisables", async ({ page }) => {
   await page.getByRole("button", { name: /Revenus/ }).click();
   await expect(page.locator("details.editor-subsection")).toHaveCount(3);
@@ -236,6 +457,7 @@ test("les nouveaux parcours guidés restent utilisables", async ({ page }) => {
   await expect(page.locator("details.editor-subsection")).toHaveCount(4);
 
   await page.getByRole("button", { name: /Passifs/ }).click();
+  await page.locator(".array-card--collapsible summary").first().click();
   await expect(
     page.getByRole("checkbox", { name: "Nora Leclerc" }),
   ).toBeChecked();
@@ -284,7 +506,10 @@ test("les nouveaux parcours guidés restent utilisables", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Guide complet" }),
   ).toBeVisible();
+  const assetsGuide = page.locator('[data-disclosure-id="guide-assets"]');
+  await expect(assetsGuide.locator("summary")).toContainText("Patrimoine");
+  await assetsGuide.locator("summary").click();
   await expect(
-    page.getByRole("heading", { name: "Patrimoine et historique mensuel" }),
+    assetsGuide.getByRole("heading", { name: "Situation actuelle" }),
   ).toBeVisible();
 });

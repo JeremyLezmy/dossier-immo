@@ -6,10 +6,13 @@ import {
   type UseFormRegister,
 } from "react-hook-form";
 import type { Dossier } from "@dossier-immo/schema";
-import { Field } from "../../../components/fields";
+import {
+  Field,
+  fieldId,
+  useFieldValidation,
+} from "../../../components/fields";
 
-const idFor = (name: string) =>
-  `field-${name.replace(/[^a-zA-Z0-9_-]+/g, "-")}`;
+const idFor = fieldId;
 
 export function TextareaField({
   label,
@@ -31,16 +34,26 @@ export function TextareaField({
   readonly example?: string;
 }) {
   const id = idFor(name);
+  const validation = useFieldValidation(name);
+  const describedBy = validation.error ? `${id}-description` : undefined;
   return (
     <Field
       label={label}
       controlId={id}
       wide={wide}
+      error={validation.error}
+      descriptionId={describedBy}
       help={help}
       destination={destination}
       example={example}
     >
-      <textarea id={id} rows={rows} {...register(name)} />
+      <textarea
+        id={id}
+        rows={rows}
+        aria-invalid={Boolean(validation.error)}
+        aria-describedby={describedBy}
+        {...register(name)}
+      />
     </Field>
   );
 }
@@ -61,6 +74,8 @@ export function RichTextField({
   readonly example?: string;
 }) {
   const id = idFor(name);
+  const validation = useFieldValidation(name);
+  const describedBy = validation.error ? `${id}-description` : undefined;
   return (
     <Controller
       name={name}
@@ -75,6 +90,8 @@ export function RichTextField({
           help={help}
           destination={destination}
           example={example}
+          error={validation.error}
+          descriptionId={describedBy}
         />
       )}
     />
@@ -120,6 +137,8 @@ function RichTextEditor({
   help,
   destination,
   example,
+  error,
+  descriptionId,
 }: {
   readonly id: string;
   readonly label: string;
@@ -129,8 +148,11 @@ function RichTextEditor({
   readonly help?: string | undefined;
   readonly destination?: string | undefined;
   readonly example?: string | undefined;
+  readonly error?: string | undefined;
+  readonly descriptionId?: string | undefined;
 }) {
   const editor = useRef<HTMLDivElement>(null);
+  const labelId = `${id}-label`;
   useEffect(() => {
     const sanitized = sanitizeRichTextValue(value);
     if (
@@ -165,11 +187,13 @@ function RichTextEditor({
   return (
     <Field
       label={label}
-      controlId={id}
+      labelId={labelId}
       wide
       help={help}
       destination={destination}
       example={example}
+      error={error}
+      descriptionId={descriptionId}
     >
       <div className="rich-text">
         <div
@@ -178,6 +202,8 @@ function RichTextEditor({
           aria-label={`Mise en forme — ${label}`}
         >
           <button
+            id={`${id}-bold`}
+            name={`${id}-bold`}
             type="button"
             aria-label="Gras"
             title="Gras"
@@ -187,6 +213,8 @@ function RichTextEditor({
             <strong>B</strong>
           </button>
           <button
+            id={`${id}-italic`}
+            name={`${id}-italic`}
             type="button"
             aria-label="Italique"
             title="Italique"
@@ -196,6 +224,8 @@ function RichTextEditor({
             <em>I</em>
           </button>
           <button
+            id={`${id}-unordered-list`}
+            name={`${id}-unordered-list`}
             type="button"
             aria-label="Liste à puces"
             title="Liste à puces"
@@ -205,6 +235,8 @@ function RichTextEditor({
             • Liste
           </button>
           <select
+            id={`${id}-font-size`}
+            name={`${id}-font-size`}
             aria-label="Taille du texte"
             defaultValue="12"
             onChange={(event) => setFontSize(event.target.value)}
@@ -222,8 +254,10 @@ function RichTextEditor({
           className="rich-text__editor"
           contentEditable
           role="textbox"
-          aria-label={label}
+          aria-labelledby={labelId}
           aria-multiline="true"
+          aria-invalid={Boolean(error)}
+          aria-describedby={descriptionId}
           data-placeholder="Saisissez votre texte…"
           onInput={commitEditorValue}
           onPaste={(event) => {
@@ -261,9 +295,11 @@ export function CheckboxField({
   readonly help?: string;
 }) {
   const id = idFor(name);
+  const validation = useFieldValidation(name);
+  const describedBy = validation.error ? `${id}-description` : undefined;
   return (
-    <Field label={label} controlId={id} help={help}>
-      <input id={id} type="checkbox" {...register(name)} />
+    <Field label={label} controlId={id} help={help} error={validation.error} descriptionId={describedBy}>
+      <input id={id} type="checkbox" aria-invalid={Boolean(validation.error)} aria-describedby={describedBy} {...register(name)} />
     </Field>
   );
 }
@@ -287,9 +323,11 @@ export function ReferenceSelect({
   readonly help?: string;
 }) {
   const id = idFor(name);
+  const validation = useFieldValidation(name);
+  const describedBy = validation.error ? `${id}-description` : undefined;
   return (
-    <Field label={label} controlId={id} help={help}>
-      <select id={id} {...register(name)}>
+    <Field label={label} controlId={id} help={help} error={validation.error} descriptionId={describedBy}>
+      <select id={id} aria-invalid={Boolean(validation.error)} aria-describedby={describedBy} {...register(name)}>
         {optional && <option value="">Non renseigné</option>}
         {options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -318,6 +356,8 @@ export function MultiReferenceSelect({
   readonly help?: string;
 }) {
   const id = idFor(name);
+  const validation = useFieldValidation(name);
+  const describedBy = validation.error ? `${id}-description` : undefined;
   return (
     <Controller
       name={name}
@@ -327,12 +367,14 @@ export function MultiReferenceSelect({
           Array.isArray(field.value) ? field.value.map(String) : [],
         );
         return (
-          <Field label={label} controlId={id} help={help}>
+          <Field label={label} controlId={id} help={help} error={validation.error} descriptionId={describedBy}>
             <div
               id={id}
               className="reference-choice-group"
               role="group"
               aria-label={label}
+              aria-invalid={Boolean(validation.error)}
+              aria-describedby={describedBy}
             >
               {options.map((option) => (
                 <label
@@ -375,15 +417,19 @@ export function StringListField({
   readonly wide?: boolean;
 }) {
   const id = idFor(name);
+  const validation = useFieldValidation(name);
+  const describedBy = validation.error ? `${id}-description` : undefined;
   return (
     <Controller
       name={name}
       control={control}
       render={({ field }) => (
-        <Field label={label} controlId={id} help={help} wide={wide}>
+        <Field label={label} controlId={id} help={help} wide={wide} error={validation.error} descriptionId={describedBy}>
           <textarea
             id={id}
             rows={4}
+            aria-invalid={Boolean(validation.error)}
+            aria-describedby={describedBy}
             value={Array.isArray(field.value) ? field.value.join("\n") : ""}
             onChange={(event) =>
               field.onChange(

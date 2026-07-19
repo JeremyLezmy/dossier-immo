@@ -7,7 +7,7 @@ export function LiabilitiesStep({ form }: { readonly form: UseFormReturn<Dossier
   const liabilities = useFieldArray({ control: form.control, name: "liabilities" });
   const peopleOptions = form.watch("household.people").map((person) => ({ value: person.id, label: person.displayName || person.id }));
   return <><SectionIntro title="Crédits et passifs" description="Renseignez les mensualités et échéances connues. Le moteur détermine automatiquement si une dette existe encore à la date d'achat." />
-    <div className="stack">{liabilities.fields.map((liability, index) => <ArrayCard key={liability.id} title={form.watch(`liabilities.${index}.label`) || `Passif ${index + 1}`} onRemove={() => liabilities.remove(index)}>
+    <div className="stack">{liabilities.fields.map((liability, index) => <ArrayCard key={liability.id} disclosureId={`liability-${form.watch(`liabilities.${index}.id`)}`} title={form.watch(`liabilities.${index}.label`) || `Passif ${index + 1}`} onRemove={() => liabilities.remove(index)}>
       <TextField label="Libellé" name={`liabilities.${index}.label`} register={form.register} />
       <MultiReferenceSelect label="Emprunteur(s)" name={`liabilities.${index}.borrowerIds`} control={form.control} options={peopleOptions} />
       <SelectField label="Catégorie" name={`liabilities.${index}.category`} register={form.register} options={[["mortgage", "Crédit immobilier"], ["auto", "Crédit automobile"], ["consumer", "Crédit à la consommation"], ["student", "Prêt étudiant"], ["professional", "Crédit professionnel"], ["alimony", "Pension alimentaire"], ["bridge", "Prêt relais"], ["other", "Autre"]]} />

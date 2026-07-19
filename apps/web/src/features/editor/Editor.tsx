@@ -23,10 +23,15 @@ import {
   X,
 } from "lucide-react";
 import { DossierActionsMenu } from "../../components/DossierActionsMenu";
+import { EditorDisclosureProvider } from "../../components/EditorDisclosure";
 import {
   FeedbackBanner,
   type FeedbackMessage,
 } from "../../components/FeedbackBanner";
+import {
+  fieldId,
+  ValidationIssuesProvider,
+} from "../../components/fields";
 import {
   clearLocalDrafts,
   loadLatestDraft,
@@ -71,6 +76,7 @@ export function Editor() {
   const [isExportingDossier, setIsExportingDossier] = useState(false);
   const [isImportingDossier, setIsImportingDossier] = useState(false);
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+  const [pendingIssuePath, setPendingIssuePath] = useState<string>();
   const autosaveRevision = useRef(0);
   const autosaveTimer = useRef<number | undefined>(undefined);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -90,6 +96,33 @@ export function Editor() {
     [validation, derived],
   );
   const activeIndex = editorSteps.findIndex((step) => step.id === currentStep);
+  const validationIssues = validation.success ? [] : validation.issues;
+  const issueCountForStep = (stepId: StepId) => {
+    const step = editorSteps.find((candidate) => candidate.id === stepId);
+    if (!step) return 0;
+    return validationIssues.filter((issue) =>
+      step.paths.some(
+        (prefix) => issue.path === prefix || issue.path.startsWith(`${prefix}.`),
+      ),
+    ).length;
+  };
+  const selectStep = (stepId: StepId) => {
+    setCurrentStep(stepId);
+    window.scrollTo({ top: 0, behavior: "auto" });
+  };
+  const openGuide = () => {
+    setFloatingPreview(false);
+    selectStep("help");
+  };
+  const goToIssue = (path: string) => {
+    const targetStep = editorSteps.find((step) =>
+      step.paths.some(
+        (prefix) => path === prefix || path.startsWith(`${prefix}.`),
+      ),
+    );
+    setPendingIssuePath(path);
+    selectStep(targetStep?.id ?? "overview");
+  };
 
   useEffect(() => {
     void loadLatestDraft()
@@ -131,9 +164,43 @@ export function Editor() {
     };
   }, [dossier, hydrated]);
 
+  useEffect(() => {
+    if (!pendingIssuePath) return;
+    const timer = window.setTimeout(() => {
+      let target: HTMLElement | null = document.getElementById(
+        fieldId(pendingIssuePath),
+      );
+      if (!target) {
+        const segments = pendingIssuePath.split(".");
+        while (!target && segments.length > 1) {
+          segments.pop();
+          target = document.getElementById(fieldId(segments.join(".")));
+        }
+      }
+      target ??= document.querySelector<HTMLElement>(
+        ".workspace__content [aria-invalid='true']",
+      );
+      target ??= document.querySelector<HTMLElement>(
+        ".workspace__content .section-intro h2",
+      );
+      if (target) {
+        let parent = target.parentElement;
+        while (parent) {
+          if (parent instanceof HTMLDetailsElement) parent.open = true;
+          parent = parent.parentElement;
+        }
+        target.scrollIntoView({ block: "center" });
+        target.focus({ preventScroll: true });
+      }
+      setPendingIssuePath(undefined);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [currentStep, pendingIssuePath]);
+
   const resetTo = (next: Dossier, feedback: FeedbackMessage) => {
     form.reset(structuredClone(next));
     setCurrentStep("overview");
+    setPendingIssuePath(undefined);
     setMessage(feedback);
   };
 
@@ -165,8 +232,9 @@ export function Editor() {
     if (!validation.success) {
       setMessage({
         tone: "warning",
-        text: "Corrigez les erreurs avant de créer une sauvegarde officielle.",
+        text: `Corrigez les ${validation.issues.length} point${validation.issues.length > 1 ? "s" : ""} signalé${validation.issues.length > 1 ? "s" : ""} avant de créer une sauvegarde officielle.`,
       });
+      selectStep("overview");
       return;
     }
     setIsExportingDossier(true);
@@ -266,12 +334,12 @@ export function Editor() {
   };
 
   const next = () =>
-    setCurrentStep(
+    selectStep(
       editorSteps[Math.min(editorSteps.length - 1, activeIndex + 1)]?.id ??
         currentStep,
     );
   const previous = () =>
-    setCurrentStep(
+    selectStep(
       editorSteps[Math.max(0, activeIndex - 1)]?.id ?? currentStep,
     );
 
@@ -317,14 +385,14 @@ export function Editor() {
             onCreateDossier={createNewDossier}
             onImportDossier={() => fileInput.current?.click()}
             onLoadExample={loadExample}
-            onOpenGuide={() => setCurrentStep("help")}
+            onOpenGuide={openGuide}
             onSaveDossier={() => void saveFile()}
             onTogglePreview={() => setFloatingPreview((value) => !value)}
           />
           <button
             className="button button--ghost topbar__desktop-action"
             type="button"
-            onClick={() => setCurrentStep("help")}
+            onClick={openGuide}
           >
             <BookOpen size={17} /> Guide
           </button>
@@ -399,14 +467,22 @@ export function Editor() {
               key={step.id}
               type="button"
               className={`step-link ${currentStep === step.id ? "step-link--active" : ""}`}
-              onClick={() => setCurrentStep(step.id)}
+              aria-current={currentStep === step.id ? "step" : undefined}
+              aria-label={`${index + 1}. ${step.shortLabel} — ${step.label}${issueCountForStep(step.id) > 0 ? ` — ${issueCountForStep(step.id)} point${issueCountForStep(step.id) > 1 ? "s" : ""} à corriger` : ""}`}
+              onClick={() => selectStep(step.id)}
             >
-              <span>{index + 1}</span>
+              <span className="step-link__number">{index + 1}</span>
               <div>
                 <strong>{step.shortLabel}</strong>
                 <small>{step.label}</small>
               </div>
-              {currentStep === step.id && <ChevronRight size={16} />}
+              {issueCountForStep(step.id) > 0 ? (
+                <span className="step-link__issue" aria-hidden="true">
+                  {issueCountForStep(step.id)}
+                </span>
+              ) : currentStep === step.id ? (
+                <ChevronRight size={16} />
+              ) : null}
             </button>
           ))}
         </nav>
@@ -421,18 +497,59 @@ export function Editor() {
       <main
         className={`workspace ${currentStep === "preview" ? "workspace--preview" : ""}`}
       >
-        {message && (
-          <FeedbackBanner
-            message={message}
-            onDismiss={() => setMessage(undefined)}
-          />
-        )}
-        <div className="workspace__content">
+        <nav className="editor-stepbar" aria-label="Navigation compacte des étapes">
+          <button
+            type="button"
+            aria-label="Étape précédente"
+            disabled={activeIndex === 0}
+            onClick={previous}
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <label className="editor-stepbar__select">
+            <span>Étape {activeIndex + 1} sur {editorSteps.length}</span>
+            <select
+              aria-label="Étape du dossier"
+              value={currentStep}
+              onChange={(event) => selectStep(event.target.value as StepId)}
+            >
+              {editorSteps.map((step, index) => {
+                const issueCount = issueCountForStep(step.id);
+                return (
+                  <option key={step.id} value={step.id}>
+                    {index + 1}. {step.label}
+                    {issueCount > 0
+                      ? ` — ${issueCount} à corriger`
+                      : ""}
+                  </option>
+                );
+              })}
+            </select>
+          </label>
+          <button
+            type="button"
+            aria-label="Étape suivante"
+            disabled={activeIndex === editorSteps.length - 1}
+            onClick={next}
+          >
+            <ChevronRight size={20} />
+          </button>
+        </nav>
+        <EditorDisclosureProvider>
+          <ValidationIssuesProvider issues={validationIssues}>
+          {message && (
+            <FeedbackBanner
+              message={message}
+              onDismiss={() => setMessage(undefined)}
+            />
+          )}
+          <div className="workspace__content">
           {currentStep === "overview" && (
             <OverviewStep
               dossier={dossier}
               derived={derived}
-              issues={validation.success ? [] : validation.issues}
+              issues={validationIssues}
+              onSelectIssue={goToIssue}
             />
           )}
           {currentStep === "household" && <HouseholdStep form={form} />}
@@ -448,11 +565,14 @@ export function Editor() {
           {currentStep === "preview" && (
             <PreviewStep
               html={documentHtml}
-              issues={validation.success ? [] : validation.issues}
+              issues={validationIssues}
               form={form}
+              onSelectIssue={goToIssue}
             />
           )}
-        </div>
+          </div>
+          </ValidationIssuesProvider>
+        </EditorDisclosureProvider>
         <footer className="step-footer">
           <button
             className="button button--ghost"
@@ -607,10 +727,12 @@ function PreviewStep({
   html,
   issues,
   form,
+  onSelectIssue,
 }: {
   readonly html?: string | undefined;
   readonly issues: readonly { path: string; message: string }[];
   readonly form: UseFormReturn<Dossier>;
+  readonly onSelectIssue: (path: string) => void;
 }) {
   const [zoom, setZoom] = useState(() => getPreviewFitZoom(0.8));
   const pageCount = html?.match(/<section class="page\b/g)?.length ?? 0;
@@ -679,8 +801,11 @@ function PreviewStep({
           <ol>
             {issues.slice(0, 20).map((issue) => (
               <li key={`${issue.path}-${issue.message}`}>
-                <code>{issue.path}</code>
-                <span>{issue.message}</span>
+                <button type="button" onClick={() => onSelectIssue(issue.path)}>
+                  <code>{issue.path}</code>
+                  <span>{issue.message}</span>
+                  <strong>Corriger</strong>
+                </button>
               </li>
             ))}
           </ol>

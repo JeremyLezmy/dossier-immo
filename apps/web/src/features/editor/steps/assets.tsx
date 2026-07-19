@@ -11,6 +11,7 @@ import {
   SelectField,
   TextField,
 } from "../../../components/fields";
+import { EditorDisclosure } from "../../../components/EditorDisclosure";
 import { CheckboxField, MultiReferenceSelect, TextareaField } from "./shared";
 
 export function AssetsStep({
@@ -38,7 +39,7 @@ export function AssetsStep({
         description="Détaillez chaque actif à la date d'observation. Un actif peut être liquide sans être mobilisable pour l'apport."
         help="Séparer comptes courants, livrets et placements permet au PDF d'utiliser des libellés bancaires propres et de justifier la stratégie d'apport."
       />
-      <details className="editor-subsection" open>
+      <EditorDisclosure disclosureId="assets-current">
         <summary>
           <div>
             <strong>Actifs à la date d'observation</strong>
@@ -50,6 +51,7 @@ export function AssetsStep({
             {assets.fields.map((asset, index) => (
               <ArrayCard
                 key={asset.id}
+                disclosureId={`asset-${form.watch(`assets.${index}.id`)}`}
                 title={
                   form.watch(`assets.${index}.label`) || `Actif ${index + 1}`
                 }
@@ -154,8 +156,8 @@ export function AssetsStep({
             Ajouter un actif
           </button>
         </div>
-      </details>
-      <details className="editor-subsection">
+      </EditorDisclosure>
+      <EditorDisclosure disclosureId="assets-history">
         <summary>
           <div>
             <strong>Historique mensuel</strong>
@@ -172,6 +174,7 @@ export function AssetsStep({
             {snapshots.fields.map((snapshot, index) => (
               <ArrayCard
                 key={snapshot.id}
+                disclosureId={`snapshot-${form.watch(`monthlySnapshots.${index}.id`)}`}
                 title={`Situation ${form.watch(`monthlySnapshots.${index}.month`)}`}
                 onRemove={() => snapshots.remove(index)}
               >
@@ -254,7 +257,7 @@ export function AssetsStep({
             Ajouter un mois
           </button>
         </div>
-      </details>
+      </EditorDisclosure>
     </>
   );
 }
