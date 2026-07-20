@@ -440,6 +440,7 @@ for (const viewport of [
   { width: 360, height: 800 },
   { width: 390, height: 844 },
   { width: 768, height: 1024 },
+  { width: 1366, height: 768 },
   { width: 1920, height: 1080 },
   { width: 2560, height: 1440 },
 ]) {
@@ -449,6 +450,14 @@ for (const viewport of [
     await page.setViewportSize(viewport);
     await expect(page.locator(".save-state")).toBeVisible();
     await expect(page.locator(".topbar .button--primary")).toBeVisible();
+    const quickPreview = page.getByRole("button", {
+      name: "Ouvrir l’aperçu rapide",
+    });
+    if (viewport.width <= 760) {
+      await expect(quickPreview).toBeVisible();
+    } else {
+      await expect(quickPreview).toBeHidden();
+    }
     expect(
       await page.evaluate(
         () =>
@@ -462,6 +471,11 @@ for (const viewport of [
       ).toBeVisible();
     } else {
       await expect(page.locator(".sidebar")).toBeVisible();
+      await expect(
+        page
+          .locator(".topbar")
+          .getByRole("button", { name: "Aperçu en direct", exact: true }),
+      ).toBeVisible();
     }
   });
 }
