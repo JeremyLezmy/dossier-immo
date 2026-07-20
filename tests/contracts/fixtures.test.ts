@@ -11,23 +11,29 @@ describe("corpus de conformité", () => {
     });
   }
 
-  it("retire la dette auto du taux d'effort après son échéance", () => {
+  it("retire les dettes échues du taux d'effort à la date d'achat", () => {
     const fixture = structuredClone(conformityFixtures.complete);
-    fixture.project.targetPurchaseDate = "2030-03-01";
-    fixture.project.expectedLiquidityAtPurchaseCents = 16_000_000;
+    fixture.project.targetPurchaseDate = "2038-03-01";
+    fixture.project.expectedLiquidityAtPurchaseCents = 20_000_000;
     const result = calculateDossier(fixture);
     expect(result.existingMonthlyDebtAtPurchaseCents).toBe(0);
   });
 
   it("sépare le prêt bonifié du prêt principal", () => {
     const result = calculateDossier(conformityFixtures.subsidizedLoan);
-    const central = result.financingScenarios.find((scenario) => scenario.id === "central-reference");
-    expect(central?.additionalPrincipalCents).toBe(1_500_000);
-    expect(central?.standardPrincipalCents).toBe((central?.principalCents ?? 0) - 1_500_000);
+    const central = result.financingScenarios.find(
+      (scenario) => scenario.id === "ines-central",
+    );
+    expect(central?.additionalPrincipalCents).toBe(1_200_000);
+    expect(central?.standardPrincipalCents).toBe(
+      (central?.principalCents ?? 0) - 1_200_000,
+    );
   });
 
   it("projette les liquidités sans stocker un total dérivé", () => {
     const result = calculateDossier(conformityFixtures.projectedSavings);
-    expect(result.projectedLiquidityAtPurchaseCents).toBeGreaterThan(result.contributionLiquidityCents);
+    expect(result.projectedLiquidityAtPurchaseCents).toBeGreaterThan(
+      result.contributionLiquidityCents,
+    );
   });
 });

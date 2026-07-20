@@ -1,0 +1,1073 @@
+{
+  "schemaVersion": 3,
+  "metadata": {
+    "dossierId": "demo-primo-accedante-salariee",
+    "title": "Primo-accession — salariée seule",
+    "createdAt": "2026-07-10",
+    "updatedAt": "2026-07-15",
+    "observationDate": "2026-07-15",
+    "currency": "EUR",
+    "locale": "fr-FR",
+    "documentStage": "ready-for-submission",
+    "editionCity": "Tours"
+  },
+  "household": {
+    "people": [
+      {
+        "id": "ines-moreau",
+        "displayName": "Inès Moreau",
+        "birthDate": "1993-04-12",
+        "role": "borrower",
+        "email": "ines.moreau@example.invalid",
+        "phone": "+33 6 00 00 00 01",
+        "qualificationNote": "Cheffe de projet qualité en contrat à durée indéterminée depuis plus de quatre ans."
+      }
+    ],
+    "relationshipStatus": "single",
+    "matrimonialRegime": "not-applicable",
+    "dependents": 0,
+    "housingStatus": "tenant",
+    "currentMonthlyRentCents": 72000,
+    "currentHousingSince": "2022-09-01",
+    "currentHousingDescription": "Deux-pièces de 42 m² loué à Tours, proche du lieu de travail.",
+    "rentHistoryNote": "Loyer réglé par virement permanent, sans retard déclaré.",
+    "paymentIncidentsNote": "Aucun incident de paiement déclaré dans cet exemple.",
+    "plannedHouseholdEvents": [
+      {
+        "id": "ines-emmenagement",
+        "label": "Emménagement dans le logement neuf",
+        "expectedDate": "2027-12-01",
+        "impact": "housing",
+        "note": "Une enveloppe d'installation séparée est conservée."
+      },
+      {
+        "id": "ines-evolution",
+        "label": "Évolution salariale conventionnelle",
+        "expectedDate": "2027-03-01",
+        "impact": "income",
+        "note": "Non retenue dans la capacité d'emprunt afin de rester prudente."
+      }
+    ]
+  },
+  "professionalActivities": [
+    {
+      "id": "ines-industrie",
+      "personId": "ines-moreau",
+      "label": "Pilotage qualité dans l'industrie médicale",
+      "occupation": "Cheffe de projet qualité",
+      "status": "permanent",
+      "engagementType": "employee",
+      "legalRegime": "CDI de droit privé",
+      "startDate": "2022-02-14",
+      "trialPeriodEndDate": "2022-06-14",
+      "compensationModel": {
+        "kind": "salary",
+        "contractualGrossAnnualCents": 4560000,
+        "variableGrossAnnualCents": 240000,
+        "workTimeBasisPoints": 10000,
+        "note": "Part variable constatée mais retenue avec décote dans le scénario prudent."
+      },
+      "entries": [
+        {
+          "id": "ines-master",
+          "kind": "education",
+          "label": "Master management de la qualité",
+          "endDate": "2017-09-30",
+          "evidenceLabels": ["Diplôme"]
+        },
+        {
+          "id": "ines-premier-poste",
+          "kind": "employment",
+          "label": "Ingénieure qualité fournisseurs",
+          "startDate": "2018-01-08",
+          "endDate": "2022-02-11",
+          "evidenceLabels": ["Certificat de travail"]
+        },
+        {
+          "id": "ines-poste-actuel",
+          "kind": "employment",
+          "label": "Cheffe de projet qualité",
+          "startDate": "2022-02-14",
+          "evidenceLabels": ["Contrat de travail", "Attestation employeur"]
+        },
+        {
+          "id": "ines-mission",
+          "kind": "assignment",
+          "label": "Déploiement d'un système qualité multi-sites",
+          "startDate": "2025-01-01",
+          "note": "Responsabilité transverse illustrant la progression interne.",
+          "evidenceLabels": ["Fiche de poste"]
+        }
+      ]
+    }
+  ],
+  "incomeStreams": [
+    {
+      "id": "ines-salary",
+      "personId": "ines-moreau",
+      "activityId": "ines-industrie",
+      "kind": "salary",
+      "label": "Salaire fixe",
+      "monthlyBankCents": 285000,
+      "monthlyPrudentCents": 285000,
+      "monthlyAfterTaxEstimateCents": 252000,
+      "recurring": true,
+      "includedInBorrowingCapacity": true,
+      "note": "Net mensuel fictif hors prime."
+    },
+    {
+      "id": "ines-variable",
+      "personId": "ines-moreau",
+      "activityId": "ines-industrie",
+      "kind": "commission",
+      "label": "Prime annuelle lissée",
+      "monthlyBankCents": 20000,
+      "monthlyPrudentCents": 10000,
+      "monthlyAfterTaxEstimateCents": 8500,
+      "recurring": false,
+      "includedInBorrowingCapacity": false,
+      "note": "Présentée pour transparence mais exclue de la capacité centrale."
+    }
+  ],
+  "revenueHistory": [
+    {
+      "id": "ines-variable-2024",
+      "incomeStreamId": "ines-variable",
+      "period": "2024",
+      "turnoverCents": 210000,
+      "expensesCents": 0,
+      "resultCents": 210000,
+      "collectedCents": 210000,
+      "observed": true,
+      "sourceLabel": "Bulletin de décembre fictif"
+    },
+    {
+      "id": "ines-variable-2025",
+      "incomeStreamId": "ines-variable",
+      "period": "2025",
+      "turnoverCents": 235000,
+      "expensesCents": 0,
+      "resultCents": 235000,
+      "collectedCents": 235000,
+      "observed": true,
+      "sourceLabel": "Bulletin de décembre fictif"
+    }
+  ],
+  "assets": [
+    {
+      "id": "ines-current",
+      "ownerIds": ["ines-moreau"],
+      "label": "Compte courant",
+      "category": "current-account",
+      "amountCents": 420000,
+      "observedAt": "2026-07-15",
+      "liquid": true,
+      "availableForContribution": true,
+      "contributionAmountCents": 200000,
+      "contributionPriority": "available",
+      "note": "Solde moyen conservant les dépenses courantes."
+    },
+    {
+      "id": "ines-livret",
+      "ownerIds": ["ines-moreau"],
+      "label": "Livret réglementé",
+      "category": "regulated-savings",
+      "amountCents": 2380000,
+      "observedAt": "2026-07-15",
+      "liquid": true,
+      "availableForContribution": true,
+      "contributionAmountCents": 1800000,
+      "contributionPriority": "preferred"
+    },
+    {
+      "id": "ines-pea",
+      "ownerIds": ["ines-moreau"],
+      "label": "Plan d'épargne en actions",
+      "category": "securities",
+      "amountCents": 960000,
+      "observedAt": "2026-07-15",
+      "liquid": true,
+      "availableForContribution": true,
+      "contributionAmountCents": 300000,
+      "contributionPriority": "avoid",
+      "note": "Mobilisation limitée pour éviter une cession complète."
+    },
+    {
+      "id": "ines-company-plan",
+      "ownerIds": ["ines-moreau"],
+      "label": "Épargne salariale",
+      "category": "retirement",
+      "amountCents": 740000,
+      "observedAt": "2026-07-15",
+      "liquid": false,
+      "availableForContribution": false,
+      "contributionPriority": "excluded",
+      "note": "Non retenue dans l'apport."
+    },
+    {
+      "id": "ines-car",
+      "ownerIds": ["ines-moreau"],
+      "label": "Véhicule personnel",
+      "category": "vehicle",
+      "amountCents": 850000,
+      "observedAt": "2026-07-15",
+      "liquid": false,
+      "availableForContribution": false,
+      "contributionPriority": "excluded"
+    }
+  ],
+  "liabilities": [
+    {
+      "id": "ines-student-loan",
+      "borrowerIds": ["ines-moreau"],
+      "label": "Solde de prêt étudiant",
+      "category": "student",
+      "outstandingCents": 290000,
+      "monthlyPaymentCents": 14500,
+      "startDate": "2020-01-05",
+      "endDate": "2028-02-05",
+      "annualRateBasisPoints": 160,
+      "includedInEffortRate": true,
+      "note": "Maintenu dans le calcul jusqu'à son échéance contractuelle."
+    }
+  ],
+  "monthlySnapshots": [
+    {
+      "id": "ines-snapshot-2026-05",
+      "month": "2026-05",
+      "assetAmountsCents": {
+        "ines-current": 380000,
+        "ines-livret": 2280000,
+        "ines-pea": 920000,
+        "ines-company-plan": 710000,
+        "ines-car": 850000
+      },
+      "incomeAmountsCents": {
+        "ines-salary": 285000,
+        "ines-variable": 0
+      },
+      "monthlySavingsCents": 85000,
+      "liabilityPaymentsCents": {
+        "ines-student-loan": 14500
+      },
+      "note": "Mois courant fictif hors prime."
+    },
+    {
+      "id": "ines-snapshot-2026-06",
+      "month": "2026-06",
+      "assetAmountsCents": {
+        "ines-current": 400000,
+        "ines-livret": 2330000,
+        "ines-pea": 940000,
+        "ines-company-plan": 725000,
+        "ines-car": 850000
+      },
+      "incomeAmountsCents": {
+        "ines-salary": 285000,
+        "ines-variable": 0
+      },
+      "monthlySavingsCents": 85000,
+      "liabilityPaymentsCents": {
+        "ines-student-loan": 14500
+      },
+      "note": "Épargne régulière fictive."
+    },
+    {
+      "id": "ines-snapshot-2026-07",
+      "month": "2026-07",
+      "assetAmountsCents": {
+        "ines-current": 420000,
+        "ines-livret": 2380000,
+        "ines-pea": 960000,
+        "ines-company-plan": 740000,
+        "ines-car": 850000
+      },
+      "incomeAmountsCents": {
+        "ines-salary": 285000,
+        "ines-variable": 0
+      },
+      "monthlySavingsCents": 85000,
+      "liabilityPaymentsCents": {
+        "ines-student-loan": 14500
+      },
+      "note": "Date d'observation du dossier."
+    }
+  ],
+  "project": {
+    "id": "ines-new-build",
+    "projectType": "new-build",
+    "targetPurchaseDate": "2027-12-01",
+    "targetPriceCents": 20500000,
+    "minimumPriceCents": 19000000,
+    "comfortableMaximumPriceCents": 21200000,
+    "maximumPriceCents": 22000000,
+    "contributionCents": 2300000,
+    "installationCents": 350000,
+    "renovationCents": 0,
+    "acquisitionFeeBasisPoints": 300,
+    "expectedLiquidityAtPurchaseCents": 4200000,
+    "monthlySavingsProjectionCents": 85000,
+    "criteria": {
+      "propertyType": "Appartement neuf ou récent avec balcon",
+      "minimumSurfaceSquareMeters": 48,
+      "idealSurfaceLabel": "50 à 58 m²",
+      "minimumBedrooms": 1,
+      "office": "Coin bureau séparé du séjour si possible.",
+      "pool": "Non recherchée.",
+      "energyRating": "RE2020 ou DPE A/B.",
+      "works": "Aucun travaux structurel ; aménagement intérieur léger accepté.",
+      "services": "Commerces, gare ou tram à moins de quinze minutes.",
+      "commute": "Moins de trente minutes du bassin d'emploi.",
+      "preferredAreas": ["Tours nord", "Saint-Cyr-sur-Loire", "Joué-lès-Tours"],
+      "excludedFeatures": [
+        "rez-de-chaussée sur rue",
+        "absence d'espace extérieur",
+        "stationnement non sécurisé"
+      ],
+      "additionalCriteria": [
+        {
+          "id": "ines-balcony",
+          "label": "Balcon",
+          "value": "Au moins 6 m²",
+          "importance": "required",
+          "note": "Critère de confort prioritaire."
+        },
+        {
+          "id": "ines-bike",
+          "label": "Local vélo",
+          "value": "Fermé et accessible",
+          "importance": "preferred"
+        },
+        {
+          "id": "ines-no-pool",
+          "label": "Piscine collective",
+          "value": "À éviter pour maîtriser les charges",
+          "importance": "excluded"
+        }
+      ]
+    }
+  },
+  "financingScenarios": [
+    {
+      "id": "ines-accessible",
+      "label": "Budget accessible",
+      "annualRateBasisPoints": 335,
+      "durationMonths": 300,
+      "insuranceAnnualBasisPoints": 18,
+      "priceOverrideCents": 18500000,
+      "contributionOverrideCents": 2300000,
+      "negotiationBasisPoints": 0,
+      "additionalLoanComponents": [],
+      "highlighted": false,
+      "displayInMainTable": true,
+      "note": "Simulation pédagogique fondée sur des hypothèses fictives, à remplacer par une proposition bancaire réelle."
+    },
+    {
+      "id": "ines-central",
+      "label": "Projet central",
+      "annualRateBasisPoints": 335,
+      "durationMonths": 300,
+      "insuranceAnnualBasisPoints": 18,
+      "priceOverrideCents": 20500000,
+      "contributionOverrideCents": 2300000,
+      "negotiationBasisPoints": 0,
+      "additionalLoanComponents": [
+        {
+          "id": "ines-employer-loan",
+          "label": "Prêt employeur",
+          "amountCents": 1200000,
+          "annualRateBasisPoints": 100,
+          "durationMonths": 240,
+          "deferredMonths": 0
+        }
+      ],
+      "highlighted": true,
+      "displayInMainTable": true,
+      "note": "Simulation pédagogique fondée sur des hypothèses fictives, à remplacer par une proposition bancaire réelle."
+    },
+    {
+      "id": "ines-negotiated",
+      "label": "Taux négocié",
+      "annualRateBasisPoints": 335,
+      "durationMonths": 300,
+      "insuranceAnnualBasisPoints": 18,
+      "priceOverrideCents": 20500000,
+      "contributionOverrideCents": 2300000,
+      "negotiationBasisPoints": 20,
+      "additionalLoanComponents": [],
+      "highlighted": false,
+      "displayInMainTable": true,
+      "note": "Simulation pédagogique fondée sur des hypothèses fictives, à remplacer par une proposition bancaire réelle."
+    },
+    {
+      "id": "ines-comfort",
+      "label": "Plafond de confort",
+      "annualRateBasisPoints": 335,
+      "durationMonths": 300,
+      "insuranceAnnualBasisPoints": 18,
+      "priceOverrideCents": 22000000,
+      "contributionOverrideCents": 2300000,
+      "negotiationBasisPoints": 0,
+      "additionalLoanComponents": [],
+      "highlighted": false,
+      "displayInMainTable": true,
+      "note": "Simulation pédagogique fondée sur des hypothèses fictives, à remplacer par une proposition bancaire réelle."
+    },
+    {
+      "id": "ines-rate-stress",
+      "label": "Stress de taux",
+      "annualRateBasisPoints": 390,
+      "durationMonths": 300,
+      "insuranceAnnualBasisPoints": 18,
+      "priceOverrideCents": 20500000,
+      "contributionOverrideCents": 2300000,
+      "negotiationBasisPoints": 0,
+      "additionalLoanComponents": [],
+      "highlighted": false,
+      "displayInMainTable": false,
+      "note": "Simulation pédagogique fondée sur des hypothèses fictives, à remplacer par une proposition bancaire réelle."
+    }
+  ],
+  "budgetScenarios": [
+    {
+      "id": "ines-current-budget",
+      "label": "Budget de vie actuel",
+      "kind": "current",
+      "assumptions": {
+        "afterTaxIncomeCents": 260500,
+        "note": "Photographie fictive avant acquisition."
+      },
+      "items": [
+        {
+          "id": "ines-housing-current",
+          "label": "Loyer ou mensualité actuelle",
+          "group": "housing",
+          "amountCents": 72000,
+          "sankeyLabel": "Logement actuel",
+          "showInSankey": true,
+          "adjustable": false,
+          "note": "Charge mensuelle fictive avant le projet."
+        },
+        {
+          "id": "ines-utilities-current",
+          "label": "Énergie et charges",
+          "group": "housing",
+          "amountCents": 15640,
+          "sankeyLabel": "Énergie et charges",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Moyenne mensuelle fictive observée avant le projet."
+        },
+        {
+          "id": "ines-food-current",
+          "label": "Alimentation",
+          "group": "living",
+          "amountCents": 29440,
+          "sankeyLabel": "Alimentation",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Moyenne mensuelle fictive observée avant le projet."
+        },
+        {
+          "id": "ines-transport-current",
+          "label": "Transport",
+          "group": "transport",
+          "amountCents": 19320,
+          "sankeyLabel": "Transport",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Moyenne mensuelle fictive observée avant le projet."
+        },
+        {
+          "id": "ines-family-current",
+          "label": "Santé et équipement",
+          "group": "family",
+          "amountCents": 8280,
+          "sankeyLabel": "Santé et équipement",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Moyenne mensuelle fictive observée avant le projet."
+        },
+        {
+          "id": "ines-leisure-current",
+          "label": "Loisirs et vacances",
+          "group": "leisure",
+          "amountCents": 17480,
+          "sankeyLabel": "Loisirs",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Moyenne mensuelle fictive observée avant le projet."
+        },
+        {
+          "id": "ines-tax-current",
+          "label": "Fiscalité hors prélèvement",
+          "group": "tax",
+          "amountCents": 6900,
+          "sankeyLabel": "Fiscalité hors prélèvement",
+          "showInSankey": true,
+          "adjustable": false,
+          "note": "Moyenne mensuelle fictive observée avant le projet."
+        },
+        {
+          "id": "ines-savings-current",
+          "label": "Épargne mensuelle",
+          "group": "savings",
+          "amountCents": 27600,
+          "sankeyLabel": "Épargne mensuelle",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Moyenne mensuelle fictive observée avant le projet."
+        },
+        {
+          "id": "ines-other-current",
+          "label": "Marge non affectée",
+          "group": "other",
+          "amountCents": 11040,
+          "sankeyLabel": "Marge non affectée",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Moyenne mensuelle fictive observée avant le projet."
+        }
+      ]
+    },
+    {
+      "id": "ines-central-budget",
+      "label": "Budget après acquisition",
+      "kind": "central",
+      "assumptions": {
+        "afterTaxIncomeCents": 260500,
+        "financingScenarioId": "ines-central",
+        "note": "Budget cible construit à partir du scénario de financement central."
+      },
+      "items": [
+        {
+          "id": "ines-utilities",
+          "label": "Énergie et charges",
+          "group": "housing",
+          "amountCents": 17000,
+          "sankeyLabel": "Énergie et charges",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Hypothèse mensuelle fictive documentée."
+        },
+        {
+          "id": "ines-food",
+          "label": "Alimentation",
+          "group": "living",
+          "amountCents": 32000,
+          "sankeyLabel": "Alimentation",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Hypothèse mensuelle fictive documentée."
+        },
+        {
+          "id": "ines-transport",
+          "label": "Transport",
+          "group": "transport",
+          "amountCents": 21000,
+          "sankeyLabel": "Transport",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Hypothèse mensuelle fictive documentée."
+        },
+        {
+          "id": "ines-family",
+          "label": "Santé et équipement",
+          "group": "family",
+          "amountCents": 9000,
+          "sankeyLabel": "Santé et équipement",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Hypothèse mensuelle fictive documentée."
+        },
+        {
+          "id": "ines-leisure",
+          "label": "Loisirs et vacances",
+          "group": "leisure",
+          "amountCents": 19000,
+          "sankeyLabel": "Loisirs",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Hypothèse mensuelle fictive documentée."
+        },
+        {
+          "id": "ines-tax",
+          "label": "Fiscalité hors prélèvement",
+          "group": "tax",
+          "amountCents": 7500,
+          "sankeyLabel": "Fiscalité hors prélèvement",
+          "showInSankey": true,
+          "adjustable": false,
+          "note": "Hypothèse mensuelle fictive documentée."
+        },
+        {
+          "id": "ines-savings",
+          "label": "Épargne mensuelle",
+          "group": "savings",
+          "amountCents": 30000,
+          "sankeyLabel": "Épargne mensuelle",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Hypothèse mensuelle fictive documentée."
+        },
+        {
+          "id": "ines-other",
+          "label": "Marge non affectée",
+          "group": "other",
+          "amountCents": 12000,
+          "sankeyLabel": "Marge non affectée",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Hypothèse mensuelle fictive documentée."
+        }
+      ]
+    },
+    {
+      "id": "ines-stress-budget",
+      "label": "Budget prudent",
+      "kind": "stress",
+      "assumptions": {
+        "afterTaxIncomeCents": 229240,
+        "financingScenarioId": "ines-central",
+        "note": "Revenus minorés et dépenses variables majorées pour tester la marge de sécurité."
+      },
+      "items": [
+        {
+          "id": "ines-utilities-stress",
+          "label": "Énergie et charges",
+          "group": "housing",
+          "amountCents": 20500,
+          "sankeyLabel": "Énergie et charges",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant majoré dans le scénario prudent.",
+          "sourceItemId": "ines-utilities"
+        },
+        {
+          "id": "ines-food-stress",
+          "label": "Alimentation",
+          "group": "living",
+          "amountCents": 36500,
+          "sankeyLabel": "Alimentation",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant majoré dans le scénario prudent.",
+          "sourceItemId": "ines-food"
+        },
+        {
+          "id": "ines-transport-stress",
+          "label": "Transport",
+          "group": "transport",
+          "amountCents": 25000,
+          "sankeyLabel": "Transport",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant majoré dans le scénario prudent.",
+          "sourceItemId": "ines-transport"
+        },
+        {
+          "id": "ines-family-stress",
+          "label": "Santé et équipement",
+          "group": "family",
+          "amountCents": 12000,
+          "sankeyLabel": "Santé et équipement",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant majoré dans le scénario prudent.",
+          "sourceItemId": "ines-family"
+        },
+        {
+          "id": "ines-leisure-stress",
+          "label": "Loisirs et vacances",
+          "group": "leisure",
+          "amountCents": 15000,
+          "sankeyLabel": "Loisirs",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant majoré dans le scénario prudent.",
+          "sourceItemId": "ines-leisure"
+        },
+        {
+          "id": "ines-tax-stress",
+          "label": "Fiscalité hors prélèvement",
+          "group": "tax",
+          "amountCents": 9000,
+          "sankeyLabel": "Fiscalité hors prélèvement",
+          "showInSankey": true,
+          "adjustable": false,
+          "note": "Montant majoré dans le scénario prudent.",
+          "sourceItemId": "ines-tax"
+        },
+        {
+          "id": "ines-savings-stress",
+          "label": "Épargne mensuelle",
+          "group": "savings",
+          "amountCents": 18000,
+          "sankeyLabel": "Épargne mensuelle",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant majoré dans le scénario prudent.",
+          "sourceItemId": "ines-savings"
+        },
+        {
+          "id": "ines-other-stress",
+          "label": "Marge non affectée",
+          "group": "other",
+          "amountCents": 16000,
+          "sankeyLabel": "Marge non affectée",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant majoré dans le scénario prudent.",
+          "sourceItemId": "ines-other"
+        }
+      ]
+    },
+    {
+      "id": "ines-custom-budget",
+      "label": "Budget année d'installation",
+      "kind": "custom",
+      "assumptions": {
+        "afterTaxIncomeCents": 260500,
+        "financingScenarioId": "ines-central",
+        "note": "Variante fictive intégrant les dépenses ponctuelles de la première année."
+      },
+      "items": [
+        {
+          "id": "ines-utilities-custom",
+          "label": "Énergie et charges",
+          "group": "housing",
+          "amountCents": 17000,
+          "sankeyLabel": "Énergie et charges",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Variante de démonstration pour la première année."
+        },
+        {
+          "id": "ines-food-custom",
+          "label": "Alimentation",
+          "group": "living",
+          "amountCents": 32000,
+          "sankeyLabel": "Alimentation",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Variante de démonstration pour la première année."
+        },
+        {
+          "id": "ines-transport-custom",
+          "label": "Transport",
+          "group": "transport",
+          "amountCents": 21000,
+          "sankeyLabel": "Transport",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Variante de démonstration pour la première année."
+        },
+        {
+          "id": "ines-family-custom",
+          "label": "Santé et équipement",
+          "group": "family",
+          "amountCents": 9000,
+          "sankeyLabel": "Santé et équipement",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Variante de démonstration pour la première année."
+        },
+        {
+          "id": "ines-leisure-custom",
+          "label": "Loisirs et vacances",
+          "group": "leisure",
+          "amountCents": 19000,
+          "sankeyLabel": "Loisirs",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Variante de démonstration pour la première année."
+        },
+        {
+          "id": "ines-tax-custom",
+          "label": "Fiscalité hors prélèvement",
+          "group": "tax",
+          "amountCents": 7500,
+          "sankeyLabel": "Fiscalité hors prélèvement",
+          "showInSankey": true,
+          "adjustable": false,
+          "note": "Variante de démonstration pour la première année."
+        },
+        {
+          "id": "ines-savings-custom",
+          "label": "Épargne mensuelle",
+          "group": "savings",
+          "amountCents": 30000,
+          "sankeyLabel": "Épargne mensuelle",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Variante de démonstration pour la première année."
+        },
+        {
+          "id": "ines-other-custom",
+          "label": "Marge non affectée",
+          "group": "other",
+          "amountCents": 32000,
+          "sankeyLabel": "Marge non affectée",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Variante de démonstration pour la première année."
+        }
+      ]
+    }
+  ],
+  "stressCases": [
+    {
+      "id": "ines-variable-excluded",
+      "label": "Prime non perçue et charges majorées",
+      "description": "Vérifie que le budget reste lisible sans rémunération variable.",
+      "enabled": true,
+      "assumptions": [
+        {
+          "id": "ines-zero-variable",
+          "label": "Prime ramenée à zéro",
+          "target": "incomeStreams.ines-variable.monthlyPrudentCents",
+          "operation": "set",
+          "value": 0,
+          "unit": "cents"
+        },
+        {
+          "id": "ines-expense-rise",
+          "label": "Dépenses variables majorées",
+          "target": "budgetScenarios.ines-stress-budget.items",
+          "operation": "add",
+          "value": 15000,
+          "unit": "cents"
+        }
+      ],
+      "note": "La prime est déjà exclue de la capacité centrale."
+    }
+  ],
+  "reservePolicy": {
+    "minimumCents": 1200000,
+    "targetCents": 1550000,
+    "allocations": [
+      {
+        "id": "ines-emergency",
+        "label": "Épargne de précaution",
+        "amountCents": 900000
+      },
+      {
+        "id": "ines-installation",
+        "label": "Installation",
+        "amountCents": 350000
+      },
+      {
+        "id": "ines-building",
+        "label": "Premières charges de copropriété",
+        "amountCents": 150000
+      },
+      {
+        "id": "ines-buffer",
+        "label": "Marge libre",
+        "amountCents": 150000
+      }
+    ]
+  },
+  "estimatedHouseholdAfterTaxIncomeCents": 260500,
+  "supportingDocuments": [
+    {
+      "id": "ines-identity",
+      "ownerId": "ines-moreau",
+      "label": "Pièce d'identité",
+      "category": "identity",
+      "status": "verified",
+      "sensitive": true,
+      "responsibleParty": "Inès Moreau",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "ines-address",
+      "ownerId": "ines-moreau",
+      "label": "Justificatif de domicile",
+      "category": "household",
+      "status": "available",
+      "sensitive": true,
+      "responsibleParty": "Inès Moreau",
+      "deliveryChannel": "encrypted-email"
+    },
+    {
+      "id": "ines-payslips",
+      "ownerId": "ines-moreau",
+      "label": "Trois derniers bulletins de salaire",
+      "category": "income",
+      "status": "verified",
+      "sensitive": true,
+      "responsibleParty": "Inès Moreau",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "ines-employer",
+      "ownerId": "ines-moreau",
+      "label": "Contrat et attestation employeur",
+      "category": "professional",
+      "status": "available",
+      "sensitive": true,
+      "responsibleParty": "Inès Moreau",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "ines-tax",
+      "ownerId": "ines-moreau",
+      "label": "Deux derniers avis d'imposition",
+      "category": "tax",
+      "status": "verified",
+      "sensitive": true,
+      "responsibleParty": "Inès Moreau",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "ines-assets",
+      "ownerId": "ines-moreau",
+      "label": "Relevés d'épargne",
+      "category": "asset",
+      "status": "available",
+      "sensitive": true,
+      "responsibleParty": "Inès Moreau",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "ines-student",
+      "ownerId": "ines-moreau",
+      "label": "Tableau d'amortissement du prêt étudiant",
+      "category": "liability",
+      "status": "available",
+      "sensitive": true,
+      "responsibleParty": "Inès Moreau",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "ines-reservation",
+      "ownerId": "ines-moreau",
+      "label": "Contrat de réservation du programme neuf",
+      "category": "project",
+      "status": "requested",
+      "sensitive": true,
+      "note": "À ajouter après sélection définitive du lot.",
+      "responsibleParty": "Promoteur fictif",
+      "deliveryChannel": "other"
+    },
+    {
+      "id": "ines-no-company",
+      "ownerId": "ines-moreau",
+      "label": "Bilans professionnels",
+      "category": "professional",
+      "status": "not-applicable",
+      "sensitive": true,
+      "note": "Sans objet pour un emploi salarié.",
+      "responsibleParty": "Inès Moreau",
+      "deliveryChannel": "other"
+    }
+  ],
+  "editorial": {
+    "presentationLetter": "<p><strong>Objet : demande d’étude de financement pour ma première résidence principale</strong></p>\n<p>Madame, Monsieur,</p>\n<p>Je souhaite acquérir un appartement neuf de 50 à 58 m² à Tours ou dans sa proche périphérie. Cette première acquisition répond à un projet durable : disposer d’un logement proche des transports, adapté à mon activité et suffisamment dimensionné pour pouvoir y rester plusieurs années.</p>\n<p>J’occupe depuis février 2022 un poste d’ingénieure qualité en contrat à durée indéterminée, après un parcours continu dans ce domaine depuis 2018. Le scénario central repose exclusivement sur mon salaire fixe. Ma prime annuelle est documentée mais n’est pas nécessaire à l’équilibre du financement.</p>\n<p>Le prix cible est de 205 000 €. Mon épargne permet un apport de 23 000 € et le montage distingue un prêt employeur de 10 000 €, soumis à confirmation. Après l’apport et les frais d’installation, je souhaite conserver <strong>15 500 € de réserve disponible</strong> pour les imprévus, l’ameublement et les premières charges.</p>\n<p>Le budget post-acquisition intègre la mensualité projetée, la copropriété, la taxe foncière, les assurances et mes dépenses habituelles. Le prêt étudiant reste comptabilisé jusqu’à son extinction. Même sans prime et avec des dépenses variables majorées, le scénario prudent conserve une capacité d’épargne mensuelle positive.</p>\n<p>Le dossier joint présente ma situation, les hypothèses de financement, les budgets et l’inventaire des justificatifs disponibles. Le contrat de réservation et les pièces propres au bien seront ajoutés dès qu’un lot définitif aura été retenu. Je reste disponible pour préciser chaque hypothèse ou transmettre tout complément utile.</p>\n<p>Veuillez agréer, Madame, Monsieur, l’expression de mes salutations distinguées.<br><strong>Inès Moreau</strong></p>",
+    "householdSummary": "Emprunteuse seule et sans personne à charge, Inès est locataire depuis 2022. Le loyer et les charges actuels sont payés régulièrement, aucun incident n’est déclaré et aucun changement familial susceptible d’alourdir le budget n’est prévu avant l’acquisition.",
+    "professionalStabilityItems": [
+      {
+        "id": "ines-cdi",
+        "title": "CDI confirmé",
+        "body": "Le contrat à durée indéterminée est en cours depuis février 2022 et la période d’essai est achevée. Les bulletins de salaire, le contrat et l’attestation employeur permettent de rapprocher rémunération contractuelle et revenus effectivement versés."
+      },
+      {
+        "id": "ines-continuity",
+        "title": "Parcours continu",
+        "body": "Le poste actuel prolonge une expérience continue dans la qualité industrielle depuis 2018. Cette cohérence de métier réduit la dépendance à un employeur particulier et documente une employabilité déjà éprouvée."
+      },
+      {
+        "id": "ines-variable-prudent",
+        "title": "Variable traité prudemment",
+        "body": "La prime annuelle est recensée et justifiée, mais elle n’entre pas dans la capacité d’emprunt centrale. Elle constitue ainsi une marge de sécurité potentielle plutôt qu’une ressource nécessaire au paiement des charges courantes."
+      }
+    ],
+    "projectSummary": "Appartement neuf de 50 à 58 m² avec balcon, proche des transports dans l’agglomération tourangelle. Le prix cible de 205 000 € inclut une marge mesurée sous le plafond retenu et aucun revenu locatif n’est attendu pour équilibrer l’opération.",
+    "reserveStrategy": "Après un apport de 23 000 €, 15 500 € restent immédiatement disponibles : 9 000 € de précaution, 4 000 € pour l’installation et 2 500 € pour les premières charges et ajustements. Cette réserve est exclue du financement et ne suppose ni prime future ni revente d’un actif.",
+    "independentIncomeIntroduction": "Aucun revenu indépendant, chiffre d’affaires ou bénéfice professionnel n’est déclaré pour ce profil exclusivement salarié. L’annexe est conservée afin que le lecteur puisse constater explicitement que la capacité de remboursement repose sur des revenus de travail salarié documentés.",
+    "finalDisclaimer": "Toutes les identités, professions, localisations, dates et valeurs de cet exemple sont fictives. Ce document ne constitue ni un conseil financier ni un accord de crédit.",
+    "sectionSlots": {
+      "cover": {
+        "introduction": "Première acquisition d’une résidence principale préparée à partir d’un salaire fixe, d’une épargne constituée progressivement et d’un budget post-achat documenté.",
+        "callout": "<strong>Lecture proposée :</strong> vérifier la stabilité du revenu fixe, le maintien du prêt étudiant dans les charges et la réserve de 15 500 € conservée après l’opération.",
+        "conclusion": "Les montants variables et le futur avantage employeur restent présentés séparément afin de ne pas surévaluer la capacité centrale."
+      },
+      "presentationLetter": {
+        "introduction": "Courrier complet à la première personne, structuré comme une demande d’étude adressée à un courtier ou à un établissement prêteur."
+      },
+      "household": {
+        "introduction": "Le foyer se limite à l’emprunteuse ; aucune pension versée, personne à charge ou évolution familiale budgétée n’est déclarée.",
+        "conclusion": "Le passage du loyer actuel à la mensualité projetée est explicité dans le budget post-achat, sans neutraliser les charges de copropriété ni la taxe foncière."
+      },
+      "income": {
+        "introduction": "Les revenus sont rapprochés du contrat de travail, des bulletins de salaire et de l’avis d’imposition disponibles.",
+        "callout": "<strong>Hypothèse centrale :</strong> seul le salaire fixe est retenu. La prime annuelle reste visible dans l’historique mais n’est pas nécessaire à l’équilibre mensuel."
+      },
+      "riskManagement": {
+        "introduction": "La prudence du dossier repose sur trois éléments vérifiables : continuité professionnelle, exclusion du variable et réserve non mobilisée.",
+        "conclusion": "Le budget stress augmente les dépenses courantes et conserve le prêt étudiant ; il maintient néanmoins une épargne mensuelle positive."
+      },
+      "assets": {
+        "introduction": "Le patrimoine est présenté de manière exhaustive pour distinguer les liquidités réellement mobilisées des actifs conservés.",
+        "conclusion": "L’épargne salariale et le véhicule sont recensés mais exclus de l’apport ; aucune cession n’est indispensable à la réalisation du projet."
+      },
+      "cashReserve": {
+        "callout": "<strong>15 500 € conservés après apport :</strong> 9 000 € de précaution, 4 000 € d’installation et 2 500 € pour les premières charges du logement.",
+        "conclusion": "Cette réserve reste disponible indépendamment du versement de la prime annuelle."
+      },
+      "project": {
+        "introduction": "Le neuf réduit les travaux immédiats mais impose d’anticiper appels de fonds, calendrier de livraison, charges de copropriété et ameublement.",
+        "conclusion": "Le choix définitif du lot devra rester sous le plafond et respecter les critères de transport, de surface et de charges renseignés."
+      },
+      "financing": {
+        "introduction": "Les scénarios comparent une durée courte, un montage central et une mensualité allégée sans modifier l’apport disponible.",
+        "conclusion": "Le prêt employeur est présenté comme une tranche distincte du même besoin de financement ; son éligibilité et ses conditions restent à confirmer avant accord."
+      },
+      "sankey": {
+        "introduction": "Le diagramme rapproche le revenu retenu de l’ensemble des sorties après acquisition, y compris mensualité, dette étudiante, logement, vie courante et épargne."
+      },
+      "postPurchaseBudget": {
+        "introduction": "Le budget central reprend les dépenses observées et ajoute les charges propres au futur logement sans compter d’économie hypothétique non documentée.",
+        "conclusion": "La prime variable n’est pas nécessaire à l’équilibre courant ; elle peut renforcer l’épargne ou absorber un imprévu sans financer une charge récurrente."
+      },
+      "supportingDocuments": {
+        "introduction": "L’inventaire permet de distinguer les pièces disponibles, celles demandées au promoteur et les documents sans objet pour une salariée.",
+        "conclusion": "Aucun fichier réel n’est joint : seul l’inventaire fictif est présenté, avec un responsable et un canal de transmission pour chaque pièce."
+      },
+      "independentIncomeAnnex": {
+        "callout": "<strong>Sans objet :</strong> aucun revenu indépendant n’est retenu. Cette annexe confirme l’absence de chiffre d’affaires professionnel à analyser."
+      }
+    }
+  },
+  "presentation": {
+    "theme": "banking-clean",
+    "density": "comfortable",
+    "pageSize": "A4",
+    "title": "Dossier de primo-accession",
+    "subtitle": "Salariée seule — appartement neuf à Tours",
+    "footer": "Démonstration fictive — aucune donnée personnelle réelle",
+    "sections": {
+      "cover": true,
+      "presentationLetter": true,
+      "household": true,
+      "income": true,
+      "riskManagement": true,
+      "assets": true,
+      "cashReserve": true,
+      "project": true,
+      "financing": true,
+      "sankey": true,
+      "postPurchaseBudget": true,
+      "supportingDocuments": true,
+      "independentIncomeAnnex": true
+    },
+    "colors": {
+      "navy": "#17324d",
+      "blue": "#1f77b4",
+      "green": "#2f855a",
+      "gold": "#b7791f",
+      "muted": "#667085"
+    }
+  }
+}

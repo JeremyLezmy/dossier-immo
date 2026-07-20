@@ -31,7 +31,9 @@ async function waitForDraftSaved(page: Page) {
 }
 
 async function selectStep(page: Page, step: string) {
-  await page.getByRole("combobox", { name: "Étape du dossier" }).selectOption(step);
+  await page
+    .getByRole("combobox", { name: "Étape du dossier" })
+    .selectOption(step);
 }
 
 test.beforeEach(async ({ page }) => {
@@ -57,8 +59,12 @@ test.beforeEach(async ({ page }) => {
 test("les actions essentielles et l'autosauvegarde restent visibles sur mobile", async ({
   page,
 }) => {
-  await expect(page.getByRole("navigation", { name: "Navigation compacte des étapes" })).toBeVisible();
-  await expect(page.getByRole("combobox", { name: "Étape du dossier" })).toHaveValue("help");
+  await expect(
+    page.getByRole("navigation", { name: "Navigation compacte des étapes" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("combobox", { name: "Étape du dossier" }),
+  ).toHaveValue("help");
   await expect(page.locator(".sidebar")).toBeHidden();
   await expect(page.locator(".save-state")).toBeVisible();
   await expect(page.locator(".save-state")).toContainText(
@@ -66,6 +72,9 @@ test("les actions essentielles et l'autosauvegarde restent visibles sur mobile",
   );
   await expect(
     page.locator(".topbar").getByRole("button", { name: "PDF", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Ouvrir l’aperçu rapide" }),
   ).toBeVisible();
 
   await openDossierActions(page);
@@ -105,6 +114,9 @@ test("l'en-tête reste utilisable sans débordement à 360 px", async ({
     page.getByRole("button", { name: "Actions du dossier" }),
   ).toBeVisible();
   await expect(
+    page.getByRole("button", { name: "Ouvrir l’aperçu rapide" }),
+  ).toBeVisible();
+  await expect(
     page.locator(".topbar").getByRole("button", { name: "PDF", exact: true }),
   ).toBeVisible();
   expect(
@@ -114,6 +126,50 @@ test("l'en-tête reste utilisable sans débordement à 360 px", async ({
         document.documentElement.clientWidth,
     ),
   ).toBe(0);
+});
+
+test("le sélecteur de dossiers fictifs reste lisible à 360 px", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await openDossierActions(page);
+  await page.getByRole("button", { name: /^Charger l'exemple fictif/ }).click();
+  const picker = page.locator("dialog.demo-picker");
+  await expect(picker).toBeVisible();
+  await expect(
+    picker.getByRole("heading", { name: "Choisir un dossier d’exemple" }),
+  ).toBeVisible();
+  await expect(picker.locator(".demo-picker__card")).toHaveCount(3);
+  expect(
+    await picker.evaluate(
+      (element) => element.scrollWidth <= element.clientWidth,
+    ),
+  ).toBe(true);
+  await expect(page).toHaveScreenshot("demo-picker-mobile.png", {
+    animations: "disabled",
+    fullPage: false,
+  });
+  await picker
+    .getByRole("button", { name: /Première acquisition en solo/ })
+    .click();
+  await expect(
+    picker.getByRole("heading", { name: "Confirmer le chargement" }),
+  ).toBeVisible();
+  expect(
+    await picker.evaluate(
+      (element) => element.scrollWidth <= element.clientWidth,
+    ),
+  ).toBe(true);
+  await expect(page).toHaveScreenshot("demo-picker-confirmation-mobile.png", {
+    animations: "disabled",
+    fullPage: false,
+  });
+  await page.keyboard.press("Escape");
+  await expect(
+    picker.getByRole("heading", { name: "Choisir un dossier d’exemple" }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(picker).toBeHidden();
 });
 
 test("le menu remplace les actions secondaires sur tablette", async ({
@@ -126,7 +182,9 @@ test("le menu remplace les actions secondaires sur tablette", async ({
   ).toBeVisible();
   await expect(page.locator(".topbar__desktop-action").first()).toBeHidden();
   await expect(page.locator(".step-footer__tools")).toBeHidden();
-  await expect(page.getByRole("combobox", { name: "Étape du dossier" })).toBeVisible();
+  await expect(
+    page.getByRole("combobox", { name: "Étape du dossier" }),
+  ).toBeVisible();
   await expect(page.locator(".sidebar")).toBeHidden();
   await expect(
     page.locator(".topbar").getByRole("button", { name: "Télécharger le PDF" }),
@@ -148,11 +206,26 @@ test("l'aperçu final ajuste les thèmes et la page A4 à un écran mobile", asy
   const themeRail = page.getByRole("complementary", {
     name: "Changer le thème",
   });
+  const themeSettings = page.locator("details.preview-theme-settings");
+  const themeSummary = themeSettings.locator("summary");
   const preview = page.getByTitle("Aperçu du dossier bancaire");
-  await expect(themeRail).toBeVisible();
+  await expect(themeSettings).not.toHaveAttribute("open", "");
+  await expect(themeRail).toBeHidden();
   await expect(preview).toBeVisible();
   await expect(page.locator(".preview-zoom output")).toHaveText("45 %");
   await waitForDraftSaved(page);
+
+  const collapsedPreviewBox = await preview.boundingBox();
+  expect(collapsedPreviewBox).not.toBeNull();
+  expect(collapsedPreviewBox!.height).toBeGreaterThan(430);
+  await expect(page).toHaveScreenshot("lot1-mobile-preview-themes.png", {
+    animations: "disabled",
+    fullPage: false,
+  });
+
+  await themeSummary.click();
+  await expect(themeSettings).toHaveAttribute("open", "");
+  await expect(themeRail).toBeVisible();
 
   const [railBox, firstThemeBox, previewBox] = await Promise.all([
     themeRail.boundingBox(),
@@ -165,17 +238,32 @@ test("l'aperçu final ajuste les thèmes et la page A4 à un écran mobile", asy
   expect(railBox!.height).toBeLessThan(80);
   expect(firstThemeBox!.height).toBeLessThan(70);
   expect(previewBox!.width).toBeGreaterThan(350);
-  await expect(page).toHaveScreenshot("lot1-mobile-preview-themes.png", {
+
+  await page
+    .getByRole("button", { name: "Afficher l’aperçu en plein écran" })
+    .click();
+  const fullscreenLayout = page.locator(".preview-layout--fullscreen");
+  await expect(fullscreenLayout).toBeVisible();
+  await expect(themeSettings).not.toHaveAttribute("open", "");
+  await expect(themeRail).toBeHidden();
+  const fullscreenBox = await fullscreenLayout.boundingBox();
+  expect(fullscreenBox).not.toBeNull();
+  expect(fullscreenBox!.x).toBe(0);
+  expect(fullscreenBox!.y).toBe(0);
+  expect(fullscreenBox!.width).toBe(390);
+  expect(fullscreenBox!.height).toBe(844);
+  await expect(page).toHaveScreenshot("lot1-mobile-preview-fullscreen.png", {
     animations: "disabled",
     fullPage: false,
   });
+  await page.keyboard.press("Escape");
+  await expect(fullscreenLayout).toBeHidden();
 });
 
 test("l'aperçu en direct occupe proprement l'écran mobile", async ({
   page,
 }) => {
-  await openDossierActions(page);
-  await page.getByRole("button", { name: /^Aperçu en direct/ }).click();
+  await page.getByRole("button", { name: "Ouvrir l’aperçu rapide" }).click();
 
   const livePreview = page.getByRole("complementary", {
     name: "Aperçu en direct",
@@ -207,7 +295,7 @@ test("la sauvegarde officielle est disponible depuis le menu mobile", async ({
   await page.getByRole("button", { name: /^Sauvegarder le dossier/ }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe(
-    "demo-foyer-rennais-fictif.dossier-immo.json",
+    "demo-famille-revenus-mixtes.dossier-immo.json",
   );
   await expect(page.locator(".feedback-banner")).toContainText(
     "Sauvegarde officielle créée.",
@@ -278,7 +366,7 @@ test("la génération du PDF verrouille l'action jusqu'à son terme", async ({
   await expect(pdfButton).toHaveAttribute("aria-busy", "true");
 
   const download = await downloadPromise;
-  expect(download.suggestedFilename()).toBe("demo-foyer-rennais-fictif.pdf");
+  expect(download.suggestedFilename()).toBe("demo-famille-revenus-mixtes.pdf");
   await expect(pdfButton).toBeEnabled();
   await expect(pdfButton).toHaveAttribute("aria-busy", "false");
   await expect(page.locator(".feedback-banner")).toContainText(
@@ -340,8 +428,9 @@ test("le guide détaillé reste lisible avec une rubrique ouverte sur mobile", a
   await expect(
     financing.getByRole("heading", { name: "Composition multi-prêts" }),
   ).toBeVisible();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth))
-    .toBeLessThanOrEqual(360);
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(360);
   await expect(financing).toHaveScreenshot("guide-financing-card-mobile.png", {
     animations: "disabled",
   });

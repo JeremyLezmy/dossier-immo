@@ -5,12 +5,15 @@ import { renderBankDocument } from "@dossier-immo/document";
 import {
   completeDemoDossier,
   createBlankDossier,
+  demoDossierCatalog,
+  type DemoDossierDescriptor,
 } from "@dossier-immo/fixtures";
 import { validateDossier, type Dossier } from "@dossier-immo/schema";
 import {
   BookOpen,
   Check,
   CircleAlert,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -18,20 +21,21 @@ import {
   FolderOpen,
   LoaderCircle,
   LockKeyhole,
+  Maximize2,
+  Minimize2,
+  Palette,
   PanelRightOpen,
   Save,
   X,
 } from "lucide-react";
 import { DossierActionsMenu } from "../../components/DossierActionsMenu";
+import { DemoDossierPicker } from "../../components/DemoDossierPicker";
 import { EditorDisclosureProvider } from "../../components/EditorDisclosure";
 import {
   FeedbackBanner,
   type FeedbackMessage,
 } from "../../components/FeedbackBanner";
-import {
-  fieldId,
-  ValidationIssuesProvider,
-} from "../../components/fields";
+import { fieldId, ValidationIssuesProvider } from "../../components/fields";
 import {
   clearLocalDrafts,
   loadLatestDraft,
@@ -77,6 +81,7 @@ export function Editor() {
   const [isImportingDossier, setIsImportingDossier] = useState(false);
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
   const [pendingIssuePath, setPendingIssuePath] = useState<string>();
+  const [examplePickerOpen, setExamplePickerOpen] = useState(false);
   const autosaveRevision = useRef(0);
   const autosaveTimer = useRef<number | undefined>(undefined);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -102,7 +107,8 @@ export function Editor() {
     if (!step) return 0;
     return validationIssues.filter((issue) =>
       step.paths.some(
-        (prefix) => issue.path === prefix || issue.path.startsWith(`${prefix}.`),
+        (prefix) =>
+          issue.path === prefix || issue.path.startsWith(`${prefix}.`),
       ),
     ).length;
   };
@@ -291,16 +297,12 @@ export function Editor() {
       });
   };
 
-  const loadExample = () => {
-    if (
-      window.confirm(
-        "Charger le dossier fictif Nora Leclerc et Samir Diallo ? Les valeurs affichées dans le formulaire seront remplacées.",
-      )
-    )
-      resetTo(completeDemoDossier, {
-        tone: "success",
-        text: "Dossier fictif Nora Leclerc et Samir Diallo chargé.",
-      });
+  const loadExample = (demo: DemoDossierDescriptor) => {
+    resetTo(demo.dossier, {
+      tone: "success",
+      text: `Dossier fictif « ${demo.title} » chargé.`,
+    });
+    setExamplePickerOpen(false);
   };
 
   const clearDrafts = async () => {
@@ -339,15 +341,19 @@ export function Editor() {
         currentStep,
     );
   const previous = () =>
-    selectStep(
-      editorSteps[Math.max(0, activeIndex - 1)]?.id ?? currentStep,
-    );
+    selectStep(editorSteps[Math.max(0, activeIndex - 1)]?.id ?? currentStep);
 
   return (
     <div className="app-shell">
       <header className="topbar">
         <div className="brand">
-          <div className="brand__mark">DI</div>
+          <img
+            className="brand__mark"
+            src={`${import.meta.env.BASE_URL}brand-mark.svg`}
+            alt=""
+            width="38"
+            height="38"
+          />
           <div>
             <strong>Dossier Immo</strong>
             <span>Pré-analyse bancaire locale</span>
@@ -376,6 +382,25 @@ export function Editor() {
           </span>
         </span>
         <div className="topbar__actions">
+          <button
+            className="button button--ghost topbar__mobile-preview-action"
+            type="button"
+            disabled={!documentHtml}
+            aria-label={
+              floatingPreview
+                ? "Fermer l’aperçu rapide"
+                : "Ouvrir l’aperçu rapide"
+            }
+            aria-pressed={floatingPreview}
+            title={
+              floatingPreview
+                ? "Fermer l’aperçu rapide"
+                : "Ouvrir l’aperçu rapide"
+            }
+            onClick={() => setFloatingPreview((value) => !value)}
+          >
+            <PanelRightOpen size={19} aria-hidden="true" />
+          </button>
           <DossierActionsMenu
             canPreview={Boolean(documentHtml)}
             clearingDrafts={isClearingDrafts}
@@ -384,7 +409,7 @@ export function Editor() {
             onClearDrafts={() => void clearDrafts()}
             onCreateDossier={createNewDossier}
             onImportDossier={() => fileInput.current?.click()}
-            onLoadExample={loadExample}
+            onLoadExample={() => setExamplePickerOpen(true)}
             onOpenGuide={openGuide}
             onSaveDossier={() => void saveFile()}
             onTogglePreview={() => setFloatingPreview((value) => !value)}
@@ -497,7 +522,10 @@ export function Editor() {
       <main
         className={`workspace ${currentStep === "preview" ? "workspace--preview" : ""}`}
       >
-        <nav className="editor-stepbar" aria-label="Navigation compacte des étapes">
+        <nav
+          className="editor-stepbar"
+          aria-label="Navigation compacte des étapes"
+        >
           <button
             type="button"
             aria-label="Étape précédente"
@@ -507,7 +535,9 @@ export function Editor() {
             <ChevronLeft size={20} />
           </button>
           <label className="editor-stepbar__select">
-            <span>Étape {activeIndex + 1} sur {editorSteps.length}</span>
+            <span>
+              Étape {activeIndex + 1} sur {editorSteps.length}
+            </span>
             <select
               aria-label="Étape du dossier"
               value={currentStep}
@@ -518,9 +548,7 @@ export function Editor() {
                 return (
                   <option key={step.id} value={step.id}>
                     {index + 1}. {step.label}
-                    {issueCount > 0
-                      ? ` — ${issueCount} à corriger`
-                      : ""}
+                    {issueCount > 0 ? ` — ${issueCount} à corriger` : ""}
                   </option>
                 );
               })}
@@ -537,40 +565,42 @@ export function Editor() {
         </nav>
         <EditorDisclosureProvider>
           <ValidationIssuesProvider issues={validationIssues}>
-          {message && (
-            <FeedbackBanner
-              message={message}
-              onDismiss={() => setMessage(undefined)}
-            />
-          )}
-          <div className="workspace__content">
-          {currentStep === "overview" && (
-            <OverviewStep
-              dossier={dossier}
-              derived={derived}
-              issues={validationIssues}
-              onSelectIssue={goToIssue}
-            />
-          )}
-          {currentStep === "household" && <HouseholdStep form={form} />}
-          {currentStep === "income" && <IncomeStep form={form} />}
-          {currentStep === "assets" && <AssetsStep form={form} />}
-          {currentStep === "liabilities" && <LiabilitiesStep form={form} />}
-          {currentStep === "project" && <ProjectStep form={form} />}
-          {currentStep === "financing" && <FinancingStep form={form} />}
-          {currentStep === "budgets" && <BudgetsStep form={form} />}
-          {currentStep === "documents" && <DocumentsStep form={form} />}
-          {currentStep === "presentation" && <PresentationStep form={form} />}
-          {currentStep === "help" && <HelpStep />}
-          {currentStep === "preview" && (
-            <PreviewStep
-              html={documentHtml}
-              issues={validationIssues}
-              form={form}
-              onSelectIssue={goToIssue}
-            />
-          )}
-          </div>
+            {message && (
+              <FeedbackBanner
+                message={message}
+                onDismiss={() => setMessage(undefined)}
+              />
+            )}
+            <div className="workspace__content">
+              {currentStep === "overview" && (
+                <OverviewStep
+                  dossier={dossier}
+                  derived={derived}
+                  issues={validationIssues}
+                  onSelectIssue={goToIssue}
+                />
+              )}
+              {currentStep === "household" && <HouseholdStep form={form} />}
+              {currentStep === "income" && <IncomeStep form={form} />}
+              {currentStep === "assets" && <AssetsStep form={form} />}
+              {currentStep === "liabilities" && <LiabilitiesStep form={form} />}
+              {currentStep === "project" && <ProjectStep form={form} />}
+              {currentStep === "financing" && <FinancingStep form={form} />}
+              {currentStep === "budgets" && <BudgetsStep form={form} />}
+              {currentStep === "documents" && <DocumentsStep form={form} />}
+              {currentStep === "presentation" && (
+                <PresentationStep form={form} />
+              )}
+              {currentStep === "help" && <HelpStep />}
+              {currentStep === "preview" && (
+                <PreviewStep
+                  html={documentHtml}
+                  issues={validationIssues}
+                  form={form}
+                  onSelectIssue={goToIssue}
+                />
+              )}
+            </div>
           </ValidationIssuesProvider>
         </EditorDisclosureProvider>
         <footer className="step-footer">
@@ -594,7 +624,7 @@ export function Editor() {
               className="button button--ghost"
               title="Remplace le formulaire courant par un dossier entièrement fictif"
               type="button"
-              onClick={loadExample}
+              onClick={() => setExamplePickerOpen(true)}
             >
               <Download size={16} /> Charger l’exemple fictif
             </button>
@@ -623,6 +653,12 @@ export function Editor() {
           onClose={() => setFloatingPreview(false)}
         />
       )}
+      <DemoDossierPicker
+        demos={demoDossierCatalog}
+        open={examplePickerOpen}
+        onClose={() => setExamplePickerOpen(false)}
+        onSelect={loadExample}
+      />
     </div>
   );
 }
@@ -735,9 +771,40 @@ function PreviewStep({
   readonly onSelectIssue: (path: string) => void;
 }) {
   const [zoom, setZoom] = useState(() => getPreviewFitZoom(0.8));
+  const [themeSettingsOpen, setThemeSettingsOpen] = useState(
+    () => !window.matchMedia("(max-width: 760px)").matches,
+  );
+  const [previewFullscreen, setPreviewFullscreen] = useState(false);
   const pageCount = html?.match(/<section class="page\b/g)?.length ?? 0;
+  const selectedTheme = form.watch("presentation.theme");
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 760px)");
+    const adaptThemeSettings = (event: MediaQueryListEvent) => {
+      setThemeSettingsOpen(!event.matches);
+    };
+    mobileQuery.addEventListener("change", adaptThemeSettings);
+    return () => mobileQuery.removeEventListener("change", adaptThemeSettings);
+  }, []);
+
+  useEffect(() => {
+    if (!previewFullscreen) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPreviewFullscreen(false);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [previewFullscreen]);
+
   return (
-    <div className="preview-layout">
+    <div
+      className={`preview-layout${previewFullscreen ? " preview-layout--fullscreen" : ""}`}
+    >
       <header className="preview-toolbar">
         <strong>Aperçu du dossier bancaire</strong>
         <span>
@@ -768,31 +835,78 @@ function PreviewStep({
             >
               Ajuster
             </button>
+            <button
+              className="preview-fullscreen-toggle"
+              type="button"
+              aria-label={
+                previewFullscreen
+                  ? "Quitter le plein écran"
+                  : "Afficher l’aperçu en plein écran"
+              }
+              aria-pressed={previewFullscreen}
+              title={
+                previewFullscreen
+                  ? "Quitter le plein écran"
+                  : "Afficher l’aperçu en plein écran"
+              }
+              onClick={() => {
+                if (
+                  !previewFullscreen &&
+                  window.matchMedia("(max-width: 760px)").matches
+                ) {
+                  setThemeSettingsOpen(false);
+                }
+                setPreviewFullscreen((value) => !value);
+              }}
+            >
+              {previewFullscreen ? (
+                <Minimize2 size={15} aria-hidden="true" />
+              ) : (
+                <Maximize2 size={15} aria-hidden="true" />
+              )}
+            </button>
           </div>
         )}
       </header>
       {html ? (
         <div className="preview-with-themes">
-          <aside className="preview-theme-rail" aria-label="Changer le thème">
-            {previewThemes.map((theme) => (
-              <button
-                key={theme.id}
-                type="button"
-                aria-label={`Thème ${theme.name}`}
-                aria-pressed={form.watch("presentation.theme") === theme.id}
-                onClick={() => applyTheme(form, theme)}
-              >
-                <span>
-                  {Object.values(theme.colors)
-                    .slice(0, 3)
-                    .map((color) => (
-                      <i key={color} style={{ background: color }} />
-                    ))}
-                </span>
-                <small>{theme.name}</small>
-              </button>
-            ))}
-          </aside>
+          <details
+            className="preview-theme-settings"
+            open={themeSettingsOpen}
+            onToggle={(event) => setThemeSettingsOpen(event.currentTarget.open)}
+          >
+            <summary>
+              <span>
+                <Palette size={16} aria-hidden="true" />
+                <strong>Thèmes du document</strong>
+                <small>
+                  {previewThemes.find((theme) => theme.id === selectedTheme)
+                    ?.name ?? "Thème actif"}
+                </small>
+              </span>
+              <ChevronDown size={17} aria-hidden="true" />
+            </summary>
+            <aside className="preview-theme-rail" aria-label="Changer le thème">
+              {previewThemes.map((theme) => (
+                <button
+                  key={theme.id}
+                  type="button"
+                  aria-label={`Thème ${theme.name}`}
+                  aria-pressed={selectedTheme === theme.id}
+                  onClick={() => applyTheme(form, theme)}
+                >
+                  <span>
+                    {Object.values(theme.colors)
+                      .slice(0, 3)
+                      .map((color) => (
+                        <i key={color} style={{ background: color }} />
+                      ))}
+                  </span>
+                  <small>{theme.name}</small>
+                </button>
+              ))}
+            </aside>
+          </details>
           <DocumentFrame html={html} className="document-preview" zoom={zoom} />
         </div>
       ) : (

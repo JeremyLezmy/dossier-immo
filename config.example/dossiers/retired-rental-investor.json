@@ -1,0 +1,1012 @@
+{
+  "schemaVersion": 3,
+  "metadata": {
+    "dossierId": "demo-retraites-investissement-locatif",
+    "title": "Retraités — investissement locatif",
+    "createdAt": "2026-07-10",
+    "updatedAt": "2026-07-15",
+    "observationDate": "2026-07-15",
+    "currency": "EUR",
+    "locale": "fr-FR",
+    "documentStage": "review",
+    "editionCity": "La Rochelle"
+  },
+  "household": {
+    "people": [
+      {
+        "id": "claire-perrin",
+        "displayName": "Claire Perrin",
+        "birthDate": "1959-02-16",
+        "role": "borrower",
+        "email": "claire.perrin@example.invalid",
+        "qualificationNote": "Retraitée de la fonction publique hospitalière."
+      },
+      {
+        "id": "alain-mercier",
+        "displayName": "Alain Mercier",
+        "birthDate": "1957-07-28",
+        "role": "co-borrower",
+        "qualificationNote": "Retraité d'une entreprise de maintenance industrielle."
+      }
+    ],
+    "relationshipStatus": "married",
+    "matrimonialRegime": "separation-of-property",
+    "dependents": 0,
+    "housingStatus": "owner",
+    "currentMonthlyRentCents": 0,
+    "relationshipSince": "1982-04-01",
+    "marriageDate": "1984-09-22",
+    "currentHousingSince": "2004-06-01",
+    "currentHousingDescription": "Maison principale détenue sans crédit dans l'agglomération rochelaise.",
+    "rentHistoryNote": "Sans objet : résidence principale détenue depuis plus de vingt ans.",
+    "paymentIncidentsNote": "Aucun incident déclaré.",
+    "plannedHouseholdEvents": [
+      {
+        "id": "retired-management",
+        "label": "Délégation future de la gestion locative",
+        "expectedDate": "2031-01-01",
+        "impact": "expense",
+        "note": "Le budget prudent inclut déjà des honoraires de gestion."
+      },
+      {
+        "id": "retired-energy",
+        "label": "Travaux énergétiques de la résidence principale",
+        "expectedDate": "2028-04-01",
+        "impact": "housing",
+        "note": "Enveloppe distincte, non financée par le prêt locatif."
+      }
+    ]
+  },
+  "professionalActivities": [],
+  "incomeStreams": [
+    {
+      "id": "claire-pension",
+      "personId": "claire-perrin",
+      "kind": "pension",
+      "label": "Pension de retraite de Claire",
+      "monthlyBankCents": 248000,
+      "monthlyPrudentCents": 248000,
+      "monthlyAfterTaxEstimateCents": 226000,
+      "recurring": true,
+      "includedInBorrowingCapacity": true,
+      "note": "Pension de base et complémentaire fictives."
+    },
+    {
+      "id": "alain-pension",
+      "personId": "alain-mercier",
+      "kind": "pension",
+      "label": "Pension de retraite d'Alain",
+      "monthlyBankCents": 213000,
+      "monthlyPrudentCents": 213000,
+      "monthlyAfterTaxEstimateCents": 195000,
+      "recurring": true,
+      "includedInBorrowingCapacity": true
+    },
+    {
+      "id": "retired-current-rent",
+      "personId": "claire-perrin",
+      "kind": "rental",
+      "label": "Loyer d'un studio existant",
+      "monthlyBankCents": 61000,
+      "monthlyPrudentCents": 42700,
+      "monthlyAfterTaxEstimateCents": 37000,
+      "recurring": true,
+      "includedInBorrowingCapacity": true,
+      "note": "Décote de 30 % appliquée au loyer brut."
+    },
+    {
+      "id": "retired-future-rent",
+      "personId": "alain-mercier",
+      "kind": "rental",
+      "label": "Loyer projeté du futur bien",
+      "monthlyBankCents": 76000,
+      "monthlyPrudentCents": 0,
+      "monthlyAfterTaxEstimateCents": 0,
+      "recurring": false,
+      "includedInBorrowingCapacity": false,
+      "note": "Flux informatif exclu de la capacité tant que le bien n'est pas acquis et loué."
+    }
+  ],
+  "revenueHistory": [
+    {
+      "id": "rent-2023",
+      "incomeStreamId": "retired-current-rent",
+      "period": "2023",
+      "turnoverCents": 732000,
+      "expensesCents": 146000,
+      "resultCents": 586000,
+      "collectedCents": 732000,
+      "observed": true,
+      "sourceLabel": "Déclaration foncière fictive 2023"
+    },
+    {
+      "id": "rent-2024",
+      "incomeStreamId": "retired-current-rent",
+      "period": "2024",
+      "turnoverCents": 732000,
+      "expensesCents": 178000,
+      "resultCents": 554000,
+      "collectedCents": 732000,
+      "observed": true,
+      "sourceLabel": "Déclaration foncière fictive 2024"
+    },
+    {
+      "id": "rent-2025",
+      "incomeStreamId": "retired-current-rent",
+      "period": "2025",
+      "turnoverCents": 732000,
+      "expensesCents": 162000,
+      "resultCents": 570000,
+      "collectedCents": 732000,
+      "observed": true,
+      "sourceLabel": "Déclaration foncière fictive 2025"
+    }
+  ],
+  "assets": [
+    {
+      "id": "retired-current",
+      "ownerIds": ["claire-perrin", "alain-mercier"],
+      "label": "Comptes courants",
+      "category": "current-account",
+      "amountCents": 1250000,
+      "observedAt": "2026-07-15",
+      "liquid": true,
+      "availableForContribution": true,
+      "contributionAmountCents": 500000,
+      "contributionPriority": "available"
+    },
+    {
+      "id": "retired-savings",
+      "ownerIds": ["claire-perrin", "alain-mercier"],
+      "label": "Livrets réglementés",
+      "category": "regulated-savings",
+      "amountCents": 4300000,
+      "observedAt": "2026-07-15",
+      "liquid": true,
+      "availableForContribution": true,
+      "contributionAmountCents": 2500000,
+      "contributionPriority": "preferred"
+    },
+    {
+      "id": "retired-securities",
+      "ownerIds": ["alain-mercier"],
+      "label": "Portefeuille de titres",
+      "category": "securities",
+      "amountCents": 6700000,
+      "observedAt": "2026-07-15",
+      "liquid": true,
+      "availableForContribution": true,
+      "contributionAmountCents": 1000000,
+      "contributionPriority": "avoid"
+    },
+    {
+      "id": "retired-life-insurance",
+      "ownerIds": ["claire-perrin"],
+      "label": "Contrat d'assurance-vie",
+      "category": "life-insurance",
+      "amountCents": 9200000,
+      "observedAt": "2026-07-15",
+      "liquid": true,
+      "availableForContribution": true,
+      "contributionAmountCents": 1500000,
+      "contributionPriority": "avoid",
+      "note": "Rachat partiel plafonné pour préserver l'épargne long terme."
+    },
+    {
+      "id": "retired-home",
+      "ownerIds": ["claire-perrin", "alain-mercier"],
+      "label": "Résidence principale",
+      "category": "real-estate",
+      "amountCents": 41000000,
+      "observedAt": "2026-07-15",
+      "liquid": false,
+      "availableForContribution": false,
+      "contributionPriority": "excluded"
+    },
+    {
+      "id": "retired-studio",
+      "ownerIds": ["claire-perrin"],
+      "label": "Studio actuellement loué",
+      "category": "real-estate",
+      "amountCents": 11800000,
+      "observedAt": "2026-07-15",
+      "liquid": false,
+      "availableForContribution": false,
+      "contributionPriority": "excluded",
+      "note": "Actif locatif conservé."
+    },
+    {
+      "id": "retired-crypto",
+      "ownerIds": ["alain-mercier"],
+      "label": "Actifs numériques",
+      "category": "crypto",
+      "amountCents": 240000,
+      "observedAt": "2026-07-15",
+      "liquid": true,
+      "availableForContribution": false,
+      "contributionPriority": "excluded",
+      "note": "Recensés par transparence, exclus de l'apport et de la réserve."
+    },
+    {
+      "id": "retired-car",
+      "ownerIds": ["claire-perrin", "alain-mercier"],
+      "label": "Véhicule",
+      "category": "vehicle",
+      "amountCents": 1400000,
+      "observedAt": "2026-07-15",
+      "liquid": false,
+      "availableForContribution": false,
+      "contributionPriority": "excluded"
+    }
+  ],
+  "liabilities": [
+    {
+      "id": "retired-studio-loan",
+      "borrowerIds": ["claire-perrin"],
+      "label": "Solde du prêt du studio",
+      "category": "mortgage",
+      "outstandingCents": 2600000,
+      "monthlyPaymentCents": 42000,
+      "startDate": "2013-03-10",
+      "endDate": "2029-03-10",
+      "annualRateBasisPoints": 245,
+      "includedInEffortRate": true,
+      "note": "Charge couverte en partie par le loyer existant."
+    }
+  ],
+  "monthlySnapshots": [
+    {
+      "id": "retired-snapshot-2026-05",
+      "month": "2026-05",
+      "assetAmountsCents": {
+        "retired-current": 1180000,
+        "retired-savings": 4220000,
+        "retired-securities": 6550000,
+        "retired-life-insurance": 9130000,
+        "retired-home": 41000000,
+        "retired-studio": 11800000,
+        "retired-crypto": 220000,
+        "retired-car": 1400000
+      },
+      "incomeAmountsCents": {
+        "claire-pension": 248000,
+        "alain-pension": 213000,
+        "retired-current-rent": 61000,
+        "retired-future-rent": 0
+      },
+      "monthlySavingsCents": 105000,
+      "liabilityPaymentsCents": {
+        "retired-studio-loan": 42000
+      },
+      "note": "Photographie mensuelle fictive."
+    },
+    {
+      "id": "retired-snapshot-2026-06",
+      "month": "2026-06",
+      "assetAmountsCents": {
+        "retired-current": 1210000,
+        "retired-savings": 4260000,
+        "retired-securities": 6620000,
+        "retired-life-insurance": 9170000,
+        "retired-home": 41000000,
+        "retired-studio": 11800000,
+        "retired-crypto": 230000,
+        "retired-car": 1400000
+      },
+      "incomeAmountsCents": {
+        "claire-pension": 248000,
+        "alain-pension": 213000,
+        "retired-current-rent": 61000,
+        "retired-future-rent": 0
+      },
+      "monthlySavingsCents": 105000,
+      "liabilityPaymentsCents": {
+        "retired-studio-loan": 42000
+      },
+      "note": "Photographie mensuelle fictive."
+    },
+    {
+      "id": "retired-snapshot-2026-07",
+      "month": "2026-07",
+      "assetAmountsCents": {
+        "retired-current": 1250000,
+        "retired-savings": 4300000,
+        "retired-securities": 6700000,
+        "retired-life-insurance": 9200000,
+        "retired-home": 41000000,
+        "retired-studio": 11800000,
+        "retired-crypto": 240000,
+        "retired-car": 1400000
+      },
+      "incomeAmountsCents": {
+        "claire-pension": 248000,
+        "alain-pension": 213000,
+        "retired-current-rent": 61000,
+        "retired-future-rent": 0
+      },
+      "monthlySavingsCents": 105000,
+      "liabilityPaymentsCents": {
+        "retired-studio-loan": 42000
+      },
+      "note": "Date d'observation du dossier."
+    }
+  ],
+  "project": {
+    "id": "retired-rental",
+    "projectType": "rental-investment",
+    "targetPurchaseDate": "2027-03-01",
+    "targetPriceCents": 17800000,
+    "minimumPriceCents": 16000000,
+    "comfortableMaximumPriceCents": 18500000,
+    "maximumPriceCents": 19500000,
+    "contributionCents": 4500000,
+    "installationCents": 200000,
+    "renovationCents": 1200000,
+    "acquisitionFeeBasisPoints": 800,
+    "expectedLiquidityAtPurchaseCents": 9800000,
+    "monthlySavingsProjectionCents": 105000,
+    "criteria": {
+      "propertyType": "Deux-pièces ancien destiné à la location longue durée",
+      "minimumSurfaceSquareMeters": 38,
+      "idealSurfaceLabel": "40 à 48 m²",
+      "minimumBedrooms": 1,
+      "office": "Sans objet.",
+      "pool": "Exclue pour limiter les charges de copropriété.",
+      "energyRating": "DPE A à D après travaux ; passoire thermique exclue.",
+      "works": "Rafraîchissement, cuisine et amélioration énergétique dans une enveloppe de 12 000 €.",
+      "services": "Transports, université ou bassin d'emploi à proximité.",
+      "commute": "Gestion accessible en moins de 45 minutes depuis le domicile.",
+      "preferredAreas": [
+        "La Rochelle — quartiers desservis",
+        "Aytré",
+        "Rochefort centre"
+      ],
+      "excludedFeatures": [
+        "location saisonnière obligatoire",
+        "copropriété avec contentieux majeur",
+        "DPE F ou G sans plan de travaux voté"
+      ],
+      "additionalCriteria": [
+        {
+          "id": "retired-rent",
+          "label": "Loyer cible",
+          "value": "700 à 780 € hors charges",
+          "importance": "required"
+        },
+        {
+          "id": "retired-management",
+          "label": "Gestion locative",
+          "value": "Délégable à une agence",
+          "importance": "preferred"
+        },
+        {
+          "id": "retired-furnished",
+          "label": "Location meublée",
+          "value": "Optionnelle après étude fiscale",
+          "importance": "optional"
+        },
+        {
+          "id": "retired-pool",
+          "label": "Piscine",
+          "value": "Exclue",
+          "importance": "excluded"
+        }
+      ]
+    }
+  },
+  "financingScenarios": [
+    {
+      "id": "retired-accessible",
+      "label": "Budget accessible",
+      "annualRateBasisPoints": 350,
+      "durationMonths": 300,
+      "insuranceAnnualBasisPoints": 48,
+      "priceOverrideCents": 15800000,
+      "contributionOverrideCents": 4500000,
+      "negotiationBasisPoints": 0,
+      "additionalLoanComponents": [],
+      "highlighted": false,
+      "displayInMainTable": true,
+      "note": "Simulation pédagogique fondée sur des hypothèses fictives, à remplacer par une proposition bancaire réelle."
+    },
+    {
+      "id": "retired-central",
+      "label": "Projet central",
+      "annualRateBasisPoints": 350,
+      "durationMonths": 300,
+      "insuranceAnnualBasisPoints": 48,
+      "priceOverrideCents": 17800000,
+      "contributionOverrideCents": 4500000,
+      "negotiationBasisPoints": 0,
+      "additionalLoanComponents": [],
+      "highlighted": true,
+      "displayInMainTable": true,
+      "note": "Simulation pédagogique fondée sur des hypothèses fictives, à remplacer par une proposition bancaire réelle."
+    },
+    {
+      "id": "retired-negotiated",
+      "label": "Taux négocié",
+      "annualRateBasisPoints": 350,
+      "durationMonths": 300,
+      "insuranceAnnualBasisPoints": 48,
+      "priceOverrideCents": 17800000,
+      "contributionOverrideCents": 4500000,
+      "negotiationBasisPoints": 20,
+      "additionalLoanComponents": [],
+      "highlighted": false,
+      "displayInMainTable": true,
+      "note": "Simulation pédagogique fondée sur des hypothèses fictives, à remplacer par une proposition bancaire réelle."
+    },
+    {
+      "id": "retired-comfort",
+      "label": "Plafond de confort",
+      "annualRateBasisPoints": 350,
+      "durationMonths": 300,
+      "insuranceAnnualBasisPoints": 48,
+      "priceOverrideCents": 19300000,
+      "contributionOverrideCents": 4500000,
+      "negotiationBasisPoints": 0,
+      "additionalLoanComponents": [],
+      "highlighted": false,
+      "displayInMainTable": true,
+      "note": "Simulation pédagogique fondée sur des hypothèses fictives, à remplacer par une proposition bancaire réelle."
+    },
+    {
+      "id": "retired-rate-stress",
+      "label": "Stress de taux",
+      "annualRateBasisPoints": 405,
+      "durationMonths": 300,
+      "insuranceAnnualBasisPoints": 48,
+      "priceOverrideCents": 17800000,
+      "contributionOverrideCents": 4500000,
+      "negotiationBasisPoints": 0,
+      "additionalLoanComponents": [],
+      "highlighted": false,
+      "displayInMainTable": false,
+      "note": "Simulation pédagogique fondée sur des hypothèses fictives, à remplacer par une proposition bancaire réelle."
+    }
+  ],
+  "budgetScenarios": [
+    {
+      "id": "retired-current-budget",
+      "label": "Budget de vie actuel",
+      "kind": "current",
+      "assumptions": {
+        "afterTaxIncomeCents": 458000,
+        "note": "Photographie fictive avant acquisition."
+      },
+      "items": [
+        {
+          "id": "retired-utilities-current",
+          "label": "Charges des logements",
+          "group": "housing",
+          "amountCents": 46920,
+          "sankeyLabel": "Charges des logements",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Moyenne mensuelle fictive observée avant le projet."
+        },
+        {
+          "id": "retired-food-current",
+          "label": "Vie courante",
+          "group": "living",
+          "amountCents": 66240,
+          "sankeyLabel": "Vie courante",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Moyenne mensuelle fictive observée avant le projet."
+        },
+        {
+          "id": "retired-transport-current",
+          "label": "Transport",
+          "group": "transport",
+          "amountCents": 28520,
+          "sankeyLabel": "Transport",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Moyenne mensuelle fictive observée avant le projet."
+        },
+        {
+          "id": "retired-family-current",
+          "label": "Santé et aide familiale",
+          "group": "family",
+          "amountCents": 33120,
+          "sankeyLabel": "Santé et aide familiale",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Moyenne mensuelle fictive observée avant le projet."
+        },
+        {
+          "id": "retired-leisure-current",
+          "label": "Loisirs et voyages",
+          "group": "leisure",
+          "amountCents": 47840,
+          "sankeyLabel": "Loisirs et voyages",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Moyenne mensuelle fictive observée avant le projet."
+        },
+        {
+          "id": "retired-tax-current",
+          "label": "Fiscalité immobilière",
+          "group": "tax",
+          "amountCents": 30360,
+          "sankeyLabel": "Fiscalité immobilière",
+          "showInSankey": true,
+          "adjustable": false,
+          "note": "Moyenne mensuelle fictive observée avant le projet."
+        },
+        {
+          "id": "retired-savings-current",
+          "label": "Épargne et entretien futur",
+          "group": "savings",
+          "amountCents": 59800,
+          "sankeyLabel": "Épargne et entretien futur",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Moyenne mensuelle fictive observée avant le projet."
+        },
+        {
+          "id": "retired-other-current",
+          "label": "Vacance et gestion locative",
+          "group": "other",
+          "amountCents": 22080,
+          "sankeyLabel": "Vacance et gestion locative",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Moyenne mensuelle fictive observée avant le projet."
+        }
+      ]
+    },
+    {
+      "id": "retired-central-budget",
+      "label": "Budget après acquisition",
+      "kind": "central",
+      "assumptions": {
+        "afterTaxIncomeCents": 458000,
+        "financingScenarioId": "retired-central",
+        "note": "Budget cible construit à partir du scénario de financement central."
+      },
+      "items": [
+        {
+          "id": "retired-utilities",
+          "label": "Charges des logements",
+          "group": "housing",
+          "amountCents": 51000,
+          "sankeyLabel": "Charges des logements",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Hypothèse mensuelle fictive documentée."
+        },
+        {
+          "id": "retired-food",
+          "label": "Vie courante",
+          "group": "living",
+          "amountCents": 72000,
+          "sankeyLabel": "Vie courante",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Hypothèse mensuelle fictive documentée."
+        },
+        {
+          "id": "retired-transport",
+          "label": "Transport",
+          "group": "transport",
+          "amountCents": 31000,
+          "sankeyLabel": "Transport",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Hypothèse mensuelle fictive documentée."
+        },
+        {
+          "id": "retired-family",
+          "label": "Santé et aide familiale",
+          "group": "family",
+          "amountCents": 36000,
+          "sankeyLabel": "Santé et aide familiale",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Hypothèse mensuelle fictive documentée."
+        },
+        {
+          "id": "retired-leisure",
+          "label": "Loisirs et voyages",
+          "group": "leisure",
+          "amountCents": 52000,
+          "sankeyLabel": "Loisirs et voyages",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Hypothèse mensuelle fictive documentée."
+        },
+        {
+          "id": "retired-tax",
+          "label": "Fiscalité immobilière",
+          "group": "tax",
+          "amountCents": 33000,
+          "sankeyLabel": "Fiscalité immobilière",
+          "showInSankey": true,
+          "adjustable": false,
+          "note": "Hypothèse mensuelle fictive documentée."
+        },
+        {
+          "id": "retired-savings",
+          "label": "Épargne et entretien futur",
+          "group": "savings",
+          "amountCents": 65000,
+          "sankeyLabel": "Épargne et entretien futur",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Hypothèse mensuelle fictive documentée."
+        },
+        {
+          "id": "retired-other",
+          "label": "Vacance et gestion locative",
+          "group": "other",
+          "amountCents": 24000,
+          "sankeyLabel": "Vacance et gestion locative",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Hypothèse mensuelle fictive documentée."
+        }
+      ]
+    },
+    {
+      "id": "retired-stress-budget",
+      "label": "Budget prudent",
+      "kind": "stress",
+      "assumptions": {
+        "afterTaxIncomeCents": 403040,
+        "financingScenarioId": "retired-central",
+        "note": "Revenus minorés et dépenses variables majorées pour tester la marge de sécurité."
+      },
+      "items": [
+        {
+          "id": "retired-utilities-stress",
+          "label": "Charges des logements",
+          "group": "housing",
+          "amountCents": 61000,
+          "sankeyLabel": "Charges des logements",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant majoré dans le scénario prudent.",
+          "sourceItemId": "retired-utilities"
+        },
+        {
+          "id": "retired-food-stress",
+          "label": "Vie courante",
+          "group": "living",
+          "amountCents": 79000,
+          "sankeyLabel": "Vie courante",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant majoré dans le scénario prudent.",
+          "sourceItemId": "retired-food"
+        },
+        {
+          "id": "retired-transport-stress",
+          "label": "Transport",
+          "group": "transport",
+          "amountCents": 36000,
+          "sankeyLabel": "Transport",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant majoré dans le scénario prudent.",
+          "sourceItemId": "retired-transport"
+        },
+        {
+          "id": "retired-family-stress",
+          "label": "Santé et aide familiale",
+          "group": "family",
+          "amountCents": 45000,
+          "sankeyLabel": "Santé et aide familiale",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant majoré dans le scénario prudent.",
+          "sourceItemId": "retired-family"
+        },
+        {
+          "id": "retired-leisure-stress",
+          "label": "Loisirs et voyages",
+          "group": "leisure",
+          "amountCents": 39000,
+          "sankeyLabel": "Loisirs et voyages",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant majoré dans le scénario prudent.",
+          "sourceItemId": "retired-leisure"
+        },
+        {
+          "id": "retired-tax-stress",
+          "label": "Fiscalité immobilière",
+          "group": "tax",
+          "amountCents": 41000,
+          "sankeyLabel": "Fiscalité immobilière",
+          "showInSankey": true,
+          "adjustable": false,
+          "note": "Montant majoré dans le scénario prudent.",
+          "sourceItemId": "retired-tax"
+        },
+        {
+          "id": "retired-savings-stress",
+          "label": "Épargne et entretien futur",
+          "group": "savings",
+          "amountCents": 35000,
+          "sankeyLabel": "Épargne et entretien futur",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant majoré dans le scénario prudent.",
+          "sourceItemId": "retired-savings"
+        },
+        {
+          "id": "retired-other-stress",
+          "label": "Vacance et gestion locative",
+          "group": "other",
+          "amountCents": 34000,
+          "sankeyLabel": "Vacance et gestion locative",
+          "showInSankey": true,
+          "adjustable": true,
+          "note": "Montant majoré dans le scénario prudent.",
+          "sourceItemId": "retired-other"
+        }
+      ]
+    }
+  ],
+  "stressCases": [
+    {
+      "id": "retired-vacancy",
+      "label": "Vacance locative et travaux",
+      "description": "Teste trois mois sans loyer projeté et une hausse des frais d'entretien.",
+      "enabled": true,
+      "assumptions": [
+        {
+          "id": "retired-zero-future-rent",
+          "label": "Loyer projeté ramené à zéro",
+          "target": "incomeStreams.retired-future-rent.monthlyPrudentCents",
+          "operation": "multiply",
+          "value": 0,
+          "unit": "ratio"
+        },
+        {
+          "id": "retired-maintenance",
+          "label": "Entretien majoré",
+          "target": "budgetScenarios.retired-stress-budget.items",
+          "operation": "add",
+          "value": 30000,
+          "unit": "cents"
+        }
+      ],
+      "note": "Le loyer projeté n'est déjà pas retenu dans la capacité centrale."
+    }
+  ],
+  "reservePolicy": {
+    "minimumCents": 3000000,
+    "targetCents": 3600000,
+    "allocations": [
+      {
+        "id": "retired-living",
+        "label": "Épargne de précaution",
+        "amountCents": 1800000
+      },
+      {
+        "id": "retired-vacancy-pocket",
+        "label": "Vacance locative",
+        "amountCents": 600000
+      },
+      {
+        "id": "retired-works-pocket",
+        "label": "Entretien des deux biens",
+        "amountCents": 800000
+      },
+      {
+        "id": "retired-health",
+        "label": "Dépenses de santé",
+        "amountCents": 400000
+      }
+    ]
+  },
+  "estimatedHouseholdAfterTaxIncomeCents": 458000,
+  "supportingDocuments": [
+    {
+      "id": "retired-id-claire",
+      "ownerId": "claire-perrin",
+      "label": "Pièce d'identité de Claire",
+      "category": "identity",
+      "status": "verified",
+      "sensitive": true,
+      "responsibleParty": "Claire Perrin",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "retired-id-alain",
+      "ownerId": "alain-mercier",
+      "label": "Pièce d'identité d'Alain",
+      "category": "identity",
+      "status": "verified",
+      "sensitive": true,
+      "responsibleParty": "Alain Mercier",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "retired-marriage",
+      "label": "Livret de famille",
+      "category": "household",
+      "status": "available",
+      "sensitive": true,
+      "responsibleParty": "Foyer",
+      "deliveryChannel": "in-person"
+    },
+    {
+      "id": "retired-pensions",
+      "label": "Titres de pension et relevés de versement",
+      "category": "income",
+      "status": "verified",
+      "sensitive": true,
+      "responsibleParty": "Foyer",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "retired-tax",
+      "label": "Avis d'imposition et déclarations foncières",
+      "category": "tax",
+      "status": "verified",
+      "sensitive": true,
+      "responsibleParty": "Foyer",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "retired-assets",
+      "label": "Relevés d'épargne et estimations immobilières",
+      "category": "asset",
+      "status": "available",
+      "sensitive": true,
+      "responsibleParty": "Foyer",
+      "deliveryChannel": "encrypted-email"
+    },
+    {
+      "id": "retired-studio-loan-doc",
+      "ownerId": "claire-perrin",
+      "label": "Tableau d'amortissement du studio",
+      "category": "liability",
+      "status": "available",
+      "sensitive": true,
+      "responsibleParty": "Claire Perrin",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "retired-lease",
+      "ownerId": "claire-perrin",
+      "label": "Bail et quittances du studio existant",
+      "category": "project",
+      "status": "available",
+      "sensitive": true,
+      "responsibleParty": "Claire Perrin",
+      "deliveryChannel": "secure-portal"
+    },
+    {
+      "id": "retired-target-property",
+      "label": "Diagnostics et procès-verbaux du bien ciblé",
+      "category": "project",
+      "status": "requested",
+      "sensitive": true,
+      "responsibleParty": "Vendeur fictif",
+      "deliveryChannel": "other"
+    },
+    {
+      "id": "retired-professional-na",
+      "label": "Justificatifs d'activité professionnelle",
+      "category": "professional",
+      "status": "not-applicable",
+      "sensitive": true,
+      "note": "Sans objet pour deux emprunteurs retraités.",
+      "responsibleParty": "Foyer",
+      "deliveryChannel": "other"
+    }
+  ],
+  "editorial": {
+    "presentationLetter": "<p><strong>Objet : étude de financement pour un investissement locatif de long terme</strong></p>\n<p>Madame, Monsieur,</p>\n<p>Nous souhaitons acquérir à La Rochelle un appartement ancien de 40 à 48 m² destiné à la location nue de longue durée. Ce projet complète un patrimoine déjà constitué, dans un secteur que nous connaissons et à une distance compatible avec une gestion suivie.</p>\n<p>Nous sommes retraités et propriétaires sans crédit de notre résidence principale. Nos pensions constituent la base du remboursement. Le studio que nous louons déjà dispose d’un historique documenté de baux, quittances et encaissements ; son loyer n’est retenu qu’à 70 %. <strong>Le futur loyer reste totalement exclu de la capacité centrale.</strong></p>\n<p>Le prix cible est de 178 000 €. Avant toute offre, nous contrôlerons diagnostics, procès-verbaux de copropriété, charges, taxe foncière et travaux prévisibles. Le budget comprend une remise en état et ne suppose ni location saisonnière ni rendement exceptionnel. L’apport de 45 000 € provient uniquement de notre épargne disponible.</p>\n<p>Après l’opération, nous conservons <strong>36 000 € de liquidités</strong> pour la précaution générale, la vacance, l’entretien et la santé. Le budget post-acquisition reprend la mensualité, les dépenses courantes et les charges locatives. Le scénario prudent cumule vacance du studio existant et réparation ponctuelle, sans compter le loyer du nouveau bien ni vendre un placement de long terme.</p>\n<p>Le dossier joint présente le foyer, les titres de pension, l’historique locatif, le patrimoine, les scénarios, les budgets et l’inventaire des justificatifs. Les diagnostics et procès-verbaux seront ajoutés dès sélection du bien. Nous restons disponibles pour expliquer notre stratégie de gestion ou transmettre toute pièce complémentaire.</p>\n<p>Veuillez agréer, Madame, Monsieur, l’expression de nos salutations distinguées.<br><strong>Claire et Alain Perrin</strong></p>",
+    "householdSummary": "Couple marié retraité, sans personne à charge et propriétaire de sa résidence principale sans crédit. Les dépenses courantes et de santé sont conservées dans les budgets, sans supposer de baisse liée au passage à la retraite.",
+    "professionalStabilityItems": [
+      {
+        "id": "retired-pensions",
+        "title": "Pensions établies",
+        "body": "Les deux pensions sont versées régulièrement et constituent la base du remboursement. Les titres de pension, relevés de versement et avis d’imposition permettent d’en vérifier la stabilité sans hypothèse de reprise d’activité."
+      },
+      {
+        "id": "retired-experience",
+        "title": "Première expérience locative",
+        "body": "Un studio loué depuis plusieurs années documente la gestion, les quittances, les charges et les encaissements. Cette expérience permet d’appuyer les hypothèses de vacance et d’entretien sur des pratiques déjà observées."
+      },
+      {
+        "id": "retired-prudence",
+        "title": "Loyer futur exclu",
+        "body": "Le revenu estimé du bien projeté est présenté pour information mais n’entre pas dans la capacité centrale. Le loyer du studio existant subit lui-même une décote de 30 % avant d’être retenu."
+      }
+    ],
+    "projectSummary": "Deux-pièces ancien de 40 à 48 m² destiné à la location nue de longue durée, dans une copropriété entretenue à La Rochelle. Le prix cible de 178 000 € inclut une enveloppe de remise en état et exclut toute hypothèse de location saisonnière.",
+    "reserveStrategy": "Après l’apport de 45 000 €, 36 000 € restent disponibles : 16 000 € de précaution générale, 8 000 € pour la vacance et l’entretien locatifs, 8 000 € pour la santé et 4 000 € pour les premières dépenses du bien. Aucun placement long terme n’est vendu.",
+    "independentIncomeIntroduction": "Aucune activité professionnelle indépendante n’est exercée par les emprunteurs. Les loyers du studio existant sont des revenus fonciers et non un chiffre d’affaires professionnel ; leur historique est documenté séparément et retenu après une décote bancaire de 30 %.",
+    "finalDisclaimer": "Toutes les identités, professions, localisations, dates et valeurs de cet exemple sont fictives. Ce document ne constitue ni un conseil financier ni un accord de crédit.",
+    "sectionSlots": {
+      "cover": {
+        "introduction": "Investissement locatif de taille mesurée porté par deux retraités propriétaires de leur résidence principale, avec une première expérience de bail longue durée.",
+        "callout": "<strong>Lecture prudente :</strong> remboursement fondé sur les pensions, loyer existant décoté de 30 %, futur loyer exclu et réserve de 36 000 € maintenue après l’apport.",
+        "conclusion": "Le projet ne repose ni sur une revente d’actif, ni sur une hausse de loyer, ni sur une occupation immédiate du futur logement."
+      },
+      "presentationLetter": {
+        "introduction": "Courrier complet présentant l’expérience locative, les contrôles préalables sur le bien, l’exclusion du futur loyer et la réserve dédiée aux aléas."
+      },
+      "household": {
+        "introduction": "Le foyer comprend deux emprunteurs retraités, sans personne à charge ni échéance de résidence principale.",
+        "conclusion": "La résidence principale est détenue sans dette ; les dépenses de santé et de vie courante restent néanmoins intégralement budgétées."
+      },
+      "income": {
+        "introduction": "La capacité distingue pensions récurrentes, loyer du studio existant après décote et revenu locatif futur présenté hors calcul.",
+        "callout": "<strong>Hypothèse centrale :</strong> le futur loyer est visible mais exclu de la capacité d’emprunt ; le loyer existant n’est retenu qu’à 70 %."
+      },
+      "riskManagement": {
+        "introduction": "Le stress combine vacance locative du studio existant, hausse des charges d’entretien et dépense ponctuelle de réparation.",
+        "conclusion": "La réserve dédiée permet de traiter ces aléas sans vendre un placement de long terme ni compter le futur loyer."
+      },
+      "assets": {
+        "introduction": "Le patrimoine sépare résidence principale, studio existant, liquidités mobilisables et placements conservés à long terme.",
+        "conclusion": "Les actifs numériques, les placements de long terme et les biens immobiliers conservés ne financent pas l’apport et ne sont pas nécessaires à l’équilibre mensuel."
+      },
+      "cashReserve": {
+        "callout": "<strong>36 000 € conservés :</strong> précaution générale, vacance et entretien locatifs, santé et premières dépenses du nouveau bien sont provisionnés séparément.",
+        "conclusion": "Cette liquidité reste disponible après paiement de l’apport, des frais et de la remise en état budgétée."
+      },
+      "project": {
+        "introduction": "Le projet vise une location nue de longue durée proche du domicile, dans une copropriété dont les charges et travaux seront examinés avant engagement.",
+        "conclusion": "Le prix final devra rester compatible avec l’enveloppe de remise en état et les diagnostics du bien, sans rechercher un rendement exceptionnel."
+      },
+      "financing": {
+        "introduction": "Les scénarios comparent plusieurs durées avec un apport identique et sans intégrer le loyer du bien projeté dans les revenus retenus.",
+        "conclusion": "Le montage reste volontairement simple, sans prêt complémentaire, différé ni hypothèse de remboursement anticipé indispensable."
+      },
+      "sankey": {
+        "introduction": "Le budget distingue pensions, loyer existant décoté, mensualité, dépenses courantes, charges locatives, épargne et marge résiduelle."
+      },
+      "postPurchaseBudget": {
+        "introduction": "Les budgets central et prudent conservent les dépenses de santé, l’entretien du studio existant et une provision pour le nouveau bien.",
+        "conclusion": "Le budget reste équilibré sans compter le loyer futur, y compris lorsque la vacance et l’entretien sont augmentés simultanément."
+      },
+      "supportingDocuments": {
+        "introduction": "L’inventaire rassemble titres de pension, fiscalité, patrimoine, bail existant, tableaux d’amortissement et pièces à obtenir sur la copropriété ciblée.",
+        "conclusion": "Les titres de pension et l’historique des revenus fonciers sont les pièces centrales ; diagnostics et procès-verbaux restent à rattacher au bien choisi."
+      },
+      "independentIncomeAnnex": {
+        "callout": "<strong>Sans activité indépendante :</strong> l’annexe explique pourquoi les revenus fonciers du studio existant ne constituent pas un revenu professionnel et documente leur décote."
+      }
+    }
+  },
+  "presentation": {
+    "theme": "heritage",
+    "density": "comfortable",
+    "pageSize": "A4",
+    "title": "Dossier d'investissement locatif",
+    "subtitle": "Couple retraité — acquisition d'un deux-pièces locatif",
+    "footer": "Démonstration fictive — aucune donnée personnelle réelle",
+    "sections": {
+      "cover": true,
+      "presentationLetter": true,
+      "household": true,
+      "income": true,
+      "riskManagement": true,
+      "assets": true,
+      "cashReserve": true,
+      "project": true,
+      "financing": true,
+      "sankey": true,
+      "postPurchaseBudget": true,
+      "supportingDocuments": true,
+      "independentIncomeAnnex": true
+    },
+    "colors": {
+      "navy": "#17324d",
+      "blue": "#1f77b4",
+      "green": "#2f855a",
+      "gold": "#b7791f",
+      "muted": "#667085"
+    }
+  }
+}

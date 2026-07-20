@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Dossier Immo</title>
+  <desc id="desc">Une maison protégée par un bouclier.</desc>
+  <rect width="64" height="64" rx="15" fill="#17324d" />
+  <path
+    d="M32 10c7 5 14 6 21 7v13c0 12-7 20-21 25C18 50 11 42 11 30V17c7-1 14-2 21-7Z"
+    fill="none"
+    stroke="#fff"
+    stroke-linejoin="round"
+    stroke-width="4"
+  />
+  <path
+    d="m21 34 11-9 11 9v12H21Z"
+    fill="#eef7f2"
+    stroke="#2f855a"
+    stroke-linejoin="round"
+    stroke-width="3.5"
+  />
+  <path d="M29 46v-8h6v8" fill="none" stroke="#1f77b4" stroke-linejoin="round" stroke-width="3" />
+</svg>

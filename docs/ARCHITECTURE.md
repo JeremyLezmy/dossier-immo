@@ -42,7 +42,7 @@ L'import valide strictement le format courant avant de remplacer le formulaire. 
 
 ## Document
 
-Le moteur produit treize sections A4, dont une page paysage pour le Sankey. Les dimensions sont fixes en impression pour empêcher les débordements silencieux. La version de référence est testée avec Edge/Chromium, une locale française et le fuseau Europe/Paris.
+Le moteur peut produire jusqu'à treize sections A4, dont une page paysage pour le Sankey. Une section demandée mais dépourvue de données métier n'est pas rendue ; une sous-partie vide ne produit jamais de titre, tableau ou encadré orphelin. Les dimensions sont fixes en impression pour empêcher les débordements silencieux. La version complète de référence est testée avec Edge/Chromium, une locale française et le fuseau Europe/Paris.
 
 ## Déploiement futur
 
