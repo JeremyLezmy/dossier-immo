@@ -48,6 +48,10 @@ test.beforeEach(async ({ page }) => {
 test("charge l'exemple complet et expose la confidentialité locale", async ({
   page,
 }) => {
+  await expect(page.locator(".brand__mark")).toHaveAttribute(
+    "src",
+    /brand-mark\.svg$/,
+  );
   await expect(
     page.getByRole("heading", { name: "Guide complet" }),
   ).toBeVisible();
@@ -61,6 +65,9 @@ test("charge l'exemple complet et expose la confidentialité locale", async ({
   await expect(page.getByText("Prêt pour la prévisualisation")).toBeVisible();
   await expect(page.getByText("Aucune donnée envoyée")).toBeVisible();
   await expect(page.locator(".metric-card")).toHaveCount(4);
+  await expect(page.locator(".save-state")).toContainText(
+    "Brouillon local à jour",
+  );
   await expect(page).toHaveScreenshot("overview-complete.png", {
     animations: "disabled",
     fullPage: true,
@@ -92,7 +99,7 @@ test("télécharge directement le PDF local", async ({ page }) => {
   const downloadPromise = page.waitForEvent("download", { timeout: 110_000 });
   await page.getByRole("button", { name: "Télécharger le PDF" }).click();
   const download = await downloadPromise;
-  expect(download.suggestedFilename()).toBe("demo-foyer-rennais-fictif.pdf");
+  expect(download.suggestedFilename()).toBe("demo-famille-revenus-mixtes.pdf");
   expect(await download.path()).toBeTruthy();
 });
 
@@ -112,9 +119,11 @@ test("le guide détaillé est replié par défaut et mémorise la rubrique ouver
 }) => {
   const cards = page.locator(".guide-card");
   await expect(cards).toHaveCount(13);
-  expect(await cards.evaluateAll((items) =>
-    items.every((item) => !(item as HTMLDetailsElement).open),
-  )).toBe(true);
+  expect(
+    await cards.evaluateAll((items) =>
+      items.every((item) => !(item as HTMLDetailsElement).open),
+    ),
+  ).toBe(true);
 
   const financing = page.locator('[data-disclosure-id="guide-financing"]');
   await financing.locator("summary").click();
@@ -129,10 +138,7 @@ test("le guide détaillé est replié par défaut et mémorise la rubrique ouver
   });
 
   await page.getByRole("button", { name: /Foyer/ }).click();
-  await page
-    .locator(".sidebar")
-    .getByRole("button", { name: /Guide/ })
-    .click();
+  await page.locator(".sidebar").getByRole("button", { name: /Guide/ }).click();
   await expect(financing).toHaveAttribute("open", "");
 });
 
@@ -186,27 +192,19 @@ test("les cartes sont repliées par défaut et mémorisent leur état entre les 
     .locator(".sidebar")
     .getByRole("button", { name: /Revenus/ })
     .click();
-  const activities = page.locator(
-    '[data-disclosure-id="income-activities"]',
-  );
+  const activities = page.locator('[data-disclosure-id="income-activities"]');
   await expect(activities).not.toHaveAttribute("open", "");
   await activities.locator("summary").first().click();
   await expect(activities).toHaveAttribute("open", "");
 
-  await page
-    .locator(".sidebar")
-    .getByRole("button", { name: /Foyer/ })
-    .click();
+  await page.locator(".sidebar").getByRole("button", { name: /Foyer/ }).click();
   await page
     .locator(".sidebar")
     .getByRole("button", { name: /Revenus/ })
     .click();
   await expect(activities).toHaveAttribute("open", "");
 
-  await page
-    .locator(".sidebar")
-    .getByRole("button", { name: /Foyer/ })
-    .click();
+  await page.locator(".sidebar").getByRole("button", { name: /Foyer/ }).click();
   const firstPerson = page.locator(".array-card--collapsible").first();
   await expect(firstPerson).not.toHaveAttribute("open", "");
   await firstPerson.locator("summary").click();
@@ -215,10 +213,7 @@ test("les cartes sont repliées par défaut et mémorisent leur état entre les 
     .locator(".sidebar")
     .getByRole("button", { name: /Revenus/ })
     .click();
-  await page
-    .locator(".sidebar")
-    .getByRole("button", { name: /Foyer/ })
-    .click();
+  await page.locator(".sidebar").getByRole("button", { name: /Foyer/ }).click();
   await expect(firstPerson).toHaveAttribute("open", "");
 });
 
@@ -234,12 +229,63 @@ test("l'historique documenté identifie la personne associée au flux de revenu"
 
   const firstHistory = history.locator(".array-card--collapsible").first();
   await expect(firstHistory.locator("summary")).toContainText(
-    "Historique 2023 — Nora Leclerc",
+    "Historique 2023 — Élodie Garnier",
   );
   await firstHistory.locator("summary").click();
   await expect(
     firstHistory.getByLabel("Flux de revenu").locator("option:checked"),
-  ).toHaveText("Revenu professionnel retenu — Nora Leclerc");
+  ).toHaveText("Bénéfice libéral retenu — Élodie Garnier");
+});
+
+test("le sélecteur charge l'un des trois dossiers entièrement fictifs", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Charger l’exemple fictif" }).click();
+  const picker = page.locator("dialog.demo-picker");
+  await expect(picker).toBeVisible();
+  await expect(
+    picker.getByRole("heading", { name: "Choisir un dossier d’exemple" }),
+  ).toBeVisible();
+  await expect(
+    picker.getByRole("button", { name: /Première acquisition en solo/ }),
+  ).toBeVisible();
+  await expect(
+    picker.getByRole("button", { name: /Famille à revenus mixtes/ }),
+  ).toBeVisible();
+  await expect(
+    picker.getByRole("button", { name: /Retraités investisseurs locatifs/ }),
+  ).toBeVisible();
+
+  await picker
+    .getByRole("button", { name: /Retraités investisseurs locatifs/ })
+    .click();
+  await expect(
+    picker.getByRole("heading", { name: "Confirmer le chargement" }),
+  ).toBeVisible();
+  await expect(picker).toContainText(
+    "Les valeurs actuellement affichées dans le formulaire seront remplacées",
+  );
+  await expect(picker).toHaveScreenshot(
+    "demo-picker-confirmation-desktop.png",
+    {
+      animations: "disabled",
+    },
+  );
+  await picker.getByRole("button", { name: "Retour aux profils" }).click();
+  await expect(
+    picker.getByRole("heading", { name: "Choisir un dossier d’exemple" }),
+  ).toBeVisible();
+  await picker
+    .getByRole("button", { name: /Retraités investisseurs locatifs/ })
+    .click();
+  await picker.getByRole("button", { name: "Charger ce dossier" }).click();
+  await expect(picker).toBeHidden();
+  await expect(page.locator(".feedback-banner")).toContainText(
+    "Retraités investisseurs locatifs",
+  );
+  await expect(
+    page.getByRole("heading", { name: "Retraités — investissement locatif" }),
+  ).toBeVisible();
 });
 
 test("duplique un scénario sans créer un second scénario principal", async ({
@@ -249,6 +295,9 @@ test("duplique un scénario sans créer un second scénario principal", async ({
     .locator(".sidebar")
     .getByRole("button", { name: /Financement/ })
     .click();
+  await expect(page.locator(".save-state")).toContainText(
+    "Brouillon local à jour",
+  );
   await expect(page).toHaveScreenshot("financing-collapsible-scenarios.png", {
     animations: "disabled",
     fullPage: true,
@@ -258,9 +307,7 @@ test("duplique un scénario sans créer un second scénario principal", async ({
   const source = cards.first();
   await expect(source).not.toHaveAttribute("open", "");
   await source.locator("summary").click();
-  await source
-    .getByRole("button", { name: "Dupliquer ce scénario" })
-    .click();
+  await source.getByRole("button", { name: "Dupliquer ce scénario" }).click();
 
   await expect(cards).toHaveCount(initialCount + 1);
   const copy = cards.last();
@@ -282,7 +329,7 @@ test("sauvegarde et réimporte le fichier canonique", async ({ page }) => {
   await page.getByRole("button", { name: "Exporter la config" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe(
-    "demo-foyer-rennais-fictif.dossier-immo.json",
+    "demo-famille-revenus-mixtes.dossier-immo.json",
   );
   const path = await download.path();
   expect(path).toBeTruthy();
@@ -412,20 +459,29 @@ test("la page Textes conserve des identifiants et des résumés HTML valides", a
     const allIds = Array.from(document.querySelectorAll<HTMLElement>("[id]"))
       .map((element) => element.id)
       .filter(Boolean);
-    const duplicateIds = [...new Set(allIds.filter(
-      (id, index) => allIds.indexOf(id) !== index,
-    ))];
+    const duplicateIds = [
+      ...new Set(allIds.filter((id, index) => allIds.indexOf(id) !== index)),
+    ];
     const invalidLabels = Array.from(
       document.querySelectorAll<HTMLLabelElement>("label[for]"),
-    ).filter((label) => {
-      const target = document.getElementById(label.htmlFor);
-      return !target || !target.matches("button, input, meter, output, progress, select, textarea");
-    }).map((label) => label.htmlFor);
+    )
+      .filter((label) => {
+        const target = document.getElementById(label.htmlFor);
+        return (
+          !target ||
+          !target.matches(
+            "button, input, meter, output, progress, select, textarea",
+          )
+        );
+      })
+      .map((label) => label.htmlFor);
     const interactiveSummaries = Array.from(
       document.querySelectorAll("summary"),
-    ).filter((summary) => summary.querySelector(
-      "a, button, input, select, textarea, [contenteditable='true'], [tabindex]:not([tabindex='-1'])",
-    )).length;
+    ).filter((summary) =>
+      summary.querySelector(
+        "a, button, input, select, textarea, [contenteditable='true'], [tabindex]:not([tabindex='-1'])",
+      ),
+    ).length;
     const unidentifiedRichTextControls = Array.from(
       document.querySelectorAll<HTMLElement>(
         ".rich-text__toolbar button, .rich-text__toolbar select, .rich-text__editor",
@@ -459,15 +515,19 @@ test("les nouveaux parcours guidés restent utilisables", async ({ page }) => {
   await page.getByRole("button", { name: /Passifs/ }).click();
   await page.locator(".array-card--collapsible summary").first().click();
   await expect(
-    page.getByRole("checkbox", { name: "Nora Leclerc" }),
+    page.getByRole("checkbox", { name: "Élodie Garnier" }),
   ).toBeChecked();
   await expect(
-    page.getByRole("checkbox", { name: "Samir Diallo" }),
+    page.getByRole("checkbox", { name: "Mathieu Roux" }),
   ).toBeChecked();
 
   await page.getByRole("button", { name: /Budgets/ }).click();
-  const budgetItem = page.locator("details.budget-comparison__item").first();
-  await expect(budgetItem).toContainText("Taxe foncière mensualisée");
+  const budgetItem = page
+    .locator("details.budget-comparison__item")
+    .filter({ hasText: "Fiscalité" });
+  await expect(budgetItem).toContainText(
+    "Fiscalité et charges non mensualisées",
+  );
   await budgetItem.locator("summary").click();
   await expect(
     budgetItem.getByRole("textbox", { name: "Libellé court du Sankey" }),

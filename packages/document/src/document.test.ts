@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { calculateDossier } from "@dossier-immo/calculations";
-import { completeDemoDossier } from "@dossier-immo/fixtures";
+import {
+  completeDemoDossier,
+  demoDossierCatalog,
+} from "@dossier-immo/fixtures";
 import { renderAssetCompositionChart } from "./charts";
 import { renderBankDocument } from "./index";
 
@@ -35,9 +38,51 @@ describe("document bancaire", () => {
     }
   });
 
+  it.each(demoDossierCatalog)(
+    "ne rend que les pages pertinentes pour $id",
+    (demo) => {
+      const demoHtml = renderBankDocument(
+        demo.dossier,
+        calculateDossier(demo.dossier),
+      );
+      const hasIndependentIncome = demo.dossier.incomeStreams.some((income) =>
+        ["self-employed", "liberal"].includes(income.kind),
+      );
+      expect(demoHtml.match(/<section class="page/g) ?? []).toHaveLength(
+        hasIndependentIncome ? 13 : 12,
+      );
+      expect(demoHtml).not.toMatch(/<tbody>\s*<\/tbody>/);
+      if (!hasIndependentIncome) {
+        expect(demoHtml).not.toContain(
+          "Annexe — revenus indépendants par emprunteur",
+        );
+      }
+      expect(demoHtml).not.toMatch(/\b(undefined|NaN|None)\b/);
+      expect(demoHtml).not.toContain("[A_COMPLETER]");
+    },
+  );
+
+  it("conserve les facteurs de stabilité sans tableau professionnel vide", () => {
+    const retired = demoDossierCatalog.find(
+      (demo) => demo.id === "retired-rental-investor",
+    )!;
+    const retiredHtml = renderBankDocument(
+      retired.dossier,
+      calculateDossier(retired.dossier),
+    );
+    const riskPage =
+      retiredHtml.match(
+        /<h2>Éléments de stabilité[\s\S]*?<div class="page-number"/,
+      )?.[0] ?? "";
+
+    expect(riskPage).toContain("Pensions établies");
+    expect(riskPage).not.toContain("Activités professionnelles");
+    expect(riskPage).not.toContain("<table");
+  });
+
   it("utilise les résultats dérivés sans placeholder", () => {
-    expect(html).toContain("5 500 €");
-    expect(html).toContain("15 000 €");
+    expect(html).toContain("6 420 €");
+    expect(html).toContain("20 000 €");
     expect(html).not.toMatch(/\b(undefined|NaN|None)\b/);
     expect(html).not.toContain("[A_COMPLETER]");
   });
@@ -53,21 +98,25 @@ describe("document bancaire", () => {
       html.match(
         /<section class="page letter-page">([\s\S]*?)<div class="page-number"/,
       )?.[1] ?? "";
-    expect(letterPage).toContain("Nora Leclerc et Samir Diallo présentent");
+    expect(letterPage).toContain(
+      "Nous souhaitons acquérir une maison de 120 à 140 m²",
+    );
+    expect(letterPage.match(/<p>/g)?.length ?? 0).toBeGreaterThanOrEqual(8);
+    expect(letterPage).toContain("<strong>Objet : étude de financement");
     expect(letterPage).not.toContain("Approche prudente");
     expect(letterPage).not.toContain(
       completeDemoDossier.editorial.reserveStrategy,
     );
   });
 
-  it("présente le modèle économique de l'activité commerciale sans concepts étrangers", () => {
+  it("présente le modèle économique de l'activité libérale sans concepts étrangers", () => {
     const riskPage =
       html.match(
         /<h2>Éléments de stabilité[\s\S]*?<div class="page-number"/,
       )?.[0] ?? "";
-    expect(riskPage).toContain("CA annuel de référence");
+    expect(riskPage).toContain("Tarif par consultation");
     expect(riskPage).not.toContain("TJM");
-    expect(riskPage).not.toContain("Tarif par consultation");
+    expect(riskPage).not.toContain("CA annuel de référence");
   });
 
   it("n'expose aucun code métier brut dans le HTML bancaire", () => {
@@ -108,7 +157,7 @@ describe("document bancaire", () => {
     }
 
     expect(html).toContain("Co-emprunteur");
-    expect(html).toContain("Travailleur indépendant");
+    expect(html).toContain("Profession libérale");
     expect(html).toContain("Épargne réglementée");
     expect(html).toContain("Disponible");
     expect(html).toContain("À fournir");
@@ -118,7 +167,7 @@ describe("document bancaire", () => {
     const dossier = structuredClone(completeDemoDossier);
     dossier.assets.push({
       id: "fictional-securities",
-      ownerIds: ["samir-diallo"],
+      ownerIds: ["mathieu-roux"],
       label: "Portefeuille fictif",
       category: "securities",
       amountCents: 100_000,

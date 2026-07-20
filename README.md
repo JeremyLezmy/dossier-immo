@@ -1,6 +1,6 @@
 # Dossier Immo
 
-Application local-first de création d'un dossier bancaire immobilier français. Elle guide la saisie du foyer, des revenus, du patrimoine, des dettes, du projet et des budgets, puis produit une synthèse PDF déterministe de treize pages.
+Application local-first de création d'un dossier bancaire immobilier français. Elle guide la saisie du foyer, des revenus, du patrimoine, des dettes, du projet et des budgets, puis produit une synthèse PDF déterministe pouvant compter jusqu'à treize pages selon les sections réellement renseignées.
 
 Les données restent dans le navigateur. Le fichier `.dossier-immo.json` téléchargé par l'utilisateur est la sauvegarde officielle ; IndexedDB fournit uniquement un brouillon de récupération. Il n'existe ni compte, backend, télémétrie ni stockage distant.
 
@@ -21,13 +21,14 @@ Sous PowerShell, utiliser `corepack.cmd` si la stratégie d'exécution bloque le
 
 - onze étapes de saisie avec aide contextuelle ;
 - guide détaillé en rubriques repliables couvrant chaque étape, ses impacts et ses contrôles utiles ;
-- exemple fictif complet et dossier vierge ;
+- trois exemples fictifs complets et dossier vierge ;
 - validation Zod avec erreurs localisées ;
 - calculs TypeScript purs, montants en centimes et taux en points de base ;
 - scénarios de financement et budgets central/stress ;
 - autosauvegarde IndexedDB, reprise et import strict du contrat courant ;
-- export JSON portable, aperçu et PDF de treize pages ;
+- export JSON portable, aperçu repliable ou plein écran et PDF pouvant compter jusqu'à treize pages ;
 - actions et état d'autosauvegarde accessibles sur mobile, tablette et desktop ;
+- accès direct à l'aperçu depuis l'en-tête mobile et thèmes repliés par défaut sur petit écran ;
 - navigation responsive libellée, progression et erreurs actionnables jusqu'au champ concerné ;
 - écrans métier adaptatifs, dont un comparatif budgétaire empilé sur mobile et tablette ;
 - fiches créées par l'utilisateur repliables avec état mémorisé et duplication contrôlée des scénarios de financement ;
@@ -65,10 +66,11 @@ Le modèle, les calculs et le document ne dépendent pas de React. L'interface o
 
 ## Confidentialité
 
-- Exemple fictif : [config.example/dossier.json](config.example/dossier.json)
+- Exemple fictif principal : [config.example/dossier.json](config.example/dossier.json)
+- Catalogue des trois profils : [config.example/dossiers](config.example/dossiers) et [docs/DEMO_DOSSIERS.md](docs/DEMO_DOSSIERS.md)
 - JSON Schema : [docs/schema/dossier.json](docs/schema/dossier.json)
 
-Ne jamais committer `private/`, `output/`, les justificatifs, PDF ou exports réels. L'exemple inclus est volontairement fictif et ne doit jamais être remplacé par un dossier réel.
+Ne jamais committer `private/`, `output/`, les justificatifs, PDF ou exports réels. Les exemples inclus sont volontairement fictifs et ne doivent jamais être remplacés par un dossier réel.
 
 ## Documentation essentielle
 

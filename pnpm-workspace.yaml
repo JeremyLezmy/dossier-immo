@@ -14,6 +14,7 @@ blockExoticSubdeps: true
 strictDepBuilds: true
 verifyStoreIntegrity: true
 verifyDepsBeforeRun: error
+enableGlobalVirtualStore: false
 linkWorkspacePackages: true
 preferWorkspacePackages: true
 saveExact: true

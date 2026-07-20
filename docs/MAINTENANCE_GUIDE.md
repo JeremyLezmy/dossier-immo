@@ -4,7 +4,7 @@
 
 L’application est entièrement locale. IndexedDB contient seulement un brouillon de confort ; le fichier `.dossier-immo.json` téléchargé par l’utilisateur est la sauvegarde canonique. Aucun compte, serveur applicatif ou envoi de justificatif n’est requis.
 
-Les données réelles restent dans `private/` ou hors du dépôt. `config.example/dossier.json` est entièrement fictif et constitue l’unique exemple publiable.
+Les données réelles restent dans `private/` ou hors du dépôt. `config.example/dossier.json` et `config.example/dossiers/` sont entièrement fictifs et constituent les seuls exemples publiables.
 
 ## Commandes courantes
 
@@ -19,7 +19,7 @@ corepack pnpm test:e2e
 - `corepack pnpm dev` lance l’éditeur local ;
 - `corepack pnpm contracts:export` régénère le JSON Schema et l’exemple depuis leurs sources TypeScript ;
 - `corepack pnpm build` enchaîne typage strict, tests unitaires/contractuels et build PWA ;
-- `corepack pnpm test:e2e` exécute les parcours réels sous Edge/Chromium et contrôle le PDF de 13 pages ;
+- `corepack pnpm test:e2e` exécute les parcours réels sous Edge/Chromium et contrôle le PDF complet de référence de 13 pages ;
 - `corepack pnpm test:e2e:update` ne s’utilise qu’après revue visuelle volontaire pour accepter de nouvelles captures.
 
 ## Chaîne d’approvisionnement Corepack/pnpm
@@ -62,7 +62,7 @@ Le résultat calculé conserve une provenance pour les agrégats critiques. Le r
 
 ## Faire évoluer le document
 
-`packages/document` rend treize sections A4 déterministes depuis le dossier validé et le résultat calculé. Le CSS écran et le CSS d’impression appartiennent au même renderer. Un changement volontaire suit ce protocole :
+`packages/document` rend jusqu'à treize sections A4 déterministes depuis le dossier validé et le résultat calculé. La fixture complète en produit treize ; une page ou un sous-bloc sans donnée métier doit être omis, sans tableau vide ni mention artificielle « non concerné ». Le CSS écran et le CSS d’impression appartiennent au même renderer. Un changement volontaire suit ce protocole :
 
 1. lancer `corepack pnpm test:e2e:update` ;
 2. ouvrir les captures produites et le PDF de test ;
@@ -70,7 +70,7 @@ Le résultat calculé conserve une provenance pour les agrégats critiques. Le r
 4. relancer `corepack pnpm test:e2e` sans mise à jour ;
 5. documenter la décision de design.
 
-Le contrôle automatisé de mise en page s’exécute avec `corepack pnpm check:layout -- config.example/dossier.json`. La génération ponctuelle d’un PDF se fait avec `corepack pnpm generate:pdf -- <dossier.json> <sortie.pdf>` et ne remplace pas la revue visuelle des treize pages.
+Le contrôle automatisé de mise en page s’exécute avec `corepack pnpm check:layout -- config.example/dossier.json`. La génération ponctuelle d’un PDF se fait avec `corepack pnpm generate:pdf -- <dossier.json> <sortie.pdf>` et ne remplace pas la revue visuelle de toutes les pages effectivement produites.
 
 ## Import, sauvegarde et reprise
 
@@ -83,6 +83,7 @@ Le contrôle automatisé de mise en page s’exécute avec `corepack pnpm check:
 - chaque contrôle invalide expose sémantiquement son état et le message associé ;
 - « Sauvegarder le dossier » produit le fichier canonique transportable ;
 - le menu « Actions du dossier » garde l’ouverture et la sauvegarde accessibles sur les écrans étroits ;
+- un bouton d'en-tête ouvre directement l'aperçu sur mobile ; dans l'étape finale, le sélecteur de thèmes est replié par défaut sous 760 px et le plein écran le referme pour maximiser la surface du document ;
 - « Effacer les brouillons » demande confirmation avant de supprimer l’état local de l’application ;
 - succès, avertissements et erreurs utilisent des retours visuels et sémantiques distincts ;
 - la génération du PDF verrouille son action jusqu'à la fin de l'opération.
@@ -97,7 +98,7 @@ Une évolution future du stockage doit préserver la récupération sûre des br
 
 ## Contrôles avant diffusion d’un PDF
 
-Vérifier identités et dates, revenus et périodes, apport et réserve, dettes et échéances, taux/assurance/frais, budget central et stress, absence de placeholder, lisibilité des treize pages et liste des justificatifs. Les hypothèses financières restent qualifiées d’indicatives.
+Vérifier identités et dates, revenus et périodes, apport et réserve, dettes et échéances, taux/assurance/frais, budget central et stress, absence de placeholder ou de bloc vide, lisibilité de toutes les pages produites et liste des justificatifs. Les hypothèses financières restent qualifiées d’indicatives.
 
 ## Confidentialité et publication
 

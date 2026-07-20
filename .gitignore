@@ -22,6 +22,9 @@ PIECES_JUSTIFICATIVES_PRIVEES/
 *.jpeg
 *.png
 !tests/e2e/**/*.png
+!apps/web/public/brand-icon-192.png
+!apps/web/public/brand-icon-512.png
+!apps/web/public/brand-maskable-512.png
 *.heic
 *.xlsx
 *.xls

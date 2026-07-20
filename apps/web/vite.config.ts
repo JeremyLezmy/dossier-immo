@@ -9,7 +9,12 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "script-defer",
-      includeAssets: [],
+      includeAssets: [
+        "brand-mark.svg",
+        "brand-icon-192.png",
+        "brand-icon-512.png",
+        "brand-maskable-512.png",
+      ],
       manifest: {
         name: "Dossier Immo",
         short_name: "Dossier Immo",
@@ -19,6 +24,26 @@ export default defineConfig({
         display: "standalone",
         lang: "fr",
         start_url: "./",
+        icons: [
+          {
+            src: "brand-icon-192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "brand-icon-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "brand-maskable-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ],
       },
       workbox: {
         navigateFallback: "index.html",
@@ -33,9 +58,22 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id.includes("node_modules")) return undefined;
-          if (["html2canvas", "css-line-break", "text-segmentation"].some((dependency) => id.includes(dependency)))
+          if (
+            ["html2canvas", "css-line-break", "text-segmentation"].some(
+              (dependency) => id.includes(dependency),
+            )
+          )
             return "pdf-canvas";
-          if (["jspdf", "dompurify", "canvg", "fflate", "fast-png", "rgbcolor"].some((dependency) => id.includes(dependency)))
+          if (
+            [
+              "jspdf",
+              "dompurify",
+              "canvg",
+              "fflate",
+              "fast-png",
+              "rgbcolor",
+            ].some((dependency) => id.includes(dependency))
+          )
             return "pdf-writer";
           if (id.includes("react") || id.includes("scheduler")) return "react";
           if (id.includes("zod") || id.includes("hookform")) return "forms";

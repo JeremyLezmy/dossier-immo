@@ -9,7 +9,7 @@ Cette architecture répond directement au produit : partage par simple URL, fonc
 ## Frontières durables
 
 ```text
-fichier JSON -> validation -> calculs purs -> renderer 13 pages
+fichier JSON -> validation -> calculs purs -> renderer de 1 à 13 pages pertinentes
                          \-> éditeur React -> brouillon IndexedDB
 ```
 

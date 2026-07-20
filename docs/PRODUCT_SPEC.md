@@ -21,13 +21,14 @@ Permettre à un particulier français de constituer, comprendre, sauvegarder et 
 - distinction déclaré / hypothèse / calculé ;
 - validation avant export ;
 - rendu bancaire déterministe et testé ;
-- exemple fictif complet couvrant toutes les sections ;
+- catalogue de trois exemples fictifs complets couvrant collectivement toutes les sections ;
 - accessibilité clavier et responsive mobile/tablette/desktop ;
+- aperçu direct depuis l'en-tête mobile, sélecteur de thèmes repliable et mode plein écran ;
 - accès permanent à l'ouverture, à la sauvegarde officielle et à l'état d'autosauvegarde, quelle que soit la taille d'écran.
 
 ## Parcours principal
 
-1. choisir « exemple complet » ou « dossier vierge » ;
+1. choisir l'un des trois exemples complets ou un dossier vierge ;
 2. renseigner le foyer ;
 3. décrire activités et revenus ;
 4. ajouter historique des indépendants ;

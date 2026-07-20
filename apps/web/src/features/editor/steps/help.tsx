@@ -17,12 +17,13 @@ const topics = [
   {
     id: "start",
     title: "Bien démarrer",
-    summary: "Choisir le bon point de départ et suivre un ordre de saisie efficace.",
+    summary:
+      "Choisir le bon point de départ et suivre un ordre de saisie efficace.",
     blocks: [
       {
         title: "Choisir une base",
         items: [
-          "Nouveau dossier crée une base minimale à compléter ; Charger l’exemple fictif permet d’explorer toutes les fonctions sans utiliser de données réelles.",
+          "Nouveau dossier crée une base minimale à compléter ; Charger l’exemple fictif ouvre trois profils synthétiques pour explorer les fonctions sans utiliser de données réelles.",
           "Ouvrir un dossier importe un fichier .dossier-immo.json existant après validation stricte de son format.",
           "Avant de remplacer un dossier en cours, exportez-le si vous souhaitez disposer d’une sauvegarde indépendante du navigateur.",
         ],
@@ -48,7 +49,8 @@ const topics = [
   {
     id: "overview",
     title: "Synthèse et validation",
-    summary: "Mesurer l’avancement et corriger directement les données invalides.",
+    summary:
+      "Mesurer l’avancement et corriger directement les données invalides.",
     blocks: [
       {
         title: "Ce que montre la synthèse",
@@ -71,7 +73,8 @@ const topics = [
   {
     id: "household",
     title: "Foyer",
-    summary: "Identifier les personnes concernées par le projet et leurs évolutions prévisibles.",
+    summary:
+      "Identifier les personnes concernées par le projet et leurs évolutions prévisibles.",
     blocks: [
       {
         title: "Personnes à renseigner",
@@ -94,7 +97,8 @@ const topics = [
   {
     id: "income",
     title: "Revenus",
-    summary: "Séparer activité professionnelle, revenu retenu et historique observé.",
+    summary:
+      "Séparer activité professionnelle, revenu retenu et historique observé.",
     blocks: [
       {
         title: "Activités professionnelles",
@@ -125,7 +129,8 @@ const topics = [
   {
     id: "assets",
     title: "Patrimoine",
-    summary: "Décrire les actifs actuels, leur disponibilité pour l’apport et leur évolution.",
+    summary:
+      "Décrire les actifs actuels, leur disponibilité pour l’apport et leur évolution.",
     blocks: [
       {
         title: "Situation actuelle",
@@ -148,7 +153,8 @@ const topics = [
   {
     id: "liabilities",
     title: "Passifs",
-    summary: "Recenser les engagements existants encore actifs à la date d’achat.",
+    summary:
+      "Recenser les engagements existants encore actifs à la date d’achat.",
     blocks: [
       {
         title: "Informations déterminantes",
@@ -171,7 +177,8 @@ const topics = [
   {
     id: "project",
     title: "Projet et réserve",
-    summary: "Fixer le coût du projet, les critères recherchés et la trésorerie conservée.",
+    summary:
+      "Fixer le coût du projet, les critères recherchés et la trésorerie conservée.",
     blocks: [
       {
         title: "Cadre financier",
@@ -233,7 +240,8 @@ const topics = [
   {
     id: "budgets",
     title: "Budgets et Sankey",
-    summary: "Comparer le quotidien central avec une hypothèse de stress cohérente.",
+    summary:
+      "Comparer le quotidien central avec une hypothèse de stress cohérente.",
     blocks: [
       {
         title: "Deux lectures du budget",
@@ -263,7 +271,8 @@ const topics = [
   {
     id: "documents",
     title: "Pièces justificatives",
-    summary: "Préparer un inventaire de suivi sans stocker les documents sensibles.",
+    summary:
+      "Préparer un inventaire de suivi sans stocker les documents sensibles.",
     blocks: [
       {
         title: "Rôle de l’inventaire",
@@ -286,7 +295,8 @@ const topics = [
   {
     id: "presentation",
     title: "Textes et présentation",
-    summary: "Adapter le discours bancaire et la présentation sans altérer les calculs.",
+    summary:
+      "Adapter le discours bancaire et la présentation sans altérer les calculs.",
     blocks: [
       {
         title: "Paramètres et thèmes",
@@ -316,7 +326,8 @@ const topics = [
   {
     id: "preview",
     title: "Aperçu et PDF",
-    summary: "Relire les treize pages et produire localement le document bancaire.",
+    summary:
+      "Relire les treize pages et produire localement le document bancaire.",
     blocks: [
       {
         title: "Aperçu",
@@ -339,7 +350,8 @@ const topics = [
   {
     id: "local-data",
     title: "Sauvegarde locale, confidentialité et limites",
-    summary: "Distinguer brouillon de récupération, sauvegarde officielle et portée des résultats.",
+    summary:
+      "Distinguer brouillon de récupération, sauvegarde officielle et portée des résultats.",
     blocks: [
       {
         title: "Brouillon et sauvegarde",
