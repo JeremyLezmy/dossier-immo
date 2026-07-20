@@ -83,7 +83,7 @@ button:disabled {
   align-items: center;
   gap: 8px;
 }
-.topbar__mobile-preview-action {
+.topbar__actions .topbar__mobile-preview-action {
   display: none;
 }
 .save-state {
@@ -1831,7 +1831,7 @@ button:disabled {
   .pdf-label--short {
     display: inline;
   }
-  .topbar__mobile-preview-action {
+  .topbar__actions .topbar__mobile-preview-action {
     display: grid;
     width: 40px;
     min-height: 40px;
