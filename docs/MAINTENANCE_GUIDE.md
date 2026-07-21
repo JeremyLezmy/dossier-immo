@@ -60,6 +60,10 @@ Les fonctions de `packages/calculations` restent pures : aucune lecture du navig
 
 Le résultat calculé conserve une provenance pour les agrégats critiques. Le renderer ne doit pas recalculer une mensualité, une réserve ou un ratio.
 
+Le financement multi-prêts repose sur une chronologie mensuelle unique dans `packages/calculations`. `durationMonths` désigne l’amortissement et `deferredMonths` la période préalable ; aucune couche ne doit interpréter la durée comme incluant le différé. Pendant celui-ci, le capital reste constant, avec paiement nul hors assurance à taux zéro ou intérêts seuls à taux positif. Les budgets, le Sankey, le taux d’effort et le document consomment la mensualité maximale assurance comprise. L’assurance reste constante et fondée sur le capital initial total.
+
+L’interface peut convertir une saisie en années vers des mois, mais le schéma et le fichier canonique conservent uniquement des mois entiers. Ne jamais ajouter une unité persistée ou un échéancier au dossier pour répondre à un besoin de présentation.
+
 ## Faire évoluer le document
 
 `packages/document` rend jusqu'à treize sections A4 déterministes depuis le dossier validé et le résultat calculé. La fixture complète en produit treize ; une page ou un sous-bloc sans donnée métier doit être omis, sans tableau vide ni mention artificielle « non concerné ». Le CSS écran et le CSS d’impression appartiennent au même renderer. Un changement volontaire suit ce protocole :
@@ -98,7 +102,7 @@ Une évolution future du stockage doit préserver la récupération sûre des br
 
 ## Contrôles avant diffusion d’un PDF
 
-Vérifier identités et dates, revenus et périodes, apport et réserve, dettes et échéances, taux/assurance/frais, budget central et stress, absence de placeholder ou de bloc vide, lisibilité de toutes les pages produites et liste des justificatifs. Les hypothèses financières restent qualifiées d’indicatives.
+Vérifier identités et dates, revenus et périodes, apport et réserve, dettes et échéances, taux/assurance/frais, durées d’amortissement, différés, mensualité maximale, budget central et stress, absence de placeholder ou de bloc vide, lisibilité de toutes les pages produites et liste des justificatifs. Les hypothèses financières restent qualifiées d’indicatives et les PTZ estimatifs doivent être confirmés par le professionnel.
 
 ## Confidentialité et publication
 

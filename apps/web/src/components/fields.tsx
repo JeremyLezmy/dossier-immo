@@ -193,6 +193,45 @@ export function RateField({ label, name, control, optional = false, ...guidance 
   return <Controller name={name} control={control} render={({ field }) => <Field label={label} error={validation.error} descriptionId={describedBy} controlId={id} {...guidance}><div className="input-affix"><input id={id} type="number" min="0" step="0.01" aria-invalid={Boolean(validation.error)} aria-describedby={describedBy} value={field.value == null ? "" : Number(field.value) / 100} placeholder={optional ? "Non renseigné" : undefined} onChange={(event) => field.onChange(optional && event.target.value === "" ? undefined : Math.round(Number(event.target.value || 0) * 100))} onBlur={field.onBlur} /><span>%</span></div></Field>} />;
 }
 
+interface DurationFieldProps extends Guidance {
+  readonly label: string;
+  readonly name: FieldPath<Dossier>;
+  readonly control: Control<Dossier>;
+  readonly hint?: string | undefined;
+  readonly allowZero?: boolean | undefined;
+}
+
+function preferredDurationUnit(value: unknown): "months" | "years" {
+  const months = Number(value);
+  return Number.isInteger(months) && months >= 12 && months % 12 === 0 ? "years" : "months";
+}
+
+function DurationInput({ id, label, value, invalid, describedBy, allowZero, onChange, onBlur }: {
+  readonly id: string;
+  readonly label: string;
+  readonly value: unknown;
+  readonly invalid: boolean;
+  readonly describedBy?: string | undefined;
+  readonly allowZero: boolean;
+  readonly onChange: (value: number) => void;
+  readonly onBlur: () => void;
+}) {
+  const [unit, setUnit] = useState<"months" | "years">(() => preferredDurationUnit(value));
+  const months = Number(value);
+  const displayValue = Number.isFinite(months) ? unit === "years" ? Number((months / 12).toFixed(4)) : months : "";
+  return <div className="duration-input">
+    <input id={id} type="number" min={allowZero ? 0 : unit === "years" ? 1 / 12 : 1} step={unit === "years" ? "any" : 1} value={displayValue} aria-invalid={invalid} aria-describedby={describedBy} onChange={(event) => onChange(event.target.value === "" ? Number.NaN : Math.round(Number(event.target.value) * (unit === "years" ? 12 : 1)))} onBlur={onBlur} />
+    <select value={unit} aria-label={`Unité — ${label}`} onChange={(event) => setUnit(event.target.value as "months" | "years")}><option value="years">Années</option><option value="months">Mois</option></select>
+  </div>;
+}
+
+export function DurationField({ label, name, control, hint, allowZero = false, ...guidance }: DurationFieldProps) {
+  const id = fieldId(name);
+  const validation = useFieldValidation(name);
+  const describedBy = hint || validation.error ? `${id}-description` : undefined;
+  return <Controller name={name} control={control} render={({ field }) => <Field label={label} hint={hint} error={validation.error} descriptionId={describedBy} controlId={id} {...guidance}><DurationInput id={id} label={label} value={field.value} invalid={Boolean(validation.error)} describedBy={describedBy} allowZero={allowZero} onChange={field.onChange} onBlur={field.onBlur} /></Field>} />;
+}
+
 export function SelectField({ label, name, register, options, ...guidance }: { readonly label: string; readonly name: FieldPath<Dossier>; readonly register: UseFormRegister<Dossier>; readonly options: readonly [string, string][] } & Guidance) {
   const id = fieldId(name);
   const validation = useFieldValidation(name);

@@ -24,7 +24,7 @@ Sous PowerShell, utiliser `corepack.cmd` si la stratégie d'exécution bloque le
 - trois exemples fictifs complets et dossier vierge ;
 - validation Zod avec erreurs localisées ;
 - calculs TypeScript purs, montants en centimes et taux en points de base ;
-- scénarios de financement et budgets central/stress ;
+- scénarios de financement simples ou composés, durées saisissables en années/mois, différé par phases et budgets fondés sur la mensualité maximale ;
 - autosauvegarde IndexedDB, reprise et import strict du contrat courant ;
 - export JSON portable, aperçu repliable ou plein écran et PDF pouvant compter jusqu'à treize pages ;
 - actions et état d'autosauvegarde accessibles sur mobile, tablette et desktop ;

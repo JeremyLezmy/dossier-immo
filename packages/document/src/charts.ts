@@ -104,7 +104,7 @@ export function renderBudgetSankey(dossier: Dossier, derived: DerivedDossier): s
 
   const existingDebt = derived.existingMonthlyDebtAtPurchaseCents;
 
-  const mortgage = scenario.monthlyPaymentIncludingInsuranceCents;
+  const mortgage = scenario.maximumMonthlyPaymentIncludingInsuranceCents;
 
   const liability = dossier.liabilities.find((item) => item.includedInEffortRate && item.endDate);
 

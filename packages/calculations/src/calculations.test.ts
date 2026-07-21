@@ -3,7 +3,9 @@ import fc from "fast-check";
 import { completeDemoDossier } from "@dossier-immo/fixtures";
 import {
   calculateDossier,
+  deferredLoanPaymentCents,
   monthlyPaymentCents,
+  remainingPrincipalAfterDefermentCents,
   remainingPrincipalCents,
 } from "./index";
 
@@ -22,7 +24,7 @@ describe("moteur de calcul", () => {
     expect(result.highlightedScenarioId).toBe("family-central");
   });
 
-  it("compose une seule fois mensualité, assurance et dette existante", () => {
+  it("compose une seule fois le pic de mensualité, l'assurance et la dette existante", () => {
     const result = calculateDossier(completeDemoDossier);
     const central = result.financingScenarios.find(
       (scenario) => scenario.id === "family-central",
@@ -30,18 +32,144 @@ describe("moteur de calcul", () => {
     expect(central).toBeDefined();
     expect(central!.principalCents).toBe(40_327_000);
     expect(central!.monthlyInsuranceCents).toBe(6_721);
-    expect(central!.monthlyPaymentIncludingInsuranceCents).toBe(
-      central!.monthlyPaymentExcludingInsuranceCents +
+    expect(central!.initialMonthlyPaymentIncludingInsuranceCents).toBeLessThan(
+      central!.maximumMonthlyPaymentIncludingInsuranceCents,
+    );
+    expect(central!.maximumPaymentStartMonth).toBe(61);
+    expect(central!.maximumMonthlyPaymentIncludingInsuranceCents).toBe(
+      central!.maximumMonthlyPaymentExcludingInsuranceCents +
         central!.monthlyInsuranceCents,
     );
     expect(central!.effortRateCentralBasisPoints).toBe(
       Math.round(
-        ((central!.monthlyPaymentIncludingInsuranceCents +
+        ((central!.maximumMonthlyPaymentIncludingInsuranceCents +
           result.existingMonthlyDebtAtPurchaseCents) /
           642_000) *
           10_000,
       ),
     );
+  });
+
+  it("conserve le comportement simple du prêt principal sans différé", () => {
+    const dossier = structuredClone(completeDemoDossier);
+    const central = dossier.financingScenarios.find(
+      (scenario) => scenario.id === "family-central",
+    )!;
+    central.additionalLoanComponents = [];
+
+    const result = calculateDossier(dossier).financingScenarios.find(
+      (scenario) => scenario.id === central.id,
+    )!;
+    const expected = monthlyPaymentCents(
+      result.principalCents,
+      central.annualRateBasisPoints,
+      central.durationMonths,
+    );
+
+    expect(result.initialMonthlyPaymentExcludingInsuranceCents).toBe(expected);
+    expect(result.maximumMonthlyPaymentExcludingInsuranceCents).toBe(expected);
+    expect(result.maximumPaymentStartMonth).toBe(1);
+  });
+
+  it("applique un différé sans paiement à une tranche à taux zéro", () => {
+    expect(deferredLoanPaymentCents(3_000_000, 0, 240, 60, 1)).toBe(0);
+    expect(deferredLoanPaymentCents(3_000_000, 0, 240, 60, 60)).toBe(0);
+    expect(deferredLoanPaymentCents(3_000_000, 0, 240, 60, 61)).toBe(12_500);
+    expect(
+      remainingPrincipalAfterDefermentCents(3_000_000, 0, 240, 60, 60),
+    ).toBe(3_000_000);
+    expect(
+      remainingPrincipalAfterDefermentCents(3_000_000, 0, 240, 60, 180),
+    ).toBe(1_500_000);
+    expect(
+      remainingPrincipalAfterDefermentCents(3_000_000, 0, 240, 60, 300),
+    ).toBe(0);
+  });
+
+  it("limite une tranche à taux positif aux intérêts pendant son différé", () => {
+    const interestOnlyPayment = Math.round((3_000_000 * 600) / 10_000 / 12);
+    expect(deferredLoanPaymentCents(3_000_000, 600, 120, 24, 1)).toBe(
+      interestOnlyPayment,
+    );
+    expect(deferredLoanPaymentCents(3_000_000, 600, 120, 24, 24)).toBe(
+      interestOnlyPayment,
+    );
+    expect(deferredLoanPaymentCents(3_000_000, 600, 120, 24, 25)).toBe(
+      monthlyPaymentCents(3_000_000, 600, 120),
+    );
+    expect(
+      remainingPrincipalAfterDefermentCents(3_000_000, 600, 120, 24, 24),
+    ).toBe(3_000_000);
+    expect(
+      remainingPrincipalAfterDefermentCents(3_000_000, 600, 120, 24, 25),
+    ).toBeLessThan(3_000_000);
+  });
+
+  it("trouve le premier mois du pic avec plusieurs tranches décalées", () => {
+    const dossier = structuredClone(completeDemoDossier);
+    const central = dossier.financingScenarios.find(
+      (scenario) => scenario.id === "family-central",
+    )!;
+    central.additionalLoanComponents = [
+      {
+        id: "deferred-first",
+        label: "Première tranche différée",
+        amountCents: 3_000_000,
+        annualRateBasisPoints: 0,
+        durationMonths: 60,
+        deferredMonths: 12,
+      },
+      {
+        id: "deferred-second",
+        label: "Seconde tranche différée",
+        amountCents: 2_400_000,
+        annualRateBasisPoints: 0,
+        durationMonths: 36,
+        deferredMonths: 24,
+      },
+    ];
+
+    const result = calculateDossier(dossier).financingScenarios.find(
+      (scenario) => scenario.id === central.id,
+    )!;
+    expect(result.maximumPaymentStartMonth).toBe(25);
+    expect(result.initialMonthlyPaymentExcludingInsuranceCents).toBeLessThan(
+      result.maximumMonthlyPaymentExcludingInsuranceCents,
+    );
+    expect(
+      result.loanComponents.map((component) => component.totalDurationMonths),
+    ).toEqual([300, 72, 60]);
+  });
+
+  it("gère une tranche complémentaire qui couvre tout le capital", () => {
+    const dossier = structuredClone(completeDemoDossier);
+    const central = dossier.financingScenarios.find(
+      (scenario) => scenario.id === "family-central",
+    )!;
+    const baseline = calculateDossier(dossier).financingScenarios.find(
+      (scenario) => scenario.id === central.id,
+    )!;
+    central.additionalLoanComponents = [
+      {
+        id: "full-capital-component",
+        label: "Tranche unique",
+        amountCents: baseline.principalCents,
+        annualRateBasisPoints: 0,
+        durationMonths: 240,
+        deferredMonths: 60,
+      },
+    ];
+
+    const result = calculateDossier(dossier).financingScenarios.find(
+      (scenario) => scenario.id === central.id,
+    )!;
+    expect(result.standardPrincipalCents).toBe(0);
+    expect(result.loanComponents[0]?.principalCents).toBe(0);
+    expect(result.initialMonthlyPaymentExcludingInsuranceCents).toBe(0);
+    expect(result.maximumMonthlyPaymentExcludingInsuranceCents).toBe(
+      monthlyPaymentCents(baseline.principalCents, 0, 240),
+    );
+    expect(result.maximumPaymentStartMonth).toBe(61);
   });
 
   it("gère les prêts à taux zéro et le capital restant dû", () => {
@@ -109,10 +237,10 @@ describe("moteur de calcul", () => {
     const result = calculateDossier(dossier);
     const centralPayment = result.financingScenarios.find(
       (scenario) => scenario.id === "family-central",
-    )!.monthlyPaymentIncludingInsuranceCents;
+    )!.maximumMonthlyPaymentIncludingInsuranceCents;
     const stressPayment = result.financingScenarios.find(
       (scenario) => scenario.id === "family-rate-stress",
-    )!.monthlyPaymentIncludingInsuranceCents;
+    )!.maximumMonthlyPaymentIncludingInsuranceCents;
 
     expect(result.budgetIncomeCents[centralBudget!.id]).toBe(724_000);
     expect(result.budgetIncomeCents[stressBudget!.id]).toBe(600_000);
@@ -163,7 +291,7 @@ describe("moteur de calcul", () => {
     const result = calculateDossier(dossier);
     const highlightedPayment = result.financingScenarios.find(
       (scenario) => scenario.id === result.highlightedScenarioId,
-    )!.monthlyPaymentIncludingInsuranceCents;
+    )!.maximumMonthlyPaymentIncludingInsuranceCents;
     expect(result.budgetIncomeCents[stressBudget!.id]).toBe(
       dossier.estimatedHouseholdAfterTaxIncomeCents,
     );
@@ -197,6 +325,48 @@ describe("moteur de calcul", () => {
           expect(remainingPrincipalCents(principal, rate, months, months)).toBe(
             0,
           );
+        },
+      ),
+      { numRuns: 500 },
+    );
+  });
+
+  it("borne le capital différé et le conserve jusqu'au début de l'amortissement", () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 1, max: 200_000_000 }),
+        fc.integer({ min: 0, max: 2_000 }),
+        fc.integer({ min: 1, max: 600 }),
+        fc.integer({ min: 0, max: 120 }),
+        (principal, rate, duration, deferred) => {
+          expect(
+            remainingPrincipalAfterDefermentCents(
+              principal,
+              rate,
+              duration,
+              deferred,
+              deferred,
+            ),
+          ).toBe(principal);
+          expect(
+            remainingPrincipalAfterDefermentCents(
+              principal,
+              rate,
+              duration,
+              deferred,
+              deferred + duration,
+            ),
+          ).toBe(0);
+          const afterFirstAmortization = remainingPrincipalAfterDefermentCents(
+            principal,
+            rate,
+            duration,
+            deferred,
+            deferred + 1,
+          );
+          expect(Number.isInteger(afterFirstAmortization)).toBe(true);
+          expect(afterFirstAmortization).toBeGreaterThanOrEqual(0);
+          expect(afterFirstAmortization).toBeLessThanOrEqual(principal);
         },
       ),
       { numRuns: 500 },

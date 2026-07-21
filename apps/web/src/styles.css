@@ -353,6 +353,14 @@ button:disabled {
   color: var(--muted);
   font-size: 12px;
 }
+.duration-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(92px, 0.42fr);
+  gap: 8px;
+}
+.duration-input select {
+  min-width: 0;
+}
 .stack {
   display: grid;
   gap: 14px;

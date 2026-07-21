@@ -39,6 +39,28 @@ describe("fixtures", () => {
     ).toBe(true);
   });
 
+  it("conserve le contrat v3 et les deux exemples de composition de financement", () => {
+    expect(
+      demoDossierCatalog.every((demo) => demo.dossier.schemaVersion === 3),
+    ).toBe(true);
+    const complementaryLoans = demoDossierCatalog.flatMap((demo) =>
+      demo.dossier.financingScenarios.flatMap(
+        (scenario) => scenario.additionalLoanComponents,
+      ),
+    );
+    expect(complementaryLoans.map((loan) => loan.label)).toEqual([
+      "Prêt employeur",
+      "Prêt à taux zéro estimatif",
+    ]);
+    expect(
+      complementaryLoans.every(
+        (loan) =>
+          Number.isInteger(loan.durationMonths) &&
+          Number.isInteger(loan.deferredMonths),
+      ),
+    ).toBe(true);
+  });
+
   it("fournit pour chaque profil une véritable lettre bancaire structurée", () => {
     for (const demo of demoDossierCatalog) {
       const letter = demo.dossier.editorial.presentationLetter;

@@ -87,6 +87,40 @@ describe("document bancaire", () => {
     expect(html).not.toContain("[A_COMPLETER]");
   });
 
+  it("présente les phases et la composition uniquement lorsqu'un prêt complémentaire existe", () => {
+    expect(html).toContain("Composition du financement — Projet central");
+    expect(html).toContain("Prêt principal");
+    expect(html).toContain("Prêt à taux zéro estimatif");
+    expect(html).toContain("0 € hors assurance pendant 60 mois");
+    expect(html).toContain("mensualité initiale estimée");
+    expect(html).toContain("à partir du mois 61");
+
+    const retired = demoDossierCatalog.find(
+      (demo) => demo.id === "retired-rental-investor",
+    )!;
+    const retiredHtml = renderBankDocument(
+      retired.dossier,
+      calculateDossier(retired.dossier),
+    );
+    expect(retiredHtml).not.toContain("Composition du financement —");
+    expect(retiredHtml).not.toContain(
+      '<table class="compact financing-composition-table">',
+    );
+  });
+
+  it("décrit les intérêts seuls d'une tranche positive différée", () => {
+    const dossier = structuredClone(completeDemoDossier);
+    const scenario = dossier.financingScenarios.find(
+      (candidate) => candidate.id === "family-central",
+    )!;
+    scenario.additionalLoanComponents[0]!.annualRateBasisPoints = 600;
+    const positiveRateHtml = renderBankDocument(
+      dossier,
+      calculateDossier(dossier),
+    );
+    expect(positiveRateHtml).toContain("d’intérêts seuls pendant 60 mois");
+  });
+
   it("inclut le Sankey accessible et l'annexe indépendante", () => {
     expect(html).toContain('aria-labelledby="sankey-title sankey-desc"');
     expect(html).toContain("Annexe — revenus indépendants par emprunteur");
