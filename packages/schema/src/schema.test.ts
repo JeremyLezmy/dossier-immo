@@ -126,6 +126,54 @@ describe("DossierSchema", () => {
       ).toBe(true);
   });
 
+  it("accepte qu'une tranche complémentaire épuise exactement le capital à financer", () => {
+    const valid = structuredClone(completeDemoDossier);
+    const scenario = valid.financingScenarios.find(
+      (candidate) => candidate.id === "family-central",
+    )!;
+    const priceCents =
+      scenario.priceOverrideCents ?? valid.project.targetPriceCents;
+    const negotiatedPriceCents = Math.round(
+      priceCents * (1 - scenario.negotiationBasisPoints / 10_000),
+    );
+    const feesCents = Math.round(
+      (negotiatedPriceCents * valid.project.acquisitionFeeBasisPoints) / 10_000,
+    );
+    const contributionCents =
+      scenario.contributionOverrideCents ?? valid.project.contributionCents;
+    scenario.additionalLoanComponents = [
+      {
+        id: "full-complementary-loan",
+        label: "Tranche couvrant tout le capital",
+        amountCents:
+          negotiatedPriceCents +
+          feesCents +
+          valid.project.renovationCents -
+          contributionCents,
+        annualRateBasisPoints: 0,
+        durationMonths: 240,
+        deferredMonths: 60,
+      },
+    ];
+    expect(validateDossier(valid).success).toBe(true);
+  });
+
+  it("rejette deux identifiants de tranches identiques dans un même scénario", () => {
+    const invalid = structuredClone(completeDemoDossier);
+    const scenario = invalid.financingScenarios.find(
+      (candidate) => candidate.id === "family-central",
+    )!;
+    scenario.additionalLoanComponents.push({
+      ...scenario.additionalLoanComponents[0]!,
+    });
+    const result = validateDossier(invalid);
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(
+        result.issues.some((issue) => issue.message.includes("dupliqué")),
+      ).toBe(true);
+  });
+
   it("exporte un JSON Schema strict", () => {
     const schema = dossierJsonSchema() as {
       type?: string;

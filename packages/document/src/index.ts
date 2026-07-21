@@ -1,4 +1,7 @@
-import type { DerivedDossier } from "@dossier-immo/calculations";
+import type {
+  DerivedDossier,
+  FinancingLoanComponentResult,
+} from "@dossier-immo/calculations";
 import {
   assetCategoryLabels,
   compensationModelLabels,
@@ -132,6 +135,38 @@ function editorial(
   if (position === "callout")
     return `<div class="callout ${className}">${conciseParagraphs(value, 520)}</div>`;
   return `<div class="editorial-${position}">${conciseParagraphs(value, 240)}</div>`;
+}
+
+function loanPaymentPhase(component: FinancingLoanComponentResult): string {
+  if (component.deferredMonths === 0)
+    return `${formatEuro(component.amortizingMonthlyPaymentExcludingInsuranceCents)} dès le mois 1`;
+  const deferredPhase =
+    component.deferredMonthlyPaymentExcludingInsuranceCents === 0
+      ? "0 € hors assurance"
+      : `${formatEuro(component.deferredMonthlyPaymentExcludingInsuranceCents)} d’intérêts seuls`;
+  return `${deferredPhase} pendant ${component.deferredMonths} mois, puis ${formatEuro(component.amortizingMonthlyPaymentExcludingInsuranceCents)}`;
+}
+
+function financingComposition(
+  dossier: Dossier,
+  derived: DerivedDossier,
+): string {
+  return dossier.financingScenarios
+    .filter((scenario) => scenario.additionalLoanComponents.length > 0)
+    .map((scenario) => {
+      const result = derived.financingScenarios.find(
+        (candidate) => candidate.id === scenario.id,
+      );
+      if (!result)
+        throw new Error(`Résultat de financement introuvable : ${scenario.id}`);
+      const paymentSummary =
+        result.initialMonthlyPaymentIncludingInsuranceCents ===
+        result.maximumMonthlyPaymentIncludingInsuranceCents
+          ? ""
+          : `<p class="small financing-phase-summary"><strong>Phases globales :</strong> mensualité initiale estimée ${formatEuro(result.initialMonthlyPaymentIncludingInsuranceCents)} ; mensualité maximale estimée ${formatEuro(result.maximumMonthlyPaymentIncludingInsuranceCents)} à partir du mois ${result.maximumPaymentStartMonth}, assurance comprise.</p>`;
+      return `<h3>Composition du financement — ${escapeHtml(result.label)}</h3><table class="compact financing-composition-table"><thead><tr><th>Ligne</th><th class="num">Montant</th><th class="num">Taux nominal</th><th class="num">Amortissement</th><th class="num">Différé</th><th>Phase estimée hors assurance</th></tr></thead><tbody>${result.loanComponents.map((component) => `<tr><td><strong>${escapeHtml(component.label)}</strong></td><td class="num">${formatEuro(component.principalCents)}</td><td class="num">${formatRate(component.annualRateBasisPoints)}</td><td class="num">${component.durationMonths} mois</td><td class="num">${component.deferredMonths > 0 ? `${component.deferredMonths} mois` : "Aucun"}</td><td>${loanPaymentPhase(component)}</td></tr>`).join("")}</tbody></table>${paymentSummary}`;
+    })
+    .join("");
 }
 
 function ageAt(birthDate: string | undefined, referenceDate: string): string {
@@ -496,7 +531,7 @@ export function renderBankDocument(
         ++pageNumber,
         `
     <h2>Scénarios de financement</h2>${editorial(dossier, "financing", "introduction")}${editorial(dossier, "financing", "callout", "prudent")}
-    <table class="compact financing-table"><thead><tr><th>Scénario</th><th class="num">Prix</th><th class="num">Frais notaire</th><th class="num">Apport</th><th class="num">Prêt</th><th class="num">Taux</th><th class="num">Assurance</th><th class="num">Mensualité</th><th class="num">Effort central</th><th class="num">Effort prudent</th></tr></thead><tbody>${derived.financingScenarios
+    <table class="compact financing-table"><thead><tr><th>Scénario</th><th class="num">Prix</th><th class="num">Frais notaire</th><th class="num">Apport</th><th class="num">Prêt</th><th class="num">Taux</th><th class="num">Assurance</th><th class="num">Mensualité max.</th><th class="num">Effort central</th><th class="num">Effort prudent</th></tr></thead><tbody>${derived.financingScenarios
       .filter(
         (scenario) =>
           dossier.financingScenarios.find((item) => item.id === scenario.id)
@@ -511,11 +546,12 @@ export function renderBankDocument(
         const fees = Math.round(
           (price * dossier.project.acquisitionFeeBasisPoints) / 10_000,
         );
-        return `<tr class="${scenario.id === derived.highlightedScenarioId ? "central-row" : ""}"><td><strong>${escapeHtml(scenario.label)}</strong></td><td class="num">${formatEuro(price)}</td><td class="num">${formatEuro(fees)}</td><td class="num">${formatEuro(source?.contributionOverrideCents ?? dossier.project.contributionCents)}</td><td class="num">${formatEuro(scenario.principalCents)}</td><td class="num">${formatRate(source?.annualRateBasisPoints ?? 0)}</td><td class="num">${formatRate(source?.insuranceAnnualBasisPoints ?? 0)}</td><td class="num"><strong>${formatEuro(scenario.monthlyPaymentIncludingInsuranceCents)}</strong></td><td class="num">${formatRate(scenario.effortRateCentralBasisPoints)}</td><td class="num">${formatRate(scenario.effortRatePrudentBasisPoints)}</td></tr>`;
+        return `<tr class="${scenario.id === derived.highlightedScenarioId ? "central-row" : ""}"><td><strong>${escapeHtml(scenario.label)}</strong></td><td class="num">${formatEuro(price)}</td><td class="num">${formatEuro(fees)}</td><td class="num">${formatEuro(source?.contributionOverrideCents ?? dossier.project.contributionCents)}</td><td class="num">${formatEuro(scenario.principalCents)}</td><td class="num">${formatRate(source?.annualRateBasisPoints ?? 0)}</td><td class="num">${formatRate(source?.insuranceAnnualBasisPoints ?? 0)}</td><td class="num"><strong>${formatEuro(scenario.maximumMonthlyPaymentIncludingInsuranceCents)}</strong></td><td class="num">${formatRate(scenario.effortRateCentralBasisPoints)}</td><td class="num">${formatRate(scenario.effortRatePrudentBasisPoints)}</td></tr>`;
       })
       .join(
         "",
-      )}</tbody></table><p class="small financing-note"><strong>Mensualité :</strong> assurance emprunteur incluse. <strong>Effort central :</strong> rapporté à ${formatEuro(derived.incomeCentralCents)}. <strong>Effort prudent :</strong> rapporté à ${formatEuro(derived.incomePrudentCents)}. Le crédit existant à la date d'achat est inclus dans les deux ratios.</p>
+      )}</tbody></table><p class="small financing-note"><strong>Mensualité maximale :</strong> estimation prudente, assurance emprunteur constante incluse. <strong>Effort central :</strong> rapporté à ${formatEuro(derived.incomeCentralCents)}. <strong>Effort prudent :</strong> rapporté à ${formatEuro(derived.incomePrudentCents)}. Le crédit existant à la date d'achat est inclus dans les deux ratios.</p>
+    ${financingComposition(dossier, derived)}
     ${editorial(dossier, "financing", "conclusion")}
   `,
         "financing-page",
@@ -537,10 +573,10 @@ export function renderBankDocument(
       stressBudget.items.map((item) => [item.sourceItemId, item]),
     );
     const centralDebt =
-      centralFinancing.monthlyPaymentIncludingInsuranceCents +
+      centralFinancing.maximumMonthlyPaymentIncludingInsuranceCents +
       centralFinancing.existingDebtAtPurchaseCents;
     const stressDebt =
-      stressFinancing.monthlyPaymentIncludingInsuranceCents +
+      stressFinancing.maximumMonthlyPaymentIncludingInsuranceCents +
       stressFinancing.existingDebtAtPurchaseCents;
     pages.push(
       page(
@@ -548,7 +584,7 @@ export function renderBankDocument(
         ++pageNumber,
         `
       <h2>Budget post-achat</h2>${editorial(dossier, "postPurchaseBudget", "introduction")}<table><thead><tr><th>Poste</th><th class="num">${escapeHtml(centralBudget.label)}</th><th class="num">${escapeHtml(stressBudget.label)}</th></tr></thead><tbody>
-      <tr><td>Crédit immobilier, assurance emprunteur incluse</td><td class="num">${formatEuro(centralFinancing.monthlyPaymentIncludingInsuranceCents)}</td><td class="num">${formatEuro(stressFinancing.monthlyPaymentIncludingInsuranceCents)}</td></tr><tr><td>Crédits existants à la date d'achat</td><td class="num">${formatEuro(centralFinancing.existingDebtAtPurchaseCents)}</td><td class="num">${formatEuro(stressFinancing.existingDebtAtPurchaseCents)}</td></tr>
+      <tr><td>Mensualité immobilière maximale estimée, assurance comprise</td><td class="num">${formatEuro(centralFinancing.maximumMonthlyPaymentIncludingInsuranceCents)}</td><td class="num">${formatEuro(stressFinancing.maximumMonthlyPaymentIncludingInsuranceCents)}</td></tr><tr><td>Crédits existants à la date d'achat</td><td class="num">${formatEuro(centralFinancing.existingDebtAtPurchaseCents)}</td><td class="num">${formatEuro(stressFinancing.existingDebtAtPurchaseCents)}</td></tr>
       ${centralBudget.items
         .map((item) => {
           const stressItem = stressBySource.get(item.id);

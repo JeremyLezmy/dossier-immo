@@ -131,7 +131,7 @@ test("le guide détaillé est replié par défaut et mémorise la rubrique ouver
   await expect(
     financing.getByRole("heading", { name: "Composition multi-prêts" }),
   ).toBeVisible();
-  await expect(financing).toContainText("Limite actuelle du différé");
+  await expect(financing).toContainText("Différé avant amortissement");
   await expect(page).toHaveScreenshot("guide-detailed-financing.png", {
     animations: "disabled",
     fullPage: true,
@@ -322,6 +322,55 @@ test("duplique un scénario sans créer un second scénario principal", async ({
   await expect(
     page.getByRole("button", { name: "Télécharger le PDF" }),
   ).toBeEnabled();
+});
+
+test("saisit les durées de financement en années ou en mois sans changer le contrat", async ({
+  page,
+}) => {
+  await page
+    .locator(".sidebar")
+    .getByRole("button", { name: /Financement/ })
+    .click();
+  const scenarios = page.locator(".array-card--collapsible");
+  const firstScenario = scenarios.first();
+  await firstScenario.locator("summary").click();
+  const duration = firstScenario.getByRole("spinbutton", {
+    name: "Durée d’amortissement",
+  });
+  const durationUnit = firstScenario.getByRole("combobox", {
+    name: "Unité — Durée d’amortissement",
+  });
+  await expect(duration).toHaveValue("25");
+  await expect(durationUnit).toHaveValue("years");
+  await duration.fill("20");
+  await durationUnit.selectOption("months");
+  await expect(duration).toHaveValue("240");
+
+  const centralScenario = scenarios.nth(1);
+  await centralScenario.locator(":scope > summary").click();
+  const complementaryLoan = centralScenario
+    .locator(".nested-card--collapsible")
+    .first();
+  await complementaryLoan.locator("summary").click();
+  await expect(
+    complementaryLoan.getByRole("spinbutton", {
+      name: "Durée d’amortissement",
+    }),
+  ).toHaveValue("20");
+  await expect(
+    complementaryLoan.getByRole("spinbutton", {
+      name: "Différé avant amortissement",
+    }),
+  ).toHaveValue("5");
+  const defermentUnit = complementaryLoan.getByRole("combobox", {
+    name: "Unité — Différé avant amortissement",
+  });
+  await defermentUnit.selectOption("months");
+  await expect(
+    complementaryLoan.getByRole("spinbutton", {
+      name: "Différé avant amortissement",
+    }),
+  ).toHaveValue("60");
 });
 
 test("sauvegarde et réimporte le fichier canonique", async ({ page }) => {

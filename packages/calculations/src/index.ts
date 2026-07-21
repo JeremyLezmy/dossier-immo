@@ -16,13 +16,32 @@ export interface FinancingScenarioResult {
   readonly principalCents: number;
   readonly standardPrincipalCents: number;
   readonly additionalPrincipalCents: number;
-  readonly monthlyPaymentExcludingInsuranceCents: number;
+  readonly loanComponents: readonly FinancingLoanComponentResult[];
+  readonly initialMonthlyPaymentExcludingInsuranceCents: number;
+  readonly initialMonthlyPaymentIncludingInsuranceCents: number;
+  readonly maximumMonthlyPaymentExcludingInsuranceCents: number;
+  readonly maximumMonthlyPaymentIncludingInsuranceCents: number;
+  readonly maximumPaymentStartMonth: number;
   readonly monthlyInsuranceCents: number;
-  readonly monthlyPaymentIncludingInsuranceCents: number;
   readonly existingDebtAtPurchaseCents: number;
   readonly effortRateCentralBasisPoints: number;
   readonly effortRatePrudentBasisPoints: number;
   readonly remainingPrincipalByYearCents: Readonly<Record<string, number>>;
+}
+
+export interface FinancingLoanComponentResult {
+  readonly id: string;
+  readonly label: string;
+  readonly kind: "principal" | "additional";
+  readonly principalCents: number;
+  readonly annualRateBasisPoints: number;
+  readonly durationMonths: number;
+  readonly deferredMonths: number;
+  readonly totalDurationMonths: number;
+  readonly deferredMonthlyPaymentExcludingInsuranceCents: number;
+  readonly amortizingMonthlyPaymentExcludingInsuranceCents: number;
+  readonly initialMonthlyPaymentExcludingInsuranceCents: number;
+  readonly maximumMonthlyPaymentExcludingInsuranceCents: number;
 }
 
 export interface DerivedDossier {
@@ -73,6 +92,55 @@ export function remainingPrincipalCents(
   return Math.max(0, roundCents(principalCents * factor - payment * ((factor - 1) / monthlyRate)));
 }
 
+function deferredMonthlyPaymentCents(principalCents: number, annualRateBasisPoints: number): number {
+  return roundCents(principalCents * annualRateBasisPoints / 10_000 / 12);
+}
+
+export function deferredLoanPaymentCents(
+  principalCents: number,
+  annualRateBasisPoints: number,
+  durationMonths: number,
+  deferredMonths: number,
+  month: number,
+): number {
+  if (month <= 0 || month > deferredMonths + durationMonths || principalCents <= 0) return 0;
+  if (month <= deferredMonths) return deferredMonthlyPaymentCents(principalCents, annualRateBasisPoints);
+  return monthlyPaymentCents(principalCents, annualRateBasisPoints, durationMonths);
+}
+
+export function remainingPrincipalAfterDefermentCents(
+  principalCents: number,
+  annualRateBasisPoints: number,
+  durationMonths: number,
+  deferredMonths: number,
+  elapsedMonths: number,
+): number {
+  if (principalCents <= 0) return 0;
+  if (elapsedMonths <= deferredMonths) return principalCents;
+  return remainingPrincipalCents(principalCents, annualRateBasisPoints, durationMonths, elapsedMonths - deferredMonths);
+}
+
+function loanComponentResult(input: {
+  readonly id: string;
+  readonly label: string;
+  readonly kind: "principal" | "additional";
+  readonly principalCents: number;
+  readonly annualRateBasisPoints: number;
+  readonly durationMonths: number;
+  readonly deferredMonths: number;
+}): FinancingLoanComponentResult {
+  const deferredPayment = deferredMonthlyPaymentCents(input.principalCents, input.annualRateBasisPoints);
+  const amortizingPayment = monthlyPaymentCents(input.principalCents, input.annualRateBasisPoints, input.durationMonths);
+  return {
+    ...input,
+    totalDurationMonths: input.deferredMonths + input.durationMonths,
+    deferredMonthlyPaymentExcludingInsuranceCents: deferredPayment,
+    amortizingMonthlyPaymentExcludingInsuranceCents: amortizingPayment,
+    initialMonthlyPaymentExcludingInsuranceCents: input.deferredMonths > 0 ? deferredPayment : amortizingPayment,
+    maximumMonthlyPaymentExcludingInsuranceCents: amortizingPayment,
+  };
+}
+
 export function monthsBetween(startDate: string, endDate: string): number {
   const [startYear = 0, startMonth = 1] = startDate.split("-").map(Number);
   const [endYear = 0, endMonth = 1] = endDate.split("-").map(Number);
@@ -105,37 +173,76 @@ function calculateScenario(
     scenario.additionalLoanComponents.reduce((total, component) => total + component.amountCents, 0),
   );
   const standardPrincipalCents = principalCents - additionalPrincipalCents;
-  const standardPayment = monthlyPaymentCents(standardPrincipalCents, scenario.annualRateBasisPoints, scenario.durationMonths);
-  const componentPayments = scenario.additionalLoanComponents.reduce(
-    (total, component) => total + monthlyPaymentCents(component.amountCents, component.annualRateBasisPoints, component.durationMonths),
+  const loanComponents: readonly FinancingLoanComponentResult[] = [
+    loanComponentResult({
+      id: `${scenario.id}-principal`,
+      label: "Prêt principal",
+      kind: "principal",
+      principalCents: standardPrincipalCents,
+      annualRateBasisPoints: scenario.annualRateBasisPoints,
+      durationMonths: scenario.durationMonths,
+      deferredMonths: 0,
+    }),
+    ...scenario.additionalLoanComponents.map((component) => loanComponentResult({
+      id: component.id,
+      label: component.label,
+      kind: "additional",
+      principalCents: component.amountCents,
+      annualRateBasisPoints: component.annualRateBasisPoints,
+      durationMonths: component.durationMonths,
+      deferredMonths: component.deferredMonths,
+    })),
+  ];
+  const activeComponents = loanComponents.filter((component) => component.principalCents > 0);
+  const maximumCalendarDurationMonths = activeComponents.reduce(
+    (maximum, component) => Math.max(maximum, component.totalDurationMonths),
     0,
   );
-  const monthlyPaymentExcludingInsuranceCents = standardPayment + componentPayments;
+  const monthlyTimeline = Array.from({ length: maximumCalendarDurationMonths }, (_, index) => {
+    const month = index + 1;
+    return {
+      month,
+      paymentExcludingInsuranceCents: activeComponents.reduce(
+        (total, component) => total + deferredLoanPaymentCents(
+          component.principalCents,
+          component.annualRateBasisPoints,
+          component.durationMonths,
+          component.deferredMonths,
+          month,
+        ),
+        0,
+      ),
+    };
+  });
+  const initialMonthlyPaymentExcludingInsuranceCents = monthlyTimeline[0]?.paymentExcludingInsuranceCents ?? 0;
+  const maximumPaymentPoint = monthlyTimeline.reduce(
+    (maximum, point) => point.paymentExcludingInsuranceCents > maximum.paymentExcludingInsuranceCents ? point : maximum,
+    { month: 1, paymentExcludingInsuranceCents: 0 },
+  );
+  const maximumMonthlyPaymentExcludingInsuranceCents = maximumPaymentPoint.paymentExcludingInsuranceCents;
   const monthlyInsuranceCents = roundCents(principalCents * scenario.insuranceAnnualBasisPoints / 10_000 / 12);
-  const monthlyPaymentIncludingInsuranceCents = monthlyPaymentExcludingInsuranceCents + monthlyInsuranceCents;
-  const totalCreditCharges = monthlyPaymentIncludingInsuranceCents + existingDebtAtPurchaseCents;
+  const initialMonthlyPaymentIncludingInsuranceCents = initialMonthlyPaymentExcludingInsuranceCents + monthlyInsuranceCents;
+  const maximumMonthlyPaymentIncludingInsuranceCents = maximumMonthlyPaymentExcludingInsuranceCents + monthlyInsuranceCents;
+  const totalCreditCharges = maximumMonthlyPaymentIncludingInsuranceCents + existingDebtAtPurchaseCents;
 
   const remainingPrincipalByYearCents = Object.fromEntries(
     [6, 8, 15, 17, 20, 25]
-      .filter((year) => year * 12 <= scenario.durationMonths)
+      .filter((year) => year * 12 <= maximumCalendarDurationMonths)
       .map((year) => {
         const elapsedMonths = year * 12;
-        const standardRemaining = remainingPrincipalCents(
-          standardPrincipalCents,
-          scenario.annualRateBasisPoints,
-          scenario.durationMonths,
-          elapsedMonths,
-        );
-        const componentsRemaining = scenario.additionalLoanComponents.reduce((total, component) => {
-          const elapsedRepaymentMonths = Math.max(0, elapsedMonths - component.deferredMonths);
-          return total + remainingPrincipalCents(
-            component.amountCents,
-            component.annualRateBasisPoints,
-            component.durationMonths,
-            elapsedRepaymentMonths,
-          );
-        }, 0);
-        return [String(year), standardRemaining + componentsRemaining];
+        return [
+          String(year),
+          activeComponents.reduce(
+            (total, component) => total + remainingPrincipalAfterDefermentCents(
+              component.principalCents,
+              component.annualRateBasisPoints,
+              component.durationMonths,
+              component.deferredMonths,
+              elapsedMonths,
+            ),
+            0,
+          ),
+        ];
       }),
   );
 
@@ -148,9 +255,13 @@ function calculateScenario(
     principalCents,
     standardPrincipalCents,
     additionalPrincipalCents,
-    monthlyPaymentExcludingInsuranceCents,
+    loanComponents,
+    initialMonthlyPaymentExcludingInsuranceCents,
+    initialMonthlyPaymentIncludingInsuranceCents,
+    maximumMonthlyPaymentExcludingInsuranceCents,
+    maximumMonthlyPaymentIncludingInsuranceCents,
+    maximumPaymentStartMonth: maximumPaymentPoint.month,
     monthlyInsuranceCents,
-    monthlyPaymentIncludingInsuranceCents,
     existingDebtAtPurchaseCents,
     effortRateCentralBasisPoints: incomeCentralCents > 0 ? roundCents(totalCreditCharges / incomeCentralCents * 10_000) : 0,
     effortRatePrudentBasisPoints: incomePrudentCents > 0 ? roundCents(totalCreditCharges / incomePrudentCents * 10_000) : 0,
@@ -203,7 +314,7 @@ export function calculateDossier(dossier: Dossier): DerivedDossier {
     budgetScenarioResults.map(({ budget, incomeCents }) => [budget.id, incomeCents]),
   );
   const budgetFinancingPaymentCents = Object.fromEntries(
-    budgetScenarioResults.map(({ budget, financingScenario }) => [budget.id, financingScenario.monthlyPaymentIncludingInsuranceCents]),
+    budgetScenarioResults.map(({ budget, financingScenario }) => [budget.id, financingScenario.maximumMonthlyPaymentIncludingInsuranceCents]),
   );
   const residualSavingsCents = Object.fromEntries(
     budgetScenarioResults.map(({ budget, incomeCents, financingScenario }) => [
@@ -211,7 +322,7 @@ export function calculateDossier(dossier: Dossier): DerivedDossier {
       incomeCents
         - (budgetTotalsCents[budget.id] ?? 0)
         - existingMonthlyDebtAtPurchaseCents
-        - financingScenario.monthlyPaymentIncludingInsuranceCents,
+        - financingScenario.maximumMonthlyPaymentIncludingInsuranceCents,
     ]),
   );
 
@@ -231,13 +342,13 @@ export function calculateDossier(dossier: Dossier): DerivedDossier {
     };
     budgetProvenance[`budgetFinancingPaymentCents.${budget.id}`] = {
       formula: usesExplicitFinancing
-        ? "mensualité avec assurance du scénario de financement affecté au budget"
-        : "mensualité avec assurance du scénario mis en avant (repli explicite)",
+        ? "mensualité maximale avec assurance du scénario de financement affecté au budget"
+        : "mensualité maximale avec assurance du scénario mis en avant (repli explicite)",
       sourceIds: [financingScenario.id],
       scenarioId: financingScenario.id,
     };
     budgetProvenance[`residualSavingsCents.${budget.id}`] = {
-      formula: "revenu du budget - postes du budget - dette existante à l'achat - mensualité avec assurance affectée au budget",
+      formula: "revenu du budget - postes du budget - dette existante à l'achat - mensualité maximale avec assurance affectée au budget",
       sourceIds: [budget.id, ...budget.items.map((item) => item.id), financingScenario.id],
       scenarioId: financingScenario.id,
       observedAt: dossier.project.targetPurchaseDate,

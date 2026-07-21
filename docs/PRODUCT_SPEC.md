@@ -43,6 +43,8 @@ Permettre à un particulier français de constituer, comprendre, sauvegarder et 
 13. imprimer ou enregistrer le PDF ;
 14. télécharger le fichier de sauvegarde.
 
+Les scénarios peuvent ventiler le capital entre un prêt principal et des tranches complémentaires, par exemple un prêt employeur ou un PTZ estimatif. Les durées sont saisissables en années ou en mois. Un différé précède l’amortissement ; la pré-analyse expose la mensualité initiale et le pic futur, puis retient ce pic assurance comprise pour l’effort et les budgets. Le montage demeure indicatif et doit être confirmé par la banque ou le courtier.
+
 ## États fonctionnels
 
 L'application distingue :
@@ -66,3 +68,4 @@ Couverture, lettre, foyer, revenus, stabilité, patrimoine, apport, réserve, pr
 - conseil financier personnalisé ;
 - connexion bancaire ;
 - redesign du PDF.
+- simulation exhaustive d’une offre de prêt, lissage, prêt relais ou éligibilité réglementaire au PTZ.

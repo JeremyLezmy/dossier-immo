@@ -667,6 +667,21 @@ li{
   background:#f4f7fb;
 }
 
+.financing-composition-table{
+  margin:6px 0 5px;
+  font-size:7.8px;
+}
+
+.financing-composition-table th,
+.financing-composition-table td{
+  padding:3px 4px;
+  line-height:1.22;
+}
+
+.financing-phase-summary{
+  margin:0 0 6px;
+}
+
 .sensitivity-table{
   font-size:9px;
 }

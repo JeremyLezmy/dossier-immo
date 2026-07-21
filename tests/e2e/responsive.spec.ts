@@ -477,6 +477,39 @@ for (const viewport of [
           .getByRole("button", { name: "Aperçu en direct", exact: true }),
       ).toBeVisible();
     }
+    if (viewport.width <= 1050) {
+      await page
+        .getByRole("combobox", { name: "Étape du dossier" })
+        .selectOption("financing");
+    } else {
+      await page
+        .locator(".sidebar")
+        .getByRole("button", { name: /Financement/ })
+        .click();
+    }
+    const centralScenario = page.locator(
+      '[data-disclosure-id="item-scenario-family-central"]',
+    );
+    await centralScenario.locator(":scope > summary").click();
+    const complementaryLoan = centralScenario.locator(
+      '[data-disclosure-id="loan-family-ptz"]',
+    );
+    await complementaryLoan.locator(":scope > summary").click();
+    await expect(centralScenario.locator(".duration-input")).toHaveCount(3);
+    expect(
+      await centralScenario
+        .locator(".duration-input")
+        .evaluateAll((controls) =>
+          controls.every((control) => {
+            const bounds = control.getBoundingClientRect();
+            return (
+              control.scrollWidth <= control.clientWidth + 1 &&
+              bounds.left >= 0 &&
+              bounds.right <= window.innerWidth
+            );
+          }),
+        ),
+    ).toBe(true);
   });
 }
 

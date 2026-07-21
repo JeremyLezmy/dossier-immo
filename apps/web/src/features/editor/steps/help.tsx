@@ -223,16 +223,17 @@ const topics = [
         title: "Composition multi-prêts",
         items: [
           "Un prêt complémentaire ventile une partie du même capital vers une ligne distincte, par exemple un PTZ ou un prêt employeur.",
-          "Son montant est retiré du prêt principal puis calculé avec son propre taux et sa propre durée ; le capital total du projet ne doit pas augmenter.",
-          "La mensualité, le taux d’effort et le capital restant dû agrègent le prêt principal et les lignes complémentaires.",
+          "Son montant est retiré du prêt principal puis calculé avec son propre taux et sa propre durée d’amortissement ; le capital total du projet ne doit pas augmenter.",
+          "Les durées peuvent être saisies en années ou en mois. Le fichier conserve toujours un nombre entier de mois afin que tous les calculs utilisent la même unité.",
         ],
       },
       {
-        title: "Limite actuelle du différé",
+        title: "Différé avant amortissement",
         items: [
-          "Le différé d’un prêt complémentaire décale actuellement sa trajectoire de capital restant dû, mais pas la mensualité affichée.",
-          "Tant que le modèle par phases n’est pas implémenté, une valeur non nulle ne doit pas être utilisée comme base d’une décision de financement.",
-          "Les résultats restent des pré-analyses indicatives à confirmer auprès d’une banque ou d’un courtier.",
+          "Le différé précède la durée d’amortissement : une tranche différée 5 ans puis amortie 20 ans s’étend donc sur 25 ans au total.",
+          "À taux zéro, aucun paiement hors assurance n’est dû pendant le différé. À taux positif, seuls les intérêts sont payés et le capital reste inchangé.",
+          "La mensualité maximale estimée, assurance comprise, sert au taux d’effort et aux budgets pour ne pas sous-estimer une phase future plus élevée.",
+          "L’assurance reste une estimation constante sur le capital initial total. Le montage, le PTZ estimatif et les conditions doivent être confirmés par la banque ou le courtier.",
         ],
       },
     ],
