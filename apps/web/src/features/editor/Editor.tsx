@@ -13,6 +13,7 @@ import {
   BookOpen,
   Check,
   CircleAlert,
+  Clock3,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -26,6 +27,7 @@ import {
   Palette,
   PanelRightOpen,
   Save,
+  ShieldCheck,
   X,
 } from "lucide-react";
 import { DossierActionsMenu } from "../../components/DossierActionsMenu";
@@ -35,10 +37,15 @@ import {
   FeedbackBanner,
   type FeedbackMessage,
 } from "../../components/FeedbackBanner";
+import { PersistenceChoiceDialog } from "../../components/PersistenceChoiceDialog";
 import { fieldId, ValidationIssuesProvider } from "../../components/fields";
 import {
   clearLocalDrafts,
+  countLocalDrafts,
+  deleteLocalDraft,
+  getNextDraftExpiration,
   loadLatestDraft,
+  purgeExpiredDrafts,
   saveDraft,
 } from "../../persistence/database";
 import {
@@ -46,6 +53,11 @@ import {
   importDossierFile,
   saveDossierFile,
 } from "../../persistence/files";
+import {
+  readPersistenceMode,
+  type PersistenceMode,
+  writePersistenceMode,
+} from "../../persistence/policy";
 import {
   applyTheme,
   AssetsStep,
@@ -66,6 +78,13 @@ import {
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
+const EXPIRY_WARNING_THRESHOLD_MS = 60 * 60 * 1_000;
+
+const draftExpirationFormatter = new Intl.DateTimeFormat("fr-FR", {
+  dateStyle: "short",
+  timeStyle: "short",
+});
+
 export function Editor() {
   const form = useForm<Dossier>({
     defaultValues: structuredClone(completeDemoDossier),
@@ -75,6 +94,23 @@ export function Editor() {
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [message, setMessage] = useState<FeedbackMessage>();
   const [hydrated, setHydrated] = useState(false);
+  const [persistenceMode, setPersistenceMode] = useState<
+    PersistenceMode | undefined
+  >(() => readPersistenceMode());
+  const initialPersistenceMode = useRef(persistenceMode);
+  const [persistenceDialogOpen, setPersistenceDialogOpen] = useState(
+    () => persistenceMode === undefined,
+  );
+  const [persistenceCheckComplete, setPersistenceCheckComplete] = useState(
+    () => persistenceMode !== undefined,
+  );
+  const [existingDraftCount, setExistingDraftCount] = useState(0);
+  const [draftExpiresAt, setDraftExpiresAt] = useState<string>();
+  const [expiryWarningFor, setExpiryWarningFor] = useState<string>();
+  const [dismissedExpiryWarning, setDismissedExpiryWarning] =
+    useState<string>();
+  const [isChangingPersistence, setIsChangingPersistence] = useState(false);
+  const [isRenewingDraft, setIsRenewingDraft] = useState(false);
   const [floatingPreview, setFloatingPreview] = useState(false);
   const [isClearingDrafts, setIsClearingDrafts] = useState(false);
   const [isExportingDossier, setIsExportingDossier] = useState(false);
@@ -84,9 +120,11 @@ export function Editor() {
   const [examplePickerOpen, setExamplePickerOpen] = useState(false);
   const autosaveRevision = useRef(0);
   const autosaveTimer = useRef<number | undefined>(undefined);
+  const skipNextAutosave = useRef(false);
   const fileInput = useRef<HTMLInputElement>(null);
-  const pendingAutosaves = useRef(new Set<Promise<void>>());
+  const pendingAutosaves = useRef(new Set<Promise<unknown>>());
   const dossier = useWatch({ control: form.control }) as Dossier;
+  const isDirty = form.formState.isDirty;
   const validation = useMemo(() => validateDossier(dossier), [dossier]);
   const derived = useMemo(
     () =>
@@ -102,6 +140,11 @@ export function Editor() {
   );
   const activeIndex = editorSteps.findIndex((step) => step.id === currentStep);
   const validationIssues = validation.success ? [] : validation.issues;
+  const showExpiryWarning =
+    persistenceMode === "local" &&
+    draftExpiresAt !== undefined &&
+    expiryWarningFor === draftExpiresAt &&
+    dismissedExpiryWarning !== draftExpiresAt;
   const issueCountForStep = (stepId: StepId) => {
     const step = editorSteps.find((candidate) => candidate.id === stepId);
     if (!step) return 0;
@@ -131,32 +174,70 @@ export function Editor() {
   };
 
   useEffect(() => {
-    void loadLatestDraft()
-      .then((draft) => {
-        if (draft) {
-          form.reset(draft.dossier);
-          setMessage({ tone: "info", text: "Brouillon local repris." });
-        }
-      })
+    const initialMode = initialPersistenceMode.current;
+    if (!initialMode) {
+      void countLocalDrafts()
+        .then(setExistingDraftCount)
+        .catch(() =>
+          setMessage({
+            tone: "warning",
+            text: "Le navigateur n’a pas permis de vérifier les anciens brouillons.",
+          }),
+        )
+        .finally(() => setPersistenceCheckComplete(true));
+      return;
+    }
+
+    const initialize = async () => {
+      if (initialMode === "session") {
+        await clearLocalDrafts();
+        return;
+      }
+      const draft = await loadLatestDraft();
+      if (draft) {
+        form.reset(draft.dossier);
+        setDraftExpiresAt(draft.expiresAt);
+        setMessage({ tone: "info", text: "Brouillon local repris." });
+        return;
+      }
+      const initialDraft = await saveDraft(form.getValues());
+      setDraftExpiresAt(initialDraft.expiresAt);
+      setSaveState("saved");
+    };
+
+    void initialize()
       .catch(() =>
         setMessage({
           tone: "error",
-          text: "Le brouillon local n'a pas pu être relu.",
+          text:
+            initialMode === "local"
+              ? "Le brouillon local n'a pas pu être relu."
+              : "Les anciennes données locales n’ont pas pu être effacées.",
         }),
       )
-      .finally(() => setHydrated(true));
+      .finally(() => {
+        skipNextAutosave.current = true;
+        setHydrated(true);
+      });
   }, [form]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || persistenceMode !== "local") return;
+    if (skipNextAutosave.current) {
+      skipNextAutosave.current = false;
+      return;
+    }
     const revision = ++autosaveRevision.current;
     setSaveState("saving");
     const timer = window.setTimeout(() => {
       const operation = saveDraft(dossier);
       pendingAutosaves.current.add(operation);
       void operation
-        .then(() => {
-          if (autosaveRevision.current === revision) setSaveState("saved");
+        .then((record) => {
+          if (autosaveRevision.current === revision) {
+            setDraftExpiresAt(record.expiresAt);
+            setSaveState("saved");
+          }
         })
         .catch(() => {
           if (autosaveRevision.current === revision) setSaveState("error");
@@ -168,7 +249,87 @@ export function Editor() {
       window.clearTimeout(timer);
       if (autosaveTimer.current === timer) autosaveTimer.current = undefined;
     };
-  }, [dossier, hydrated]);
+  }, [dossier, hydrated, persistenceMode]);
+
+  useEffect(() => {
+    if (persistenceMode !== "session" || !isDirty) return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [isDirty, persistenceMode]);
+
+  useEffect(() => {
+    if (persistenceMode !== "local" || !draftExpiresAt) return;
+    const remaining = Date.parse(draftExpiresAt) - Date.now();
+    const warningDelay = remaining - EXPIRY_WARNING_THRESHOLD_MS;
+    const expireCurrentDraft = () => {
+      void deleteLocalDraft(dossier.metadata.dossierId)
+        .then(() => {
+          setExpiryWarningFor(undefined);
+          setDraftExpiresAt(undefined);
+          setSaveState("idle");
+          setMessage({
+            tone: "info",
+            text: "La reprise locale a expiré. Le formulaire reste ouvert, mais ce brouillon n’est plus enregistré.",
+          });
+        })
+        .catch(() =>
+          setMessage({
+            tone: "error",
+            text: "Le brouillon arrivé à échéance n’a pas pu être supprimé.",
+          }),
+        );
+    };
+    if (remaining <= 0) {
+      setExpiryWarningFor(undefined);
+      expireCurrentDraft();
+      return;
+    }
+    let warningTimer: number | undefined;
+    if (warningDelay <= 0) setExpiryWarningFor(draftExpiresAt);
+    else {
+      warningTimer = window.setTimeout(
+        () => setExpiryWarningFor(draftExpiresAt),
+        warningDelay,
+      );
+    }
+    const expirationTimer = window.setTimeout(expireCurrentDraft, remaining);
+    return () => {
+      if (warningTimer !== undefined) window.clearTimeout(warningTimer);
+      window.clearTimeout(expirationTimer);
+    };
+  }, [dossier.metadata.dossierId, draftExpiresAt, persistenceMode]);
+
+  useEffect(() => {
+    if (persistenceMode !== "local") return;
+    let cancelled = false;
+    let purgeTimer: number | undefined;
+
+    const scheduleNextPurge = async () => {
+      await purgeExpiredDrafts();
+      if (cancelled) return;
+      const nextExpiration = await getNextDraftExpiration();
+      if (!nextExpiration || cancelled) return;
+      const remaining = Math.max(0, Date.parse(nextExpiration) - Date.now());
+      purgeTimer = window.setTimeout(() => {
+        void scheduleNextPurge();
+      }, remaining);
+    };
+
+    void scheduleNextPurge().catch(() =>
+      setMessage({
+        tone: "error",
+        text: "La vérification des échéances locales n’a pas pu être planifiée.",
+      }),
+    );
+    return () => {
+      cancelled = true;
+      if (purgeTimer !== undefined) window.clearTimeout(purgeTimer);
+    };
+  }, [draftExpiresAt, persistenceMode]);
 
   useEffect(() => {
     if (!pendingIssuePath) return;
@@ -233,25 +394,27 @@ export function Editor() {
     }
   };
 
-  const saveFile = async () => {
-    if (isExportingDossier) return;
+  const saveFile = async (): Promise<boolean> => {
+    if (isExportingDossier) return false;
     if (!validation.success) {
       setMessage({
         tone: "warning",
         text: `Corrigez les ${validation.issues.length} point${validation.issues.length > 1 ? "s" : ""} signalé${validation.issues.length > 1 ? "s" : ""} avant de créer une sauvegarde officielle.`,
       });
       selectStep("overview");
-      return;
+      return false;
     }
     setIsExportingDossier(true);
     try {
       await saveDossierFile(validation.dossier);
       setMessage({ tone: "success", text: "Sauvegarde officielle créée." });
+      return true;
     } catch (error) {
       setMessage({
         tone: "error",
         text: error instanceof Error ? error.message : "Sauvegarde impossible.",
       });
+      return false;
     } finally {
       setIsExportingDossier(false);
     }
@@ -286,11 +449,11 @@ export function Editor() {
   };
 
   const createNewDossier = () => {
-    if (
-      window.confirm(
-        "Créer un dossier vierge ? Le brouillon actuel restera dans l'autosauvegarde locale.",
-      )
-    )
+    const consequence =
+      persistenceMode === "local"
+        ? "Le brouillon actuel restera disponible jusqu’à son échéance."
+        : "Les modifications non exportées du dossier actuel seront perdues.";
+    if (window.confirm("Créer un dossier vierge ? " + consequence))
       resetTo(createBlankDossier(), {
         tone: "success",
         text: "Nouveau dossier créé.",
@@ -305,6 +468,110 @@ export function Editor() {
     setExamplePickerOpen(false);
   };
 
+  const stopPendingAutosaves = async () => {
+    if (autosaveTimer.current !== undefined) {
+      window.clearTimeout(autosaveTimer.current);
+      autosaveTimer.current = undefined;
+    }
+    autosaveRevision.current += 1;
+    await Promise.allSettled([...pendingAutosaves.current]);
+  };
+
+  const chooseSessionPersistence = async () => {
+    if (isChangingPersistence) return;
+    setIsChangingPersistence(true);
+    try {
+      await stopPendingAutosaves();
+      await clearLocalDrafts();
+      const preferenceSaved = writePersistenceMode("session");
+      setPersistenceMode("session");
+      setExistingDraftCount(0);
+      setDraftExpiresAt(undefined);
+      setSaveState("idle");
+      setHydrated(true);
+      setPersistenceDialogOpen(false);
+      setMessage({
+        tone: preferenceSaved ? "success" : "warning",
+        text: preferenceSaved
+          ? "Session privée activée. Aucune donnée du dossier n’est enregistrée."
+          : "Session privée activée pour cet onglet, mais le navigateur n’a pas pu mémoriser ce choix.",
+      });
+    } catch {
+      setMessage({
+        tone: "error",
+        text: "Le mode session n’a pas pu être activé sans risque. Les réglages restent ouverts.",
+      });
+    } finally {
+      setIsChangingPersistence(false);
+    }
+  };
+
+  const chooseLocalPersistence = async () => {
+    if (isChangingPersistence) return;
+    setIsChangingPersistence(true);
+    try {
+      await stopPendingAutosaves();
+      let expiration: string;
+      let resumed = false;
+      if (!persistenceMode) {
+        const existingDraft = await loadLatestDraft();
+        if (existingDraft) {
+          form.reset(existingDraft.dossier);
+          expiration = existingDraft.expiresAt;
+          resumed = true;
+        } else {
+          expiration = (await saveDraft(dossier)).expiresAt;
+        }
+      } else {
+        expiration = (await saveDraft(dossier)).expiresAt;
+      }
+      const preferenceSaved = writePersistenceMode("local");
+      skipNextAutosave.current = true;
+      setPersistenceMode("local");
+      setDraftExpiresAt(expiration);
+      setSaveState("saved");
+      setHydrated(true);
+      setPersistenceDialogOpen(false);
+      setMessage({
+        tone: preferenceSaved ? "success" : "warning",
+        text: !preferenceSaved
+          ? "La reprise locale est active pour cet onglet, mais le navigateur n’a pas pu mémoriser ce choix."
+          : resumed
+            ? "Brouillon local repris. Son délai de 24 h court à partir de sa migration."
+            : "Reprise locale activée pour 24 h sur ce navigateur.",
+      });
+    } catch {
+      setMessage({
+        tone: "error",
+        text: "La reprise locale n’a pas pu être activée. Aucune fausse sauvegarde n’est annoncée.",
+      });
+    } finally {
+      setIsChangingPersistence(false);
+    }
+  };
+
+  const renewLocalDraft = async () => {
+    if (persistenceMode !== "local" || isRenewingDraft) return;
+    setIsRenewingDraft(true);
+    try {
+      const record = await saveDraft(dossier);
+      setDraftExpiresAt(record.expiresAt);
+      setSaveState("saved");
+      setMessage({
+        tone: "success",
+        text: "La reprise locale du brouillon courant est prolongée de 24 h.",
+      });
+    } catch {
+      setSaveState("error");
+      setMessage({
+        tone: "error",
+        text: "La reprise locale n’a pas pu être prolongée.",
+      });
+    } finally {
+      setIsRenewingDraft(false);
+    }
+  };
+
   const clearDrafts = async () => {
     if (isClearingDrafts) return;
     if (
@@ -316,13 +583,9 @@ export function Editor() {
 
     setIsClearingDrafts(true);
     try {
-      if (autosaveTimer.current !== undefined) {
-        window.clearTimeout(autosaveTimer.current);
-        autosaveTimer.current = undefined;
-      }
-      autosaveRevision.current += 1;
-      await Promise.allSettled([...pendingAutosaves.current]);
+      await stopPendingAutosaves();
       await clearLocalDrafts();
+      setDraftExpiresAt(undefined);
       setSaveState("idle");
       setMessage({ tone: "success", text: "Brouillons locaux effacés." });
     } catch {
@@ -360,11 +623,22 @@ export function Editor() {
           </div>
         </div>
         <span
-          className={`save-state save-state--${saveState}`}
+          className={
+            "save-state save-state--" +
+            (persistenceMode === "session" ? "session" : saveState)
+          }
           role={saveState === "error" ? "alert" : "status"}
           aria-live={saveState === "error" ? "assertive" : "polite"}
+          title={
+            draftExpiresAt
+              ? "Brouillon conservé jusqu’au " +
+                draftExpirationFormatter.format(new Date(draftExpiresAt))
+              : undefined
+          }
         >
-          {saveState === "saving" ? (
+          {persistenceMode === "session" ? (
+            <LockKeyhole size={15} aria-hidden="true" />
+          ) : saveState === "saving" ? (
             <LoaderCircle className="spinner" size={15} aria-hidden="true" />
           ) : saveState === "error" ? (
             <CircleAlert size={15} aria-hidden="true" />
@@ -372,13 +646,17 @@ export function Editor() {
             <Check size={15} aria-hidden="true" />
           )}
           <span>
-            {saveState === "saving"
-              ? "Enregistrement du brouillon…"
-              : saveState === "saved"
-                ? "Brouillon local à jour"
-                : saveState === "error"
-                  ? "Autosauvegarde indisponible"
-                  : "Brouillon local"}
+            {!persistenceMode
+              ? "Choix de confidentialité requis"
+              : persistenceMode === "session"
+                ? "Session privée · non enregistrée"
+                : saveState === "saving"
+                  ? "Enregistrement du brouillon…"
+                  : saveState === "saved"
+                    ? "Brouillon local à jour"
+                    : saveState === "error"
+                      ? "Autosauvegarde indisponible"
+                      : "Brouillon local"}
           </span>
         </span>
         <div className="topbar__actions">
@@ -406,11 +684,16 @@ export function Editor() {
             clearingDrafts={isClearingDrafts}
             exportingDossier={isExportingDossier}
             importingDossier={isImportingDossier}
+            localExpiresAt={draftExpiresAt}
+            persistenceMode={persistenceMode}
+            renewingDraft={isRenewingDraft}
             onClearDrafts={() => void clearDrafts()}
             onCreateDossier={createNewDossier}
             onImportDossier={() => fileInput.current?.click()}
             onLoadExample={() => setExamplePickerOpen(true)}
             onOpenGuide={openGuide}
+            onOpenPrivacy={() => setPersistenceDialogOpen(true)}
+            onRenewDraft={() => void renewLocalDraft()}
             onSaveDossier={() => void saveFile()}
             onTogglePreview={() => setFloatingPreview((value) => !value)}
           />
@@ -514,8 +797,18 @@ export function Editor() {
         <div className="sidebar__privacy">
           <LockKeyhole size={18} />
           <div>
-            <strong>100 % local</strong>
-            <span>Aucune donnée envoyée</span>
+            <strong>
+              {persistenceMode === "local"
+                ? "Reprise locale 24 h"
+                : persistenceMode === "session"
+                  ? "Session privée"
+                  : "Choix requis"}
+            </strong>
+            <span>
+              {persistenceMode === "session"
+                ? "Aucune donnée enregistrée"
+                : "Aucune donnée envoyée"}
+            </span>
           </div>
         </div>
       </aside>
@@ -565,6 +858,43 @@ export function Editor() {
         </nav>
         <EditorDisclosureProvider>
           <ValidationIssuesProvider issues={validationIssues}>
+            {showExpiryWarning && (
+              <FeedbackBanner
+                actions={[
+                  {
+                    disabled: isRenewingDraft,
+                    emphasis: "primary",
+                    label: isRenewingDraft
+                      ? "Prolongation…"
+                      : "Prolonger de 24 h",
+                    onClick: () => void renewLocalDraft(),
+                  },
+                  {
+                    disabled: isExportingDossier,
+                    emphasis: "secondary",
+                    label: isExportingDossier
+                      ? "Export en cours…"
+                      : "Exporter le JSON",
+                    onClick: () => {
+                      const warnedExpiration = draftExpiresAt;
+                      void saveFile().then((saved) => {
+                        if (saved) setDismissedExpiryWarning(warnedExpiration);
+                      });
+                    },
+                  },
+                  {
+                    label: "Ignorer",
+                    onClick: () => setDismissedExpiryWarning(draftExpiresAt),
+                  },
+                ]}
+                dismissible={false}
+                message={{
+                  tone: "warning",
+                  text: "Votre reprise locale expire dans moins d’une heure. Prolongez-la ou créez votre sauvegarde officielle.",
+                }}
+                onDismiss={() => setDismissedExpiryWarning(draftExpiresAt)}
+              />
+            )}
             {message && (
               <FeedbackBanner
                 message={message}
@@ -629,13 +959,34 @@ export function Editor() {
               <Download size={16} /> Charger l’exemple fictif
             </button>
             <button
-              className="button button--ghost button--danger"
+              className="button button--ghost"
               type="button"
-              disabled={isClearingDrafts}
-              onClick={() => void clearDrafts()}
+              onClick={() => setPersistenceDialogOpen(true)}
             >
-              {isClearingDrafts ? "Effacement…" : "Effacer les brouillons"}
+              <ShieldCheck size={16} aria-hidden="true" />
+              Confidentialité
             </button>
+            {persistenceMode === "local" && (
+              <>
+                <button
+                  className="button button--ghost"
+                  type="button"
+                  disabled={isRenewingDraft}
+                  onClick={() => void renewLocalDraft()}
+                >
+                  <Clock3 size={16} aria-hidden="true" />
+                  {isRenewingDraft ? "Prolongation…" : "Prolonger de 24 h"}
+                </button>
+                <button
+                  className="button button--ghost button--danger"
+                  type="button"
+                  disabled={isClearingDrafts}
+                  onClick={() => void clearDrafts()}
+                >
+                  {isClearingDrafts ? "Effacement…" : "Effacer les brouillons"}
+                </button>
+              </>
+            )}
           </div>
           <button
             className="button button--primary"
@@ -658,6 +1009,17 @@ export function Editor() {
         open={examplePickerOpen}
         onClose={() => setExamplePickerOpen(false)}
         onSelect={loadExample}
+      />
+      <PersistenceChoiceDialog
+        busy={isChangingPersistence}
+        currentMode={persistenceMode}
+        existingDraftCount={existingDraftCount}
+        localExpiresAt={draftExpiresAt}
+        open={persistenceDialogOpen && persistenceCheckComplete}
+        required={persistenceMode === undefined}
+        onChooseLocal={() => void chooseLocalPersistence()}
+        onChooseSession={() => void chooseSessionPersistence()}
+        onClose={() => setPersistenceDialogOpen(false)}
       />
     </div>
   );

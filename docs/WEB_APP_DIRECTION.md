@@ -10,7 +10,7 @@ Cette architecture répond directement au produit : partage par simple URL, fonc
 
 ```text
 fichier JSON -> validation -> calculs purs -> renderer de 1 à 13 pages pertinentes
-                         \-> éditeur React -> brouillon IndexedDB
+                         \-> éditeur React -> mémoire ou brouillon IndexedDB 24 h
 ```
 
 - `packages/schema` est l’autorité du format persistant ;
@@ -22,7 +22,9 @@ Les packages ne dépendent pas de l’application. Le document ne dépend pas de
 
 ## Portabilité
 
-Le build utilise des chemins relatifs et produit des fichiers statiques dans `apps/web/dist`. Il peut être servi par n’importe quel hébergeur statique. Le service worker précache l’application ; les données restent dans le fichier de l’utilisateur et dans l’IndexedDB du navigateur.
+Le build utilise des chemins relatifs et produit des fichiers statiques dans `apps/web/dist`. Il peut être servi par n’importe quel hébergeur statique. Le service worker précache l’application ; les données restent en mémoire en session privée, dans le fichier de l’utilisateur ou, après consentement explicite, dans l’IndexedDB du navigateur pendant 24 heures glissantes.
+
+IndexedDB, comme `localStorage`, est cloisonné par origine et non par chemin. Sur une origine GitHub Pages partagée par plusieurs applications, la session privée demeure le choix recommandé ; la reprise locale suppose de faire confiance aux autres applications de cette origine.
 
 Un packaging desktop futur pourrait réutiliser les mêmes packages sans modifier le modèle. Un backend ne deviendrait pertinent que pour une fonctionnalité explicitement multi-utilisateur : collaboration, synchronisation chiffrée ou génération serveur contrôlée.
 

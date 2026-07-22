@@ -15,7 +15,7 @@ Permettre à un particulier français de constituer, comprendre, sauvegarder et 
 
 - fonctionnement local-first ;
 - fichier `.dossier-immo.json` comme sauvegarde autoritative ;
-- autosauvegarde navigateur présentée comme brouillon récupérable ;
+- choix initial explicite entre session privée sans persistance du dossier et brouillon navigateur récupérable pendant 24 heures ;
 - aucun compte ni base serveur ;
 - aucune télémétrie ;
 - distinction déclaré / hypothèse / calculé ;
@@ -24,24 +24,26 @@ Permettre à un particulier français de constituer, comprendre, sauvegarder et 
 - catalogue de trois exemples fictifs complets couvrant collectivement toutes les sections ;
 - accessibilité clavier et responsive mobile/tablette/desktop ;
 - aperçu direct depuis l'en-tête mobile, sélecteur de thèmes repliable et mode plein écran ;
-- accès permanent à l'ouverture, à la sauvegarde officielle et à l'état d'autosauvegarde, quelle que soit la taille d'écran.
+- accès permanent à l'ouverture, à la sauvegarde officielle et à l'état d'autosauvegarde, quelle que soit la taille d'écran ;
+- avertissement non bloquant une heure avant l'expiration locale, avec prolongation, export officiel ou choix explicite d'ignorer.
 
 ## Parcours principal
 
-1. choisir l'un des trois exemples complets ou un dossier vierge ;
-2. renseigner le foyer ;
-3. décrire activités et revenus ;
-4. ajouter historique des indépendants ;
-5. renseigner actifs et passifs ;
-6. compléter historique mensuel ;
-7. définir projet et critères du bien ;
-8. comparer les scénarios de financement ;
-9. définir budgets central et stress ;
-10. suivre les justificatifs ;
-11. corriger les erreurs de complétude ;
-12. prévisualiser le dossier ;
-13. imprimer ou enregistrer le PDF ;
-14. télécharger le fichier de sauvegarde.
+1. choisir le mode session privée recommandé ou la reprise locale 24 heures ;
+2. choisir l'un des trois exemples complets ou un dossier vierge ;
+3. renseigner le foyer ;
+4. décrire activités et revenus ;
+5. ajouter historique des indépendants ;
+6. renseigner actifs et passifs ;
+7. compléter historique mensuel ;
+8. définir projet et critères du bien ;
+9. comparer les scénarios de financement ;
+10. définir budgets central et stress ;
+11. suivre les justificatifs ;
+12. corriger les erreurs de complétude ;
+13. prévisualiser le dossier ;
+14. imprimer ou enregistrer le PDF ;
+15. télécharger le fichier de sauvegarde.
 
 Les scénarios peuvent ventiler le capital entre un prêt principal et des tranches complémentaires, par exemple un prêt employeur ou un PTZ estimatif. Les durées sont saisissables en années ou en mois. Un différé précède l’amortissement ; la pré-analyse expose la mensualité initiale et le pic futur, puis retient ce pic assurance comprise pour l’effort et les budgets. Le montage demeure indicatif et doit être confirmé par la banque ou le courtier.
 
@@ -49,7 +51,8 @@ Les scénarios peuvent ventiler le capital entre un prêt principal et des tranc
 
 L'application distingue :
 
-- brouillon local non validé ;
+- session privée sans donnée de dossier persistée ;
+- brouillon local non validé, expirant 24 heures après sa dernière modification ;
 - dossier valide mais incomplet éditorialement ;
 - dossier prêt pour pré-analyse ;
 - dossier exporté ;

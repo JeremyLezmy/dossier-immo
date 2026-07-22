@@ -2,7 +2,7 @@
 
 Application local-first de création d'un dossier bancaire immobilier français. Elle guide la saisie du foyer, des revenus, du patrimoine, des dettes, du projet et des budgets, puis produit une synthèse PDF déterministe pouvant compter jusqu'à treize pages selon les sections réellement renseignées.
 
-Les données restent dans le navigateur. Le fichier `.dossier-immo.json` téléchargé par l'utilisateur est la sauvegarde officielle ; IndexedDB fournit uniquement un brouillon de récupération. Il n'existe ni compte, backend, télémétrie ni stockage distant.
+Les données du dossier ne sont jamais envoyées à un serveur. Au premier accès, l'utilisateur choisit entre une session privée sans persistance du dossier et une reprise locale IndexedDB, limitée à 24 heures après la dernière modification et renouvelable manuellement. Le fichier `.dossier-immo.json` téléchargé reste la seule sauvegarde officielle. Il n'existe ni compte, backend, télémétrie ni stockage distant.
 
 ## Démarrage rapide
 
@@ -25,7 +25,7 @@ Sous PowerShell, utiliser `corepack.cmd` si la stratégie d'exécution bloque le
 - validation Zod avec erreurs localisées ;
 - calculs TypeScript purs, montants en centimes et taux en points de base ;
 - scénarios de financement simples ou composés, durées saisissables en années/mois, différé par phases et budgets fondés sur la mensualité maximale ;
-- autosauvegarde IndexedDB, reprise et import strict du contrat courant ;
+- session privée par défaut ou reprise IndexedDB optionnelle pendant 24 heures, renouvelable, avertie une heure avant l'échéance et purgée à terme ;
 - export JSON portable, aperçu repliable ou plein écran et PDF pouvant compter jusqu'à treize pages ;
 - actions et état d'autosauvegarde accessibles sur mobile, tablette et desktop ;
 - accès direct à l'aperçu depuis l'en-tête mobile et thèmes repliés par défaut sur petit écran ;

@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+const PERSISTENCE_MODE_STORAGE_KEY = "dossier-immo-persistence-mode-v1";
+
 async function readDraftCount(page: Page): Promise<number> {
   return page.evaluate(
     async () =>
@@ -15,6 +17,31 @@ async function readDraftCount(page: Page): Promise<number> {
           count.onsuccess = () => resolve(count.result);
         };
       }),
+  );
+}
+
+async function makeDraftExpireSoon(page: Page): Promise<void> {
+  await page.evaluate(
+    async (expiresAt) =>
+      await new Promise<void>((resolve, reject) => {
+        const request = indexedDB.open("dossier-immo-local-v1");
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          const transaction = request.result.transaction("drafts", "readwrite");
+          const store = transaction.objectStore("drafts");
+          const getAll = store.getAll();
+          getAll.onerror = () => reject(getAll.error);
+          getAll.onsuccess = () => {
+            for (const record of getAll.result) {
+              record.expiresAt = expiresAt;
+              store.put(record);
+            }
+          };
+          transaction.oncomplete = () => resolve();
+          transaction.onerror = () => reject(transaction.error);
+        };
+      }),
+    new Date(Date.now() + 30 * 60 * 1_000).toISOString(),
   );
 }
 
@@ -53,7 +80,56 @@ test.beforeEach(async ({ page }) => {
         request.onblocked = () => resolve();
       }),
   );
+  await page.evaluate(
+    (key) => localStorage.setItem(key, "local"),
+    PERSISTENCE_MODE_STORAGE_KEY,
+  );
   await page.reload();
+});
+
+test("le choix de confidentialité reste lisible du mobile au grand écran", async ({
+  page,
+}) => {
+  for (const viewport of [
+    { width: 360, height: 800 },
+    { width: 390, height: 844 },
+    { width: 768, height: 1024 },
+    { width: 1920, height: 1080 },
+    { width: 2560, height: 1440 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.evaluate(
+      (key) => localStorage.removeItem(key),
+      PERSISTENCE_MODE_STORAGE_KEY,
+    );
+    await page.reload();
+    const dialog = page.getByRole("dialog", {
+      name: "Comment souhaitez-vous travailler ?",
+    });
+    await expect(dialog).toBeVisible();
+    const box = await dialog.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.y).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
+    expect(
+      await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth -
+          document.documentElement.clientWidth,
+      ),
+    ).toBe(0);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeVisible();
+
+    if (viewport.width === 360 || viewport.width === 1920) {
+      await expect(dialog).toHaveScreenshot(
+        `privacy-choice-${viewport.width}.png`,
+        { animations: "disabled" },
+      );
+    }
+  }
 });
 
 test("les actions essentielles et l'autosauvegarde restent visibles sur mobile", async ({
@@ -85,6 +161,8 @@ test("les actions essentielles et l'autosauvegarde restent visibles sur mobile",
     "Sauvegarder le dossier",
     "Nouveau dossier",
     "Charger l'exemple fictif",
+    "Confidentialité et stockage",
+    "Prolonger la reprise de 24 h",
     "Effacer les brouillons",
   ]) {
     await expect(
@@ -126,6 +204,32 @@ test("l'en-tête reste utilisable sans débordement à 360 px", async ({
         document.documentElement.clientWidth,
     ),
   ).toBe(0);
+});
+
+test("l'avertissement d'échéance laisse les trois choix accessibles à 360 px", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await waitForDraftSaved(page);
+  await makeDraftExpireSoon(page);
+  await page.reload();
+  const warning = page
+    .locator(".feedback-banner--warning")
+    .filter({ hasText: "expire dans moins d’une heure" });
+  await expect(warning).toBeVisible();
+  for (const name of ["Prolonger de 24 h", "Exporter le JSON", "Ignorer"]) {
+    await expect(warning.getByRole("button", { name })).toBeVisible();
+  }
+  expect(
+    await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth -
+        document.documentElement.clientWidth,
+    ),
+  ).toBe(0);
+  await expect(warning).toHaveScreenshot("expiry-warning-mobile.png", {
+    animations: "disabled",
+  });
 });
 
 test("le sélecteur de dossiers fictifs reste lisible à 360 px", async ({
@@ -431,6 +535,10 @@ test("le guide détaillé reste lisible avec une rubrique ouverte sur mobile", a
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(360);
+  await page.addStyleTag({
+    content:
+      ".topbar, .editor-stepbar, .step-footer { visibility: hidden !important; }",
+  });
   await expect(financing).toHaveScreenshot("guide-financing-card-mobile.png", {
     animations: "disabled",
   });
@@ -497,18 +605,16 @@ for (const viewport of [
     await complementaryLoan.locator(":scope > summary").click();
     await expect(centralScenario.locator(".duration-input")).toHaveCount(3);
     expect(
-      await centralScenario
-        .locator(".duration-input")
-        .evaluateAll((controls) =>
-          controls.every((control) => {
-            const bounds = control.getBoundingClientRect();
-            return (
-              control.scrollWidth <= control.clientWidth + 1 &&
-              bounds.left >= 0 &&
-              bounds.right <= window.innerWidth
-            );
-          }),
-        ),
+      await centralScenario.locator(".duration-input").evaluateAll((controls) =>
+        controls.every((control) => {
+          const bounds = control.getBoundingClientRect();
+          return (
+            control.scrollWidth <= control.clientWidth + 1 &&
+            bounds.left >= 0 &&
+            bounds.right <= window.innerWidth
+          );
+        }),
+      ),
     ).toBe(true);
   });
 }

@@ -1,25 +1,33 @@
 import { useEffect, useId, useRef, useState } from "react";
 import {
   BookOpen,
+  Clock3,
   Download,
   FilePlus2,
   FolderOpen,
   Menu,
   PanelRightOpen,
   Save,
+  ShieldCheck,
   Trash2,
 } from "lucide-react";
+import type { PersistenceMode } from "../persistence/policy";
 
 interface DossierActionsMenuProps {
   readonly canPreview: boolean;
   readonly clearingDrafts: boolean;
   readonly exportingDossier: boolean;
   readonly importingDossier: boolean;
+  readonly localExpiresAt?: string | undefined;
+  readonly persistenceMode?: PersistenceMode | undefined;
+  readonly renewingDraft: boolean;
   readonly onClearDrafts: () => void;
   readonly onCreateDossier: () => void;
   readonly onImportDossier: () => void;
   readonly onLoadExample: () => void;
   readonly onOpenGuide: () => void;
+  readonly onOpenPrivacy: () => void;
+  readonly onRenewDraft: () => void;
   readonly onSaveDossier: () => void;
   readonly onTogglePreview: () => void;
 }
@@ -29,11 +37,16 @@ export function DossierActionsMenu({
   clearingDrafts,
   exportingDossier,
   importingDossier,
+  localExpiresAt,
+  persistenceMode,
+  renewingDraft,
   onClearDrafts,
   onCreateDossier,
   onImportDossier,
   onLoadExample,
   onOpenGuide,
+  onOpenPrivacy,
+  onRenewDraft,
   onSaveDossier,
   onTogglePreview,
 }: DossierActionsMenuProps) {
@@ -114,6 +127,40 @@ export function DossierActionsMenu({
             </span>
           </button>
 
+          <p>Confidentialité</p>
+          <button type="button" onClick={() => run(onOpenPrivacy)}>
+            <ShieldCheck size={18} aria-hidden="true" />
+            <span>
+              <strong>Confidentialité et stockage</strong>
+              <small>
+                {persistenceMode === "local"
+                  ? "Reprise locale 24 h activée"
+                  : "Session privée, sans brouillon enregistré"}
+              </small>
+            </span>
+          </button>
+          {persistenceMode === "local" && (
+            <button
+              type="button"
+              disabled={renewingDraft}
+              onClick={() => run(onRenewDraft)}
+            >
+              <Clock3 size={18} aria-hidden="true" />
+              <span>
+                <strong>
+                  {renewingDraft
+                    ? "Prolongation…"
+                    : "Prolonger la reprise de 24 h"}
+                </strong>
+                <small>
+                  {localExpiresAt
+                    ? "Repousse l’échéance du brouillon courant"
+                    : "Enregistre le brouillon courant pour 24 h"}
+                </small>
+              </span>
+            </button>
+          )}
+
           <p>Fichier officiel</p>
           <button
             type="button"
@@ -157,20 +204,22 @@ export function DossierActionsMenu({
               <small>Remplacer temporairement le formulaire</small>
             </span>
           </button>
-          <button
-            type="button"
-            className="dossier-actions-menu__danger"
-            disabled={clearingDrafts}
-            onClick={() => run(onClearDrafts)}
-          >
-            <Trash2 size={18} aria-hidden="true" />
-            <span>
-              <strong>
-                {clearingDrafts ? "Effacement…" : "Effacer les brouillons"}
-              </strong>
-              <small>Supprimer les brouillons de cet appareil</small>
-            </span>
-          </button>
+          {persistenceMode === "local" && (
+            <button
+              type="button"
+              className="dossier-actions-menu__danger"
+              disabled={clearingDrafts}
+              onClick={() => run(onClearDrafts)}
+            >
+              <Trash2 size={18} aria-hidden="true" />
+              <span>
+                <strong>
+                  {clearingDrafts ? "Effacement…" : "Effacer les brouillons"}
+                </strong>
+                <small>Supprimer les brouillons de cet appareil</small>
+              </span>
+            </button>
+          )}
         </div>
       )}
     </div>
