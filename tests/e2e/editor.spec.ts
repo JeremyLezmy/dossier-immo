@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
+const PERSISTENCE_MODE_STORAGE_KEY = "dossier-immo-persistence-mode-v1";
+const legacyDossier = JSON.parse(
+  readFileSync("config.example/dossier.json", "utf8"),
+) as {
+  metadata: { dossierId: string };
+  household: { people: Array<{ displayName: string }> };
+};
+
 async function readStoredDraftName(
   page: import("@playwright/test").Page,
 ): Promise<string | undefined> {
@@ -25,6 +33,76 @@ async function readStoredDraftName(
   );
 }
 
+async function readStoredDraftExpiration(
+  page: import("@playwright/test").Page,
+): Promise<string | undefined> {
+  return page.evaluate(
+    async () =>
+      await new Promise<string | undefined>((resolve, reject) => {
+        const request = indexedDB.open("dossier-immo-local-v1");
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          const getAll = request.result
+            .transaction("drafts", "readonly")
+            .objectStore("drafts")
+            .getAll();
+          getAll.onerror = () => reject(getAll.error);
+          getAll.onsuccess = () => resolve(getAll.result.at(-1)?.expiresAt);
+        };
+      }),
+  );
+}
+
+async function setStoredDraftExpiration(
+  page: import("@playwright/test").Page,
+  expiresAt: string,
+): Promise<void> {
+  await page.evaluate(
+    async (nextExpiration) =>
+      await new Promise<void>((resolve, reject) => {
+        const request = indexedDB.open("dossier-immo-local-v1");
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          const transaction = request.result.transaction("drafts", "readwrite");
+          const store = transaction.objectStore("drafts");
+          const getAll = store.getAll();
+          getAll.onerror = () => reject(getAll.error);
+          getAll.onsuccess = () => {
+            for (const record of getAll.result) {
+              record.expiresAt = nextExpiration;
+              store.put(record);
+            }
+          };
+          transaction.oncomplete = () => resolve();
+          transaction.onerror = () => reject(transaction.error);
+        };
+      }),
+    expiresAt,
+  );
+}
+
+async function hasStoredDraft(
+  page: import("@playwright/test").Page,
+  id: string,
+): Promise<boolean> {
+  return page.evaluate(
+    async (draftId) =>
+      await new Promise<boolean>((resolve, reject) => {
+        const request = indexedDB.open("dossier-immo-local-v1");
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          const get = request.result
+            .transaction("drafts", "readonly")
+            .objectStore("drafts")
+            .get(draftId);
+          get.onerror = () => reject(get.error);
+          get.onsuccess = () => resolve(Boolean(get.result));
+        };
+      }),
+    id,
+  );
+}
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(window, "showSaveFilePicker", {
@@ -42,7 +120,324 @@ test.beforeEach(async ({ page }) => {
         request.onblocked = () => resolve();
       }),
   );
+  await page.evaluate(
+    (key) => localStorage.setItem(key, "local"),
+    PERSISTENCE_MODE_STORAGE_KEY,
+  );
   await page.reload();
+});
+
+test("propose un choix de confidentialité explicite au premier accès", async ({
+  page,
+}) => {
+  await expect(page.locator(".save-state")).toContainText(
+    "Brouillon local à jour",
+  );
+  await page.evaluate(
+    async () =>
+      await new Promise<void>((resolve, reject) => {
+        const request = indexedDB.open("dossier-immo-local-v1");
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          const transaction = request.result.transaction("drafts", "readwrite");
+          transaction.objectStore("drafts").clear();
+          transaction.oncomplete = () => resolve();
+          transaction.onerror = () => reject(transaction.error);
+        };
+      }),
+  );
+  await page.evaluate(
+    (key) => localStorage.removeItem(key),
+    PERSISTENCE_MODE_STORAGE_KEY,
+  );
+  await page.reload();
+
+  const dialog = page.getByRole("dialog", {
+    name: "Comment souhaitez-vous travailler ?",
+  });
+  await expect(dialog).toBeVisible();
+  await expect(
+    dialog.getByRole("heading", { name: "Session privée" }),
+  ).toBeVisible();
+  await expect(
+    dialog.getByRole("heading", { name: "Reprise locale" }),
+  ).toBeVisible();
+  await expect(
+    dialog.getByRole("button", { name: "Continuer en session privée" }),
+  ).toBeFocused();
+  await dialog
+    .getByRole("button", { name: "Continuer en session privée" })
+    .click();
+
+  await expect(page.locator(".save-state")).toContainText(
+    "Session privée · non enregistrée",
+  );
+  await page.getByRole("button", { name: /Foyer/ }).click();
+  await page.locator(".array-card--collapsible summary").first().click();
+  const name = page.getByLabel("Nom affiché").first();
+  const originalName = await name.inputValue();
+  await name.fill("Donnée éphémère");
+  await page.waitForTimeout(900);
+  expect(await readStoredDraftName(page)).toBeUndefined();
+
+  page.once("dialog", (browserDialog) => browserDialog.accept());
+  await page.reload();
+  await expect(page.locator(".save-state")).toContainText(
+    "Session privée · non enregistrée",
+  );
+  await page.getByRole("button", { name: /Foyer/ }).click();
+  await page.locator(".array-card--collapsible summary").first().click();
+  await expect(page.getByLabel("Nom affiché").first()).toHaveValue(
+    originalName,
+  );
+});
+
+test("signale et conserve un brouillon existant si la reprise locale est choisie", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: /Foyer/ }).click();
+  await page.locator(".array-card--collapsible summary").first().click();
+  await page.getByLabel("Nom affiché").first().fill("Brouillon à reprendre");
+  await expect(page.locator(".save-state")).toContainText(
+    "Brouillon local à jour",
+  );
+  await page.evaluate(
+    (key) => localStorage.removeItem(key),
+    PERSISTENCE_MODE_STORAGE_KEY,
+  );
+  await page.reload();
+
+  const dialog = page.getByRole("dialog", {
+    name: "Comment souhaitez-vous travailler ?",
+  });
+  await expect(
+    dialog.getByText("Un brouillon local existant a été détecté."),
+  ).toBeVisible();
+  await expect(
+    dialog.getByRole("button", {
+      name: "Effacer les brouillons et passer en session",
+    }),
+  ).toBeVisible();
+  await dialog
+    .getByRole("button", { name: "Activer la reprise locale 24 h" })
+    .click();
+
+  await page.getByRole("button", { name: /Foyer/ }).click();
+  await page.locator(".array-card--collapsible summary").first().click();
+  await expect(page.getByLabel("Nom affiché").first()).toHaveValue(
+    "Brouillon à reprendre",
+  );
+});
+
+test("migre un ancien brouillon en lui accordant 24 h sans perdre ses données", async ({
+  page,
+}) => {
+  await page.goto("/brand-mark.svg");
+  await page.evaluate(
+    async ({ dossier, preferenceKey }) => {
+      localStorage.setItem(preferenceKey, "local");
+      await new Promise<void>((resolve, reject) => {
+        const deletion = indexedDB.deleteDatabase("dossier-immo-local-v1");
+        deletion.onsuccess = () => resolve();
+        deletion.onerror = () => reject(deletion.error);
+        deletion.onblocked = () =>
+          reject(new Error("La base précédente est encore ouverte."));
+      });
+      await new Promise<void>((resolve, reject) => {
+        const request = indexedDB.open("dossier-immo-local-v1", 1);
+        request.onerror = () => reject(request.error);
+        request.onupgradeneeded = () => {
+          const store = request.result.createObjectStore("drafts", {
+            keyPath: "id",
+          });
+          store.createIndex("updatedAt", "updatedAt");
+        };
+        request.onsuccess = () => {
+          const database = request.result;
+          const transaction = database.transaction("drafts", "readwrite");
+          transaction.objectStore("drafts").put({
+            id: dossier.metadata.dossierId,
+            dossier,
+            updatedAt: "2025-01-01T00:00:00.000Z",
+          });
+          transaction.oncomplete = () => {
+            database.close();
+            resolve();
+          };
+          transaction.onerror = () => reject(transaction.error);
+        };
+      });
+    },
+    {
+      dossier: legacyDossier,
+      preferenceKey: PERSISTENCE_MODE_STORAGE_KEY,
+    },
+  );
+  const migrationStartedAt = Date.now();
+  await page.goto("/");
+
+  await expect(page.getByText("Brouillon local repris.")).toBeVisible();
+  expect(await readStoredDraftName(page)).toBe(
+    legacyDossier.household.people[0]?.displayName,
+  );
+  const expiration = await readStoredDraftExpiration(page);
+  expect(Date.parse(expiration ?? "") - migrationStartedAt).toBeGreaterThan(
+    23 * 60 * 60 * 1_000,
+  );
+});
+
+test("active une reprise locale de 24 h et permet de la prolonger", async ({
+  page,
+}) => {
+  await page.evaluate(
+    (key) => localStorage.removeItem(key),
+    PERSISTENCE_MODE_STORAGE_KEY,
+  );
+  await page.reload();
+  const dialog = page.getByRole("dialog", {
+    name: "Comment souhaitez-vous travailler ?",
+  });
+  await dialog
+    .getByRole("button", { name: "Activer la reprise locale 24 h" })
+    .click();
+  await expect(page.locator(".save-state")).toContainText(
+    "Brouillon local à jour",
+  );
+
+  const firstExpiration = await readStoredDraftExpiration(page);
+  expect(firstExpiration).toBeDefined();
+  expect(Date.parse(firstExpiration) - Date.now()).toBeGreaterThan(
+    23 * 60 * 60 * 1_000,
+  );
+
+  await page.waitForTimeout(50);
+  await page.getByRole("button", { name: "Prolonger de 24 h" }).click();
+  await expect(page.getByText(/prolongée de 24 h/)).toBeVisible();
+  const renewedExpiration = await readStoredDraftExpiration(page);
+  expect(Date.parse(renewedExpiration ?? "")).toBeGreaterThan(
+    Date.parse(firstExpiration),
+  );
+});
+
+test("avertit une heure avant l’échéance et permet d’ignorer ou prolonger", async ({
+  page,
+}) => {
+  await expect(page.locator(".save-state")).toContainText(
+    "Brouillon local à jour",
+  );
+  const imminentExpiration = new Date(
+    Date.now() + 30 * 60 * 1_000,
+  ).toISOString();
+  await setStoredDraftExpiration(page, imminentExpiration);
+  await page.reload();
+
+  const warning = page
+    .locator(".feedback-banner--warning")
+    .filter({ hasText: "expire dans moins d’une heure" });
+  await expect(warning).toBeVisible();
+  await expect(
+    warning.getByRole("button", { name: "Prolonger de 24 h" }),
+  ).toBeVisible();
+  await expect(
+    warning.getByRole("button", { name: "Exporter le JSON" }),
+  ).toBeVisible();
+  await warning.getByRole("button", { name: "Ignorer" }).click();
+  await expect(warning).toBeHidden();
+  expect(await readStoredDraftExpiration(page)).toBe(imminentExpiration);
+
+  await page.reload();
+  await expect(warning).toBeVisible();
+  await warning.getByRole("button", { name: "Prolonger de 24 h" }).click();
+  await expect(warning).toBeHidden();
+  expect(
+    Date.parse((await readStoredDraftExpiration(page)) ?? "") - Date.now(),
+  ).toBeGreaterThan(23 * 60 * 60 * 1_000);
+});
+
+test("purge un brouillon local expiré à la prochaine ouverture", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: /Foyer/ }).click();
+  await page.locator(".array-card--collapsible summary").first().click();
+  await page.getByLabel("Nom affiché").first().fill("Brouillon expiré");
+  await expect(page.locator(".save-state")).toContainText(
+    "Brouillon local à jour",
+  );
+  await page.evaluate(
+    async () =>
+      await new Promise<void>((resolve, reject) => {
+        const request = indexedDB.open("dossier-immo-local-v1");
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          const transaction = request.result.transaction("drafts", "readwrite");
+          const store = transaction.objectStore("drafts");
+          const getAll = store.getAll();
+          getAll.onerror = () => reject(getAll.error);
+          getAll.onsuccess = () => {
+            for (const record of getAll.result) {
+              record.expiresAt = "2020-01-01T00:00:00.000Z";
+              store.put(record);
+            }
+          };
+          transaction.oncomplete = () => resolve();
+          transaction.onerror = () => reject(transaction.error);
+        };
+      }),
+  );
+
+  await page.reload();
+  expect(await readStoredDraftName(page)).not.toBe("Brouillon expiré");
+  await expect(page.locator(".save-state")).toContainText(
+    "Brouillon local à jour",
+  );
+});
+
+test("purge aussi l’échéance d’un brouillon non affiché pendant que l’application reste ouverte", async ({
+  page,
+}) => {
+  await expect(page.locator(".save-state")).toContainText(
+    "Brouillon local à jour",
+  );
+  const hiddenDraftId = "brouillon-secondaire-expirable";
+  await page.evaluate(
+    async ({ expiresAt, id }) =>
+      await new Promise<void>((resolve, reject) => {
+        const request = indexedDB.open("dossier-immo-local-v1");
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          const transaction = request.result.transaction("drafts", "readwrite");
+          const store = transaction.objectStore("drafts");
+          const getAll = store.getAll();
+          getAll.onerror = () => reject(getAll.error);
+          getAll.onsuccess = () => {
+            const source = structuredClone(getAll.result.at(-1));
+            source.id = id;
+            source.dossier.metadata.dossierId = id;
+            source.updatedAt = new Date().toISOString();
+            source.expiresAt = expiresAt;
+            store.put(source);
+          };
+          transaction.oncomplete = () => resolve();
+          transaction.onerror = () => reject(transaction.error);
+        };
+      }),
+    {
+      expiresAt: new Date(Date.now() + 2_000).toISOString(),
+      id: hiddenDraftId,
+    },
+  );
+  expect(await hasStoredDraft(page, hiddenDraftId)).toBe(true);
+
+  await page.getByRole("button", { name: /Foyer/ }).click();
+  await page.locator(".array-card--collapsible summary").first().click();
+  await page
+    .getByLabel("Nom affiché")
+    .first()
+    .fill("Déclenche la planification");
+  await expect(page.locator(".save-state")).toContainText(
+    "Brouillon local à jour",
+  );
+  await expect.poll(() => hasStoredDraft(page, hiddenDraftId)).toBe(false);
 });
 
 test("charge l'exemple complet et expose la confidentialité locale", async ({

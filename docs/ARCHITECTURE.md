@@ -18,7 +18,7 @@ Moteur documentaire HTML/CSS print
 Aperçu et impression PDF Chromium
 ```
 
-Le fichier `.dossier-immo.json` est la sauvegarde autoritative. IndexedDB ne conserve qu'un brouillon local récupérable.
+Le fichier `.dossier-immo.json` est la sauvegarde autoritative. IndexedDB ne conserve qu'un brouillon local récupérable lorsque l'utilisateur active explicitement cette option.
 
 ## Frontières
 
@@ -36,7 +36,9 @@ Les valeurs importantes exposent une provenance : formule, identifiants sources,
 
 ## Persistance
 
-La GUI autosauvegarde le formulaire, y compris invalide, dans IndexedDB après une temporisation. Au rechargement, le dernier brouillon est repris avant toute nouvelle écriture. Une sauvegarde officielle n'est possible qu'après validation complète et produit le JSON canonique.
+Au premier accès, la GUI exige un choix entre `session` et `local`. Le mode est la seule préférence conservée dans `localStorage` ; aucune donnée métier n'y est écrite. Le mode `session`, recommandé, purge IndexedDB et conserve le formulaire uniquement en mémoire. Le mode `local` autosauvegarde le formulaire, y compris invalide, après une temporisation. Chaque écriture fixe `expiresAt` à 24 heures après la modification ; une prolongation manuelle produit le même effet. Une heure avant l'échéance, une bannière non bloquante permet de prolonger, d'exporter le JSON canonique ou d'ignorer l'avertissement courant. La purge intervient à l'échéance lorsque l'application est ouverte, ou à la prochaine ouverture sinon. Les enregistrements antérieurs à cette politique reçoivent 24 heures à partir de leur migration afin d'éviter une suppression silencieuse.
+
+Au rechargement en mode local, le dernier brouillon non expiré est repris avant toute nouvelle écriture. Une sauvegarde officielle n'est possible qu'après validation complète et produit le JSON canonique. Ce mécanisme ne modifie pas le contrat `schemaVersion: 3` du fichier métier.
 
 L'import valide strictement le format courant avant de remplacer le formulaire. Les fichiers de plus de 10 Mo, les JSON invalides et les contrats non conformes sont rejetés.
 
@@ -46,6 +48,8 @@ Le moteur peut produire jusqu'à treize sections A4, dont une page paysage pour 
 
 ## Déploiement futur
 
-Le build `apps/web/dist` est entièrement statique et utilise des chemins relatifs. La PWA précache uniquement le code et les assets applicatifs ; les dossiers privés restent dans IndexedDB ou dans les fichiers choisis par l'utilisateur.
+Le build `apps/web/dist` est entièrement statique et utilise des chemins relatifs. La PWA précache uniquement le code et les assets applicatifs ; les dossiers privés restent en mémoire, dans l'IndexedDB optionnelle ou dans les fichiers choisis par l'utilisateur.
+
+Le stockage navigateur est isolé par origine web, pas par chemin. Plusieurs applications GitHub Pages publiées sous la même origine peuvent donc techniquement partager `localStorage` et IndexedDB. Le mode session réduit ce risque et doit rester recommandé tant que Dossier Immo ne dispose pas de sa propre origine. La reprise locale ne doit jamais être présentée comme une isolation cryptographique.
 
 Avant un déploiement public, vérifier la liste des fichiers suivis, les secrets et les données personnelles. Les exemples doivent rester entièrement fictifs.

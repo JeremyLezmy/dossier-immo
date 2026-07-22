@@ -357,7 +357,10 @@ const topics = [
       {
         title: "Brouillon et sauvegarde",
         items: [
-          "L’autosauvegarde IndexedDB conserve localement la saisie en cours, même invalide, afin de la reprendre après un rechargement.",
+          "Le mode session privée recommandé ne conserve aucune donnée du dossier : fermer ou recharger l’onglet fait perdre les modifications non exportées.",
+          "Si vous activez la reprise locale, IndexedDB conserve la saisie en cours, même invalide, pendant 24 heures après sa dernière modification. Vous pouvez prolonger ce délai manuellement.",
+          "Lorsqu’il reste moins d’une heure, une bannière permet de prolonger de 24 heures, d’exporter la sauvegarde JSON ou d’ignorer l’avertissement. Ignorer ne change pas l’échéance.",
+          "Une échéance est supprimée immédiatement si l’application est ouverte, ou à la prochaine ouverture sinon. Les données locales peuvent aussi disparaître si les données du site sont effacées.",
           "Le fichier .dossier-immo.json exporté est la seule sauvegarde canonique, portable et indépendante de ce navigateur.",
           "L’interface reprend actuellement le brouillon le plus récent. Un futur gestionnaire local permettra de choisir et administrer plusieurs dossiers.",
         ],
@@ -374,6 +377,7 @@ const topics = [
         title: "Périmètre de l’application",
         items: [
           "Aucune donnée du dossier n’est envoyée à un serveur et l’application peut fonctionner hors ligne après son installation.",
+          "Le stockage du navigateur est partagé entre les applications utilisant exactement la même adresse web. Sur l’hébergement actuel, n’activez la reprise locale que si vous faites confiance aux autres applications de cette adresse.",
           "Les calculs constituent une pré-analyse documentaire, pas une offre de prêt ni un conseil juridique, fiscal ou financier personnalisé.",
           "La banque, le courtier ou les professionnels compétents restent responsables de la vérification et de la décision finale.",
         ],

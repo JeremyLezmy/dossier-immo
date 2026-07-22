@@ -80,7 +80,12 @@ Le contrôle automatisé de mise en page s’exécute avec `corepack pnpm check:
 
 - l’import valide strictement la structure courante ;
 - une erreur est affichée avec son chemin, sans écraser le brouillon courant ;
-- l’autosauvegarde IndexedDB reprend l’édition après rechargement ;
+- le premier accès exige un choix entre session privée sans persistance du dossier et reprise locale 24 heures ;
+- le mode session purge les brouillons IndexedDB et n'écrit aucune donnée métier dans `localStorage` ;
+- l’autosauvegarde IndexedDB ne fonctionne qu'après consentement au mode local et reprend le dernier brouillon non expiré après rechargement ;
+- toute écriture ou prolongation manuelle repousse `expiresAt` de 24 heures ; une échéance passée est purgée immédiatement ou à la prochaine ouverture ;
+- à moins d'une heure de l'échéance, une bannière non bloquante propose « Prolonger de 24 h », « Exporter le JSON » et « Ignorer » ; ignorer masque seulement l'avertissement courant et ne modifie jamais `expiresAt` ;
+- une migration d'ancien brouillon accorde 24 heures à partir de la migration, sans changer `schemaVersion: 3` ;
 - l'état de l'autosauvegarde reste visible sur mobile, tablette et desktop ;
 - sous 1050 px, la navigation compacte conserve le libellé complet de l'étape, sa position, les commandes précédent/suivant et le nombre de points à corriger ;
 - la synthèse de validation ouvre l'étape concernée, déplie sa sous-section et place le focus sur le contrôle invalide ;
@@ -98,7 +103,7 @@ Un scénario de financement peut être dupliqué depuis sa fiche dépliée. La c
 
 Les infobulles d'aide restent ancrées à leur déclencheur, basculent au-dessus lorsque l'espace inférieur manque et demeurent contenues dans le viewport. Ne pas réintroduire de position verticale fixe commune à toutes les infobulles mobiles.
 
-Une évolution future du stockage doit préserver la récupération sûre des brouillons. Le fichier exporté demeure l’autorité indépendante du navigateur.
+Une évolution future du stockage doit préserver la récupération sûre des brouillons, le consentement explicite et la purge en mode session. Le fichier exporté demeure l’autorité indépendante du navigateur. Ne jamais promettre une isolation entre applications partageant la même origine : les stockages navigateur sont cloisonnés par origine, pas par chemin.
 
 ## Contrôles avant diffusion d’un PDF
 
