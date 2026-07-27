@@ -10,8 +10,8 @@
     {
       "specifier": "semver@6.3.1",
       "introducedOn": "2026-07-19",
-      "lastReviewedOn": "2026-07-19",
-      "nextReviewOn": "2026-07-26",
+      "lastReviewedOn": "2026-07-27",
+      "nextReviewOn": "2026-08-03",
       "reviewCadenceDays": 7,
       "requiredBy": ["@babel/core@7.29.7"],
       "reason": "Babel 7 impose semver ^6.3.1. Cette version maintenue ne fournit pas un niveau de provenance suffisant pour la politique no-downgrade, mais son remplacement isolé sortirait de la plage déclarée par Babel.",
@@ -21,13 +21,52 @@
     {
       "specifier": "@trickfilm400/rollup-plugin-off-main-thread@3.0.0-pre1",
       "introducedOn": "2026-07-19",
-      "lastReviewedOn": "2026-07-19",
-      "nextReviewOn": "2026-07-26",
+      "lastReviewedOn": "2026-07-27",
+      "nextReviewOn": "2026-08-03",
       "reviewCadenceDays": 7,
       "requiredBy": ["workbox-build@7.4.1", "vite-plugin-pwa@1.3.0"],
       "reason": "workbox-build 7.4.1 impose exactement ce fork prerelease. La PWA dépend de cette chaîne et aucun remplacement direct compatible n'est disponible dans le graphe verrouillé.",
       "integrity": "sha512-/67zpWDBLV+oYAEL682s1ktXL0HgqX76f6gaVGkGnVZlBbm1zd0v4Bz8MFF2GGhoX9rvfq3KSQHubFHwa6w6/Q==",
       "removalCondition": "Supprimer dès que Workbox abandonne ce fork ou qu'une version de vite-plugin-pwa validée permet une chaîne qui ne déclenche plus ERR_PNPM_TRUST_DOWNGRADE."
+    }
+  ],
+  "securityOverrides": [
+    {
+      "selector": "brace-expansion@",
+      "version": "5.0.8",
+      "specifier": "brace-expansion@5.0.8",
+      "introducedOn": "2026-07-27",
+      "lastReviewedOn": "2026-07-27",
+      "nextReviewOn": "2026-08-03",
+      "reviewCadenceDays": 7,
+      "requiredBy": ["minimatch@10.2.5", "glob@11.1.0"],
+      "removedSpecifiers": ["brace-expansion@5.0.7"],
+      "reason": "Convergence compatible vers le correctif de GHSA-mh99-v99m-4gvg pour toutes les plages qui acceptent brace-expansion 5.0.8.",
+      "integrity": "sha512-JZyDyq3D4AUifKTPOB7DELf6XsB3WdPuNxCtob1vFXPsSXhdAiHBWJ/tJ8HAc9aH84BK+5JFZLNkJKx3G9kzQg==",
+      "removalCondition": "Supprimer lorsque tous les parents compatibles verrouillent nativement brace-expansion 5.0.8 ou une version corrigée ultérieure."
+    },
+    {
+      "selector": "@trickfilm400/rollup-plugin-off-main-thread@3.0.0-pre1>ejs",
+      "version": "6.0.1",
+      "specifier": "ejs@6.0.1",
+      "introducedOn": "2026-07-27",
+      "lastReviewedOn": "2026-07-27",
+      "nextReviewOn": "2026-08-03",
+      "reviewCadenceDays": 7,
+      "requiredBy": [
+        "@trickfilm400/rollup-plugin-off-main-thread@3.0.0-pre1",
+        "workbox-build@7.4.1"
+      ],
+      "removedSpecifiers": [
+        "ejs@3.1.10",
+        "jake@10.9.4",
+        "filelist@1.0.6",
+        "minimatch@5.1.9",
+        "brace-expansion@2.1.2"
+      ],
+      "reason": "Le plugin PWA appelle uniquement l'API CommonJS stable ejs.render. EJS 6.0.1 conserve cette API et retire la chaîne de CLI inutilisée Jake/Filelist/Minimatch qui imposait une version vulnérable sans rétroportage compatible.",
+      "integrity": "sha512-UaaM14yby8U3k02ihS1Bmj5Kz2d7CCQM1scxpgs4Mhkq8F1wR2gl3+Ts4h5Ne4Mnt7M9m4Dw7jsuMr3+xO4vZA==",
+      "removalCondition": "Supprimer lorsque Workbox ou son plugin off-main-thread accepte nativement EJS 6 ou abandonne cette dépendance."
     }
   ],
   "deprecatedTransitives": [

@@ -20,6 +20,13 @@ preferWorkspacePackages: true
 saveExact: true
 disallowWorkspaceCycles: true
 
+overrides:
+  # Compatible convergence to the fix for GHSA-mh99-v99m-4gvg.
+  "brace-expansion@": 5.0.8
+  # Parent-scoped compatibility adaptation: the PWA plugin only calls the
+  # CommonJS ejs.render API, which EJS 6 keeps without the vulnerable CLI chain.
+  "@trickfilm400/rollup-plugin-off-main-thread@3.0.0-pre1>ejs": 6.0.1
+
 allowBuilds:
   esbuild: true
   core-js: false
