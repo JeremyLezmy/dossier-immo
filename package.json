@@ -22,7 +22,7 @@
     "deps:audit": "corepack pnpm audit --audit-level=moderate",
     "deps:tree": "corepack pnpm list --depth Infinity",
     "deps:outdated": "corepack pnpm outdated --long",
-    "deps:sbom": "corepack pnpm sbom --format cyclonedx",
+    "deps:sbom": "corepack pnpm sbom --sbom-format cyclonedx",
     "deps:policy": "node tools/check-dependency-policy.mjs",
     "deps:trust-exclusions": "node tools/check-dependency-policy.mjs --probe"
   },

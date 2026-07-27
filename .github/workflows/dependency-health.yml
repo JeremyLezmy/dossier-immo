@@ -28,13 +28,14 @@ jobs:
       - name: Install locked dependencies
         run: corepack pnpm install --frozen-lockfile
 
-      - name: Verify project runtime and policy
-        run: |
-          corepack pnpm runtime:check
-          corepack pnpm deps:policy
+      - name: Verify project runtime
+        run: corepack pnpm runtime:check
 
       - name: Re-probe exact trust exclusions
         run: corepack pnpm deps:trust-exclusions
+
+      - name: Verify static dependency policy
+        run: corepack pnpm deps:policy
 
       - name: Audit vulnerabilities
         run: corepack pnpm deps:audit

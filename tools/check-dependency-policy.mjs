@@ -1,8 +1,19 @@
-import { mkdtemp, mkdir, readFile, rm, copyFile, writeFile } from "node:fs/promises";
+import {
+  mkdtemp,
+  mkdir,
+  readFile,
+  rm,
+  copyFile,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import {
+  collectOverdueReviewErrors,
+  shouldStopBeforeProbe,
+} from "./dependency-review-policy.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const policyPath = join(root, "docs", "dependency-trust-exclusions.json");
@@ -16,13 +27,13 @@ const manifestPaths = [
   "packages/document/package.json",
   "packages/domain/package.json",
   "packages/fixtures/package.json",
-  "packages/schema/package.json"
+  "packages/schema/package.json",
 ];
 
 const [policyText, workspaceText, lockfileText] = await Promise.all([
   readFile(policyPath, "utf8"),
   readFile(workspacePath, "utf8"),
-  readFile(lockfilePath, "utf8")
+  readFile(lockfilePath, "utf8"),
 ]);
 const policy = JSON.parse(policyText);
 const errors = [];
@@ -32,10 +43,26 @@ function fail(message) {
 }
 
 function extractYamlExclusions(yaml) {
-  const block = yaml.match(/^trustPolicyExclude:\s*\r?\n((?:^[ \t]+.*(?:\r?\n|$))*)/m)?.[1] ?? "";
+  const block =
+    yaml.match(
+      /^trustPolicyExclude:\s*\r?\n((?:^[ \t]+.*(?:\r?\n|$))*)/m,
+    )?.[1] ?? "";
   return [...block.matchAll(/^\s+-\s+(?:"([^"]+)"|'([^']+)'|([^\s#]+))/gm)].map(
-    (match) => match[1] ?? match[2] ?? match[3]
+    (match) => match[1] ?? match[2] ?? match[3],
   );
+}
+
+function extractYamlOverrides(yaml) {
+  const block =
+    yaml.match(/^overrides:\s*\r?\n((?:^[ \t]+.*(?:\r?\n|$))*)/m)?.[1] ?? "";
+  return [
+    ...block.matchAll(
+      /^\s{2}(?:"([^"]+)"|'([^']+)'|([^:\s#]+)):\s+(?:"([^"]+)"|'([^']+)'|([^\s#]+))/gm,
+    ),
+  ].map((match) => ({
+    selector: match[1] ?? match[2] ?? match[3],
+    version: match[4] ?? match[5] ?? match[6],
+  }));
 }
 
 function packageName(specifier) {
@@ -48,10 +75,16 @@ function escapeRegExp(value) {
 }
 
 const yamlExclusions = extractYamlExclusions(workspaceText);
-const documentedExclusions = policy.exclusions.map(({ specifier }) => specifier);
+const yamlOverrides = extractYamlOverrides(workspaceText);
+const documentedExclusions = policy.exclusions.map(
+  ({ specifier }) => specifier,
+);
+const securityOverrides = policy.securityOverrides ?? [];
 
 if (policy.policy.maturityWindowMinutes !== 4320) {
-  fail("La fenêtre de maturité documentée doit rester de 4320 minutes (72 h). ");
+  fail(
+    "La fenêtre de maturité documentée doit rester de 4320 minutes (72 h). ",
+  );
 }
 if (policy.policy.trustPolicy !== "no-downgrade") {
   fail("La politique documentée doit rester no-downgrade.");
@@ -72,7 +105,23 @@ if (
   yamlExclusions.length !== documentedExclusions.length ||
   yamlExclusions.some((specifier) => !documentedExclusions.includes(specifier))
 ) {
-  fail("Les exclusions pnpm et docs/dependency-trust-exclusions.json divergent.");
+  fail(
+    "Les exclusions pnpm et docs/dependency-trust-exclusions.json divergent.",
+  );
+}
+if (
+  yamlOverrides.length !== securityOverrides.length ||
+  securityOverrides.some(
+    ({ selector, version }) =>
+      !yamlOverrides.some(
+        (override) =>
+          override.selector === selector && override.version === version,
+      ),
+  )
+) {
+  fail(
+    "Les overrides pnpm et docs/dependency-trust-exclusions.json divergent.",
+  );
 }
 
 const today = new Date().toISOString().slice(0, 10);
@@ -83,10 +132,19 @@ for (const exclusion of policy.exclusions) {
   if (separator <= 0 || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) {
     fail(`${specifier} n'est pas une exclusion exacte nom@version.`);
   }
-  if (!exclusion.reason || !exclusion.integrity || !exclusion.removalCondition) {
-    fail(`${specifier} ne documente pas complètement raison, intégrité et condition de retrait.`);
+  if (
+    !exclusion.reason ||
+    !exclusion.integrity ||
+    !exclusion.removalCondition
+  ) {
+    fail(
+      `${specifier} ne documente pas complètement raison, intégrité et condition de retrait.`,
+    );
   }
-  if (!Array.isArray(exclusion.requiredBy) || exclusion.requiredBy.length === 0) {
+  if (
+    !Array.isArray(exclusion.requiredBy) ||
+    exclusion.requiredBy.length === 0
+  ) {
     fail(`${specifier} ne documente aucun parent requis.`);
   }
   if (
@@ -95,28 +153,105 @@ for (const exclusion of policy.exclusions) {
   ) {
     fail(`${specifier} dépasse la cadence maximale de revue autorisée.`);
   }
-  if (exclusion.nextReviewOn < today) {
-    fail(`${specifier} aurait dû être revu le ${exclusion.nextReviewOn}.`);
-  }
   const lockEntry = new RegExp(
-    `(?:^|\\n)  ['\"]?${escapeRegExp(specifier)}['\"]?:\\r?\\n    resolution: \\{integrity: ${escapeRegExp(exclusion.integrity)}\\}`
+    `(?:^|\\n)  ['\"]?${escapeRegExp(specifier)}['\"]?:\\r?\\n    resolution: \\{integrity: ${escapeRegExp(exclusion.integrity)}\\}`,
   );
   if (!lockEntry.test(lockfileText)) {
-    fail(`${specifier} ou son intégrité documentée ne correspond plus au lockfile.`);
+    fail(
+      `${specifier} ou son intégrité documentée ne correspond plus au lockfile.`,
+    );
   }
   for (const parent of exclusion.requiredBy) {
     if (!lockfileText.includes(parent)) {
-      fail(`Le parent documenté ${parent} de ${specifier} est absent du lockfile.`);
+      fail(
+        `Le parent documenté ${parent} de ${specifier} est absent du lockfile.`,
+      );
     }
   }
 }
 
-if (errors.length > 0) {
-  for (const error of errors) console.error(`- ${error}`);
+for (const override of securityOverrides) {
+  const { selector, specifier, version } = override;
+  if (
+    !selector ||
+    !specifier ||
+    !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)
+  ) {
+    fail(`${selector || specifier} n'est pas un override exact et versionné.`);
+  }
+  if (!override.reason || !override.integrity || !override.removalCondition) {
+    fail(
+      `${selector} ne documente pas complètement raison, intégrité et condition de retrait.`,
+    );
+  }
+  if (!Array.isArray(override.requiredBy) || override.requiredBy.length === 0) {
+    fail(`${selector} ne documente aucun parent requis.`);
+  }
+  if (
+    !Array.isArray(override.removedSpecifiers) ||
+    override.removedSpecifiers.length === 0
+  ) {
+    fail(`${selector} ne documente aucune version vulnérable retirée.`);
+  }
+  if (
+    !Number.isInteger(override.reviewCadenceDays) ||
+    override.reviewCadenceDays > policy.policy.maximumReviewCadenceDays
+  ) {
+    fail(`${selector} dépasse la cadence maximale de revue autorisée.`);
+  }
+  const lockEntry = new RegExp(
+    `(?:^|\\n)  ['"]?${escapeRegExp(specifier)}['"]?:\\r?\\n    resolution: \\{integrity: ${escapeRegExp(override.integrity)}\\}`,
+  );
+  if (!lockEntry.test(lockfileText)) {
+    fail(
+      `${specifier} ou son intégrité documentée ne correspond plus au lockfile.`,
+    );
+  }
+  for (const parent of override.requiredBy) {
+    if (!lockfileText.includes(parent)) {
+      fail(
+        `Le parent documenté ${parent} de ${selector} est absent du lockfile.`,
+      );
+    }
+  }
+  for (const removedSpecifier of override.removedSpecifiers) {
+    const removedEntry = new RegExp(
+      `(?:^|\\n)  ['"]?${escapeRegExp(removedSpecifier)}['"]?:`,
+    );
+    if (removedEntry.test(lockfileText)) {
+      fail(
+        `${removedSpecifier}, que ${selector} doit retirer, reste dans le lockfile.`,
+      );
+    }
+  }
+}
+
+const overdueReviewErrors = collectOverdueReviewErrors(
+  [...policy.exclusions, ...securityOverrides],
+  today,
+);
+
+if (
+  shouldStopBeforeProbe({
+    probeRequested,
+    validationErrors: errors,
+    overdueReviewErrors,
+  })
+) {
+  for (const error of [...errors, ...overdueReviewErrors])
+    console.error(`- ${error}`);
   process.exit(1);
 }
 
-console.log(`Politique statique valide : ${documentedExclusions.length} exclusion(s) exacte(s), fenêtre 72 h.`);
+console.log(
+  `Structure de politique valide : ${documentedExclusions.length} exclusion(s) exacte(s), ${securityOverrides.length} override(s) de sécurité, fenêtre 72 h.`,
+);
+
+if (overdueReviewErrors.length > 0) {
+  console.error(
+    "Revue échue : les sondages sont poursuivis pour déterminer si les exclusions restent nécessaires.",
+  );
+}
 
 async function copyManifest(relativePath, destinationRoot) {
   const destination = join(destinationRoot, relativePath);
@@ -125,52 +260,69 @@ async function copyManifest(relativePath, destinationRoot) {
 }
 
 async function probeExclusion(exclusion) {
-  const temporaryRoot = await mkdtemp(join(tmpdir(), "dossier-immo-trust-probe-"));
+  const temporaryRoot = await mkdtemp(
+    join(tmpdir(), "dossier-immo-trust-probe-"),
+  );
   try {
-    await Promise.all(manifestPaths.map((path) => copyManifest(path, temporaryRoot)));
+    await Promise.all(
+      manifestPaths.map((path) => copyManifest(path, temporaryRoot)),
+    );
     await copyFile(lockfilePath, join(temporaryRoot, "pnpm-lock.yaml"));
     const linePattern = new RegExp(
       `^\\s+-\\s+(?:"${escapeRegExp(exclusion.specifier)}"|'${escapeRegExp(exclusion.specifier)}'|${escapeRegExp(exclusion.specifier)})\\s*\\r?\\n`,
-      "m"
+      "m",
     );
     const workspaceWithoutExclusion = workspaceText.replace(linePattern, "");
     if (workspaceWithoutExclusion === workspaceText) {
-      throw new Error(`Impossible de retirer ${exclusion.specifier} du YAML de test.`);
+      throw new Error(
+        `Impossible de retirer ${exclusion.specifier} du YAML de test.`,
+      );
     }
-    await writeFile(join(temporaryRoot, "pnpm-workspace.yaml"), workspaceWithoutExclusion, "utf8");
+    await writeFile(
+      join(temporaryRoot, "pnpm-workspace.yaml"),
+      workspaceWithoutExclusion,
+      "utf8",
+    );
 
     const isWindows = process.platform === "win32";
-    const command = isWindows ? process.env.ComSpec ?? "cmd.exe" : "corepack";
+    const command = isWindows ? (process.env.ComSpec ?? "cmd.exe") : "corepack";
     const commandArguments = isWindows
       ? [
           "/d",
           "/s",
           "/c",
-          "corepack.cmd pnpm install --lockfile-only --frozen-lockfile --ignore-scripts"
+          "corepack.cmd pnpm install --lockfile-only --frozen-lockfile --ignore-scripts",
         ]
-      : ["pnpm", "install", "--lockfile-only", "--frozen-lockfile", "--ignore-scripts"];
-    const result = spawnSync(
-      command,
-      commandArguments,
-      {
-        cwd: temporaryRoot,
-        encoding: "utf8",
-        env: { ...process.env, CI: "true", NO_COLOR: "1" }
-      }
-    );
+      : [
+          "pnpm",
+          "install",
+          "--lockfile-only",
+          "--frozen-lockfile",
+          "--ignore-scripts",
+        ];
+    const result = spawnSync(command, commandArguments, {
+      cwd: temporaryRoot,
+      encoding: "utf8",
+      env: { ...process.env, CI: "true", NO_COLOR: "1" },
+    });
     if (result.error) {
-      throw new Error(`Impossible de lancer Corepack pour ${exclusion.specifier}: ${result.error.message}`);
+      throw new Error(
+        `Impossible de lancer Corepack pour ${exclusion.specifier}: ${result.error.message}`,
+      );
     }
     const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
     if (result.status === 0) {
       throw new Error(
-        `${exclusion.specifier} ne bloque plus la politique : l'exclusion doit être examinée et probablement supprimée.`
+        `${exclusion.specifier} ne bloque plus la politique : l'exclusion doit être examinée et probablement supprimée.`,
       );
     }
     const name = packageName(exclusion.specifier);
-    if (!/TRUST_DOWNGRADE|trust level downgrade/i.test(output) || !output.includes(name)) {
+    if (
+      !/TRUST_DOWNGRADE|trust level downgrade/i.test(output) ||
+      !output.includes(name)
+    ) {
       throw new Error(
-        `Le sondage de ${exclusion.specifier} a échoué pour une raison inattendue :\n${output.trim()}`
+        `Le sondage de ${exclusion.specifier} a échoué pour une raison inattendue :\n${output.trim()}`,
       );
     }
     console.log(`Exclusion encore nécessaire : ${exclusion.specifier}`);
@@ -180,7 +332,18 @@ async function probeExclusion(exclusion) {
 }
 
 if (probeRequested) {
+  const probeErrors = [];
   for (const exclusion of policy.exclusions) {
-    await probeExclusion(exclusion);
+    try {
+      await probeExclusion(exclusion);
+    } catch (error) {
+      probeErrors.push(error instanceof Error ? error.message : String(error));
+    }
+  }
+  if (probeErrors.length > 0 || overdueReviewErrors.length > 0) {
+    for (const error of [...probeErrors, ...overdueReviewErrors]) {
+      console.error(`- ${error}`);
+    }
+    process.exit(1);
   }
 }

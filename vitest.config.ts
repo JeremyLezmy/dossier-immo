@@ -7,6 +7,7 @@ export default defineConfig({
       "packages/**/*.test.ts",
       "apps/web/**/*.test.ts",
       "tests/contracts/**/*.test.ts",
+      "tools/**/*.test.ts",
     ],
     coverage: {
       provider: "v8",
