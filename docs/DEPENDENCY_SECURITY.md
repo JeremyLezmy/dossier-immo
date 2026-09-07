@@ -25,7 +25,7 @@ Exceptions approuvées le 19 juillet 2026 :
 
 Ces exceptions ne déclarent pas les paquets « sûrs pour toujours ». Elles acceptent un risque résiduel étroit et vérifiable afin de conserver une chaîne compatible. Leurs archives sont verrouillées par les intégrités du lockfile.
 
-Le sondage du 27 juillet 2026 a confirmé que les deux exclusions restaient nécessaires. Leur prochaine revue est fixée au 3 août 2026.
+Le sondage du 7 septembre 2026 confirme que les deux exclusions restent nécessaires (ERR_PNPM_TRUST_DOWNGRADE sans chacune). Prochaine revue : 14 septembre 2026. Les parents verrouillés restent minimatch 10.2.5 (brace-expansion ^5.0.5, incluant des versions vulnérables) et le plugin off-main-thread 3.0.0-pre1 (EJS ^3.1.10) : les correctifs imposés sont conservés. Aucun changement de versions ni de lockfile.
 
 Deux transitifs dépréciés proviennent également de Workbox : `glob@11.1.0` et `source-map@0.8.0-beta.0`. Ils ne sont pas exclus des contrôles de confiance. Ils restent documentés pour être éliminés dès qu'une chaîne Workbox compatible le permet, sans override hors contrat.
 
@@ -65,3 +65,12 @@ La CI `dependency-health.yml` exécute ce sondage chaque lundi et à chaque pull
 8. Mettre à jour ce document et le registre si la chaîne ou les exceptions changent.
 
 Ne jamais désactiver globalement la fenêtre, `no-downgrade`, l'intégrité ou `strictDepBuilds` pour débloquer une installation. Une exception urgente doit rester exacte, temporaire, approuvée et documentée.
+
+
+## Correctifs du 7 septembre 2026
+
+L’audit avant publication a signalé douze avis (dix élevés, deux modérés). Correctifs ciblés : PostCSS 8.5.28, Nano ID 3.3.18, DOMPurify 3.4.14, brace-expansion 5.0.9, fast-uri 3.1.6 et Browserslist 4.28.8. Les versions effectivement verrouillées sont l’autorité. Les nouveaux overrides restent limités aux branches majeures compatibles avec les parents : AJV 8.20.0 accepte fast-uri ^3.0.1 ; Babel helper-compilation-targets 7.29.7 accepte Browserslist ^4.24.0. Le registre contient les intégrités, parents, anciennes versions exclues et critères de retrait. Le sondage confirme les deux exclusions de confiance ; échéance de revue : 14 septembre 2026. Aucun abaissement des contrôles ni nouvelle autorisation de scripts.
+
+PDF.js est migré séparément de 5.7.284 vers 6.2.108 pour GHSA-hq66-cqwq-w95j. Dépendance de développement Apache-2.0 du projet Mozilla, uniquement utilisée par tools/pdf-text.mjs, pdf-page.mjs et pdf-audit.mjs. Son moteur exige Node >=22.13 ou >=24, compatible avec le runtime 24.18.0 du dépôt. Le backend de rendu @napi-rs/canvas 1.0.8 (MIT) est déclaré explicitement pour les outils CLI ; voir PDFJS_MIGRATION.md. Vérifier extraction et rendu sur le PDF fictif avec les trois outils ; aucune inclusion de PDF.js dans le bundle applicatif.
+
+Après résolution ciblée et installation figée, pnpm audit ne signale plus de vulnérabilité connue. Les deux transitifs Workbox dépréciés restent inchangés et suivis.
