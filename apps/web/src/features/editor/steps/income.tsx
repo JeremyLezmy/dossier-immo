@@ -1,3 +1,5 @@
+import { IncomeReadingSummary, PlanningPeriods } from "./planning";
+
 import { useEffect } from "react";
 import {
   useFieldArray,
@@ -433,7 +435,8 @@ function HistoryCard({
     };
   });
   const selectedIncome = incomeStreams.find(
-    (income) => income.id === form.watch(`revenueHistory.${index}.incomeStreamId`),
+    (income) =>
+      income.id === form.watch(`revenueHistory.${index}.incomeStreamId`),
   );
   const selectedPerson = people.find(
     (person) => person.id === selectedIncome?.personId,
@@ -520,6 +523,7 @@ export function IncomeStep({
         title="Activités et revenus"
         description="Séparez les activités, leur mode de rémunération et les revenus retenus. L'interface n'affiche que les indicateurs adaptés au modèle choisi."
       />
+      <IncomeReadingSummary form={form} />
       <EditorDisclosure disclosureId="income-activities">
         <summary>
           <div>
@@ -625,6 +629,30 @@ export function IncomeStep({
                   help="Hypothèse minorée utilisée pour mesurer la robustesse du dossier."
                 />
                 <MoneyField
+                  label="Revenu économique mensuel avant IR"
+                  name={`incomeStreams.${index}.monthlyEconomicCents`}
+                  control={form.control}
+                  optional
+                  help="Après cotisations et frais professionnels, distinct du revenu bancaire."
+                />
+                <TextField
+                  label="Début du revenu"
+                  name={`incomeStreams.${index}.startDate`}
+                  register={form.register}
+                  type="date"
+                />
+                <TextField
+                  label="Fin du revenu / contrat"
+                  name={`incomeStreams.${index}.endDate`}
+                  register={form.register}
+                  type="date"
+                />
+                <TextareaField
+                  label="Convention bancaire"
+                  name={`incomeStreams.${index}.bankingConvention`}
+                  register={form.register}
+                />
+                <MoneyField
                   label="Après impôt estimé"
                   name={`incomeStreams.${index}.monthlyAfterTaxEstimateCents`}
                   control={form.control}
@@ -669,6 +697,8 @@ export function IncomeStep({
           </button>
         </div>
       </EditorDisclosure>
+      <PlanningPeriods form={form} />
+
       <EditorDisclosure disclosureId="income-history">
         <summary>
           <div>

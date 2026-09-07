@@ -60,7 +60,7 @@ Les fonctions de `packages/calculations` restent pures : aucune lecture du navig
 
 Le résultat calculé conserve une provenance pour les agrégats critiques. Le renderer ne doit pas recalculer une mensualité, une réserve ou un ratio.
 
-Le financement multi-prêts repose sur une chronologie mensuelle unique dans `packages/calculations`. `durationMonths` désigne l’amortissement et `deferredMonths` la période préalable ; aucune couche ne doit interpréter la durée comme incluant le différé. Pendant celui-ci, le capital reste constant, avec paiement nul hors assurance à taux zéro ou intérêts seuls à taux positif. Les budgets, le Sankey, le taux d’effort et le document consomment la mensualité maximale assurance comprise. L’assurance reste constante et fondée sur le capital initial total.
+Le financement multi-prêts repose sur une chronologie mensuelle unique dans `packages/calculations`. `durationMonths` désigne l’amortissement et `deferredMonths` la période préalable ; aucune couche ne doit interpréter la durée comme incluant le différé. Pendant celui-ci, le capital reste constant, avec paiement nul hors assurance à taux zéro ou intérêts seuls à taux positif. Les budgets et le Sankey utilisent la mensualité initiale et exposent les phases suivantes. Le taux d’effort utilise la charge annuelle maximale des crédits réellement simultanés : ne pas cumuler un pic futur avec une dette déjà éteinte. L’assurance reste constante et fondée sur le capital initial total.
 
 L’interface peut convertir une saisie en années vers des mois, mais le schéma et le fichier canonique conservent uniquement des mois entiers. Ne jamais ajouter une unité persistée ou un échéancier au dossier pour répondre à un besoin de présentation.
 
@@ -112,3 +112,6 @@ Vérifier identités et dates, revenus et périodes, apport et réserve, dettes 
 ## Confidentialité et publication
 
 Ne jamais committer `private/`, `output/`, PDF, relevés, justificatifs ou exports réels. Vérifier `git status`, la liste des fichiers suivis et les motifs sensibles avant chaque publication. La fixture doit conserver des identités, métiers, lieux, dates et montants manifestement fictifs.
+
+
+Les deux annexes facultatives peuvent porter le document complet à 15 pages. Le dossier fictif historique reste un oracle de 13 pages par défaut. Toute activation ou évolution doit être vérifiée en pagination et en rendu, sans supprimer d’informations utiles uniquement pour conserver un nombre de pages. La fiscalité simplifiée et les comparaisons de revenus ont leur autorité dans `packages/calculations` ; toute mise à jour de barème doit être datée et couverte par des exemples de tranches.

@@ -16,7 +16,7 @@ describe("document bancaire", () => {
     const titles = [
       "Lettre de présentation",
       "Synthèse foyer",
-      "Revenus retenus",
+      "Revenus — budget de vie et lecture bancaire",
       "Éléments de stabilité",
       "Patrimoine, liquidités et apport",
       "Trésorerie conservée après achat",

@@ -3,6 +3,7 @@ import type { Dossier, ValidationIssue } from "@dossier-immo/schema";
 import { SectionIntro } from "../../../components/fields";
 import { editorSteps } from "./metadata";
 import { euro } from "./shared";
+import { SavingsSummary } from "./planning";
 
 export function OverviewStep({
   dossier,
@@ -62,7 +63,7 @@ export function OverviewStep({
       </div>
       {derived && (
         <div className="metric-grid">
-          <Metric label="Revenu central" value={derived.incomeCentralCents} />
+          <Metric label={derived.incomePresentation.hasEconomicBasis ? derived.incomePresentation.economicLabel + " avant IR" : "Base bancaire proposée"} value={derived.incomePresentation.hasEconomicBasis ? derived.incomePresentation.beforeTaxCents : derived.incomeCentralCents} />
           <Metric label="Patrimoine" value={derived.totalAssetsCents} />
           <Metric
             label="Liquidités projetées"
@@ -80,6 +81,9 @@ export function OverviewStep({
           />
         </div>
       )}
+      {dossier.incomePeriods?.length ? (
+        <SavingsSummary dossier={dossier} derived={derived} />
+      ) : null}
       <div className="privacy-card">
         <span aria-hidden="true">✓</span>
         <div>

@@ -15,6 +15,8 @@ import type { PersistenceMode } from "../persistence/policy";
 
 interface DossierActionsMenuProps {
   readonly canPreview: boolean;
+  readonly printing: boolean;
+  readonly onPrintPdf: () => void;
   readonly clearingDrafts: boolean;
   readonly exportingDossier: boolean;
   readonly importingDossier: boolean;
@@ -34,6 +36,8 @@ interface DossierActionsMenuProps {
 
 export function DossierActionsMenu({
   canPreview,
+  printing,
+  onPrintPdf,
   clearingDrafts,
   exportingDossier,
   importingDossier,
@@ -162,6 +166,7 @@ export function DossierActionsMenu({
           )}
 
           <p>Fichier officiel</p>
+          <button type="button" disabled={!canPreview || printing} onClick={() => run(onPrintPdf)}><Download size={18} aria-hidden="true" /><span><strong>Imprimer / PDF texte</strong><small>Enregistrer un PDF avec texte sélectionnable</small></span></button>
           <button
             type="button"
             disabled={importingDossier}

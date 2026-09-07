@@ -172,6 +172,8 @@ const sections: readonly {
     title: "Pièces justificatives",
     description: "Introduction et conclusion de la liste de suivi.",
   },
+  { key: "financialReview", title: "Repères de revenus, fiscalité et crédit auto", description: "Page facultative pour expliciter les hypothèses de transition et les arbitrages." },
+  { key: "incomeHistoryChart", title: "Évolution mensuelle du CA encaissé", description: "Annexe facultative, fondée sur les historiques mensuels observés." },
   {
     key: "independentIncomeAnnex",
     title: "Annexes des revenus indépendants",

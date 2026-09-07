@@ -201,6 +201,16 @@ p{
   text-transform:uppercase;
 }
 
+/* Keep the economic and banking readings together on the income sheet. */
+.financial-review-page h3{margin-top:12px;}
+.financial-review-page table{margin:8px 0;}
+.financial-review-page p{margin-bottom:7px;}
+.income-page .kpi-grid{margin:12px 0;}
+.income-page .kpi small{display:block;font-size:10.8px;line-height:1.35;margin-top:5px;}
+.income-page .callout{font-size:12px;line-height:1.4;}
+.income-page h3{margin-top:12px;}
+.income-page table{margin:8px 0 10px;}
+
 .meta strong,
 .kpi strong{
   display:block;
@@ -637,6 +647,7 @@ li{
   line-height:1.3;
 }
 
+.budget-hypotheses{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}.budget-hypotheses ul{padding-left:15px;margin:4px 0}.budget-hypotheses li{margin:3px 0}
 .financing-page .callout{
   margin:10px 0;
 }

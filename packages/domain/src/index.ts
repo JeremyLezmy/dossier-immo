@@ -230,7 +230,9 @@ export const editorialSectionLabels = {
   sankey: "Page 10 · Flux budgétaires",
   postPurchaseBudget: "Page 11 · Budget post-achat",
   supportingDocuments: "Page 12 · Pièces justificatives",
-  independentIncomeAnnex: "Page 13 · Annexe des revenus indépendants",
+  independentIncomeAnnex: "Annexe des revenus indépendants",
+  financialReview: "Repères pour l’étude bancaire",
+  incomeHistoryChart: "Évolution mensuelle des revenus",
 } as const satisfies Readonly<Record<keyof Dossier["editorial"]["sectionSlots"], string>>;
 
 type EditorialSlotPosition = keyof NonNullable<Dossier["editorial"]["sectionSlots"][keyof Dossier["editorial"]["sectionSlots"]]>;

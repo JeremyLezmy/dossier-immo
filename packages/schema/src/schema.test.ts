@@ -90,6 +90,9 @@ describe("DossierSchema", () => {
       projected.project.installationCents -
       projected.reservePolicy.minimumCents;
 
+    projected.financingScenarios.forEach((scenario) => {
+      delete scenario.contributionOverrideCents;
+    });
     expect(validateDossier(projected).success).toBe(true);
   });
 

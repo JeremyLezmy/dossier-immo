@@ -237,10 +237,10 @@ describe("moteur de calcul", () => {
     const result = calculateDossier(dossier);
     const centralPayment = result.financingScenarios.find(
       (scenario) => scenario.id === "family-central",
-    )!.maximumMonthlyPaymentIncludingInsuranceCents;
+    )!.initialMonthlyPaymentIncludingInsuranceCents;
     const stressPayment = result.financingScenarios.find(
       (scenario) => scenario.id === "family-rate-stress",
-    )!.maximumMonthlyPaymentIncludingInsuranceCents;
+    )!.initialMonthlyPaymentIncludingInsuranceCents;
 
     expect(result.budgetIncomeCents[centralBudget!.id]).toBe(724_000);
     expect(result.budgetIncomeCents[stressBudget!.id]).toBe(600_000);
@@ -291,7 +291,7 @@ describe("moteur de calcul", () => {
     const result = calculateDossier(dossier);
     const highlightedPayment = result.financingScenarios.find(
       (scenario) => scenario.id === result.highlightedScenarioId,
-    )!.maximumMonthlyPaymentIncludingInsuranceCents;
+    )!.initialMonthlyPaymentIncludingInsuranceCents;
     expect(result.budgetIncomeCents[stressBudget!.id]).toBe(
       dossier.estimatedHouseholdAfterTaxIncomeCents,
     );
