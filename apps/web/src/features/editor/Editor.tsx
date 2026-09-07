@@ -50,6 +50,7 @@ import {
 } from "../../persistence/database";
 import {
   downloadPdfDocument,
+  printDocument,
   importDossierFile,
   saveDossierFile,
 } from "../../persistence/files";
@@ -448,6 +449,15 @@ export function Editor() {
     }
   };
 
+  const printTextPdf = async () => {
+    if (!documentHtml || isPdfGenerating) return;
+    setIsPdfGenerating(true);
+    setMessage({ tone: "info", text: "Choisissez Enregistrer au format PDF dans la fenêtre d’impression pour conserver le texte sélectionnable." });
+    try { await printDocument(documentHtml); }
+    catch (error) { setMessage({ tone: "error", text: error instanceof Error ? error.message : "Impression impossible." }); }
+    finally { setIsPdfGenerating(false); }
+  };
+
   const createNewDossier = () => {
     const consequence =
       persistenceMode === "local"
@@ -681,6 +691,8 @@ export function Editor() {
           </button>
           <DossierActionsMenu
             canPreview={Boolean(documentHtml)}
+            printing={isPdfGenerating}
+            onPrintPdf={() => void printTextPdf()}
             clearingDrafts={isClearingDrafts}
             exportingDossier={isExportingDossier}
             importingDossier={isImportingDossier}

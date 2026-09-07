@@ -1,3 +1,5 @@
+import { CashFlowFields } from "./planning";
+
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
 import type { Dossier } from "@dossier-immo/schema";
 import {
@@ -52,6 +54,7 @@ export function ProjectStep({
             ]}
             help="Détermine le vocabulaire employé dans le PDF ; il ne modifie pas automatiquement la fiscalité."
           />
+          <MoneyField label="Frais de garantie et dossier financés" name="project.financingFeesCents" control={form.control} optional help="Hypothèse ajoutée au coût à financer, distincte des frais d’acquisition et de l’installation." />
           <TextField
             label="Date cible d'achat"
             name="project.targetPurchaseDate"
@@ -109,6 +112,8 @@ export function ProjectStep({
             control={form.control}
             help="Estimation en pourcentage du prix : par exemple 7,5 % pour 750 points de base."
           />
+          {!form.watch("cashFlowPlan") && (
+            <>
           <MoneyField
             label="Liquidités attendues à l'achat"
             name="project.expectedLiquidityAtPurchaseCents"
@@ -123,8 +128,12 @@ export function ProjectStep({
             optional
             help="Montant ajouté chaque mois jusqu'à la date cible lorsque les liquidités attendues ne sont pas saisies explicitement."
           />
+            </>
+          )}
         </div>
       </EditorDisclosure>
+      <CashFlowFields form={form} />
+
       <EditorDisclosure disclosureId="project-property-criteria">
         <summary>
           <div>

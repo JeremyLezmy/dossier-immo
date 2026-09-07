@@ -950,7 +950,7 @@ test("la page Textes conserve des identifiants et des résumés HTML valides", a
 
 test("les nouveaux parcours guidés restent utilisables", async ({ page }) => {
   await page.getByRole("button", { name: /Revenus/ }).click();
-  await expect(page.locator("details.editor-subsection")).toHaveCount(3);
+  await expect(page.locator("details.editor-subsection")).toHaveCount(4);
   await page.getByRole("button", { name: /Patrimoine/ }).click();
   await expect(page.locator("details.editor-subsection")).toHaveCount(2);
   await page.getByRole("button", { name: /Projet/ }).click();

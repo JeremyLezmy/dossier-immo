@@ -3,11 +3,21 @@ import { assetCategoryLabels } from "@dossier-immo/domain";
 import type { Dossier } from "@dossier-immo/schema";
 import { escapeHtml, formatDate, formatEuro, formatRate } from "./format";
 
-const palette = ["#17324d", "#1f77b4", "#2f855a", "#b7791f", "#0f766e", "#475467", "#7c3aed"];
+const palette = [
+  "#17324d",
+  "#1f77b4",
+  "#2f855a",
+  "#b7791f",
+  "#0f766e",
+  "#475467",
+  "#7c3aed",
+];
 
-type SankeyOutputVariant = "mortgage" | "debt" | "housing" | "daily" | "savings";
+type SankeyOutputVariant =
+  "mortgage" | "debt" | "housing" | "daily" | "savings";
 
-type SankeyRibbonVariant = "neutral" | "tax" | "available" | SankeyOutputVariant;
+type SankeyRibbonVariant =
+  "neutral" | "tax" | "available" | SankeyOutputVariant;
 
 type SankeyNodeVariant = "tax" | "available" | SankeyOutputVariant;
 
@@ -27,10 +37,14 @@ export function renderAssetCompositionChart(dossier: Dossier): string {
   const groups = new Map<Dossier["assets"][number]["category"], number>();
 
   for (const asset of dossier.assets) {
-    groups.set(asset.category, (groups.get(asset.category) ?? 0) + asset.amountCents);
+    groups.set(
+      asset.category,
+      (groups.get(asset.category) ?? 0) + asset.amountCents,
+    );
   }
 
-  const total = [...groups.values()].reduce((sum, value) => sum + value, 0) || 1;
+  const total =
+    [...groups.values()].reduce((sum, value) => sum + value, 0) || 1;
 
   let x = 0;
 
@@ -40,7 +54,9 @@ export function renderAssetCompositionChart(dossier: Dossier): string {
     const result = `<rect x="${x.toFixed(2)}" y="20" width="${width.toFixed(2)}" height="54" fill="${palette[index % palette.length]}"/><text x="${(
       x +
       width / 2
-    ).toFixed(2)}" y="51" fill="white" text-anchor="middle" font-size="13">${width > 75 ? escapeHtml(assetCategoryLabels[category]) : ""}</text>`;
+    ).toFixed(
+      2,
+    )}" y="51" fill="white" text-anchor="middle" font-size="13">${width > 75 ? escapeHtml(assetCategoryLabels[category]) : ""}</text>`;
 
     x += width;
     return result;
@@ -58,55 +74,61 @@ export function renderAssetCompositionChart(dossier: Dossier): string {
   )}${legend.join("")}</svg>`;
 }
 
-export function renderBudgetSankey(dossier: Dossier, derived: DerivedDossier): string {
-  const budget = dossier.budgetScenarios.find((item) => item.kind === "central") ?? dossier.budgetScenarios[0];
+export function renderBudgetSankey(
+  dossier: Dossier,
+  derived: DerivedDossier,
+): string {
+  const budget =
+    dossier.budgetScenarios.find((item) => item.kind === "central") ??
+    dossier.budgetScenarios[0];
 
-  const scenario = derived.financingScenarios.find((item) => item.id === derived.highlightedScenarioId) ?? derived.financingScenarios[0];
+  const scenario =
+    derived.financingScenarios.find(
+      (item) =>
+        item.id ===
+        (budget?.assumptions.financingScenarioId ??
+          derived.highlightedScenarioId),
+    ) ?? derived.financingScenarios[0];
 
   if (!budget || !scenario) {
     return "";
   }
 
-  const sourceScenario = dossier.financingScenarios.find((item) => item.id === scenario.id);
-
-  const includedIncomes = dossier.incomeStreams.filter((income) => income.includedInBorrowingCapacity);
-
-  const people = dossier.household.people
-    .filter((person) => person.role !== "dependent")
-    .map((person) => ({
-      label: person.displayName.split(/\s+/)[0] ?? person.displayName,
-      value: includedIncomes.filter((income) => income.personId === person.id).reduce((sum, income) => sum + income.monthlyBankCents, 0),
-    }))
-    .filter((person) => person.value > 0);
-
-  const grossIncome = Math.max(
-    1,
-    people.reduce((sum, person) => sum + person.value, 0),
+  const sourceScenario = dossier.financingScenarios.find(
+    (item) => item.id === scenario.id,
   );
 
-  const disposableIncome = dossier.estimatedHouseholdAfterTaxIncomeCents;
-
+  const people = derived.budgetPeopleIncomeCents[budget.id] ?? [];
+  const grossIncome = Math.max(
+    1,
+    derived.budgetBeforeTaxIncomeCents[budget.id] ?? 0,
+  );
+  const disposableIncome = derived.budgetIncomeCents[budget.id] ?? 0;
   const estimatedTax = Math.max(0, grossIncome - disposableIncome);
-
-  const visibleItems = budget.items.filter((item) => item.showInSankey);
-
-  const houseItems = visibleItems.filter((item) => ["housing", "tax"].includes(item.group));
-
-  const dailyItems = visibleItems.filter((item) => !["housing", "tax", "savings"].includes(item.group));
-
-  const houseTotal = houseItems.reduce((sum, item) => sum + item.amountCents, 0);
-
-  const dailyTotal = dailyItems.reduce((sum, item) => sum + item.amountCents, 0);
-
-  const explicitSavings = visibleItems.filter((item) => item.group === "savings").reduce((sum, item) => sum + item.amountCents, 0);
-
-  const residualSavings = Math.max(0, (derived.residualSavingsCents[budget.id] ?? 0) + explicitSavings);
-
-  const existingDebt = derived.existingMonthlyDebtAtPurchaseCents;
-
-  const mortgage = scenario.maximumMonthlyPaymentIncludingInsuranceCents;
-
-  const liability = dossier.liabilities.find((item) => item.includedInEffortRate && item.endDate);
+  const visibleItems = budget.items.filter((item) => !item.liabilityId);
+  const houseItems = visibleItems.filter((item) =>
+    ["housing", "tax"].includes(item.group),
+  );
+  const dailyItems = visibleItems.filter(
+    (item) => !["housing", "tax", "savings"].includes(item.group),
+  );
+  const houseTotal = houseItems.reduce(
+    (sum, item) => sum + item.amountCents,
+    0,
+  );
+  const dailyTotal = dailyItems.reduce(
+    (sum, item) => sum + item.amountCents,
+    0,
+  );
+  const residualSavings = derived.savingsCapacityCents[budget.id] ?? 0;
+  const existingDebt = derived.budgetDebtCents[budget.id] ?? 0;
+  const mortgage = derived.budgetFinancingPaymentCents[budget.id] ?? 0;
+  const liability = dossier.liabilities.find(
+    (item) =>
+      item.endDate && item.endDate >= dossier.project.targetPurchaseDate,
+  );
+  if (residualSavings < 0 || disposableIncome > grossIncome)
+    return `<div class="callout prudent"><strong>Budget à équilibrer.</strong> ${residualSavings < 0 ? `Déficit mensuel : ${formatEuro(-residualSavings)}.` : "Le revenu après IR dépasse le revenu avant IR renseigné."} Le tableau budgétaire détaille les hypothèses à corriger avant de tracer les flux.</div>`;
 
   /*
    * Échelle financière commune à tous les flux.
@@ -117,7 +139,15 @@ export function renderBudgetSankey(dossier: Dossier, derived: DerivedDossier): s
    */
   const flowScale = 360 / grossIncome;
 
-  const ribbon = (x1: number, top1: number, bottom1: number, x2: number, top2: number, bottom2: number, variant: SankeyRibbonVariant): string => {
+  const ribbon = (
+    x1: number,
+    top1: number,
+    bottom1: number,
+    x2: number,
+    top2: number,
+    bottom2: number,
+    variant: SankeyRibbonVariant,
+  ): string => {
     const controlX = (x1 + x2) / 2;
 
     return `<path class="sankey-ribbon sankey-ribbon--${variant}" d="M${x1} ${top1.toFixed(1)} C${controlX.toFixed(1)} ${top1.toFixed(
@@ -127,10 +157,19 @@ export function renderBudgetSankey(dossier: Dossier, derived: DerivedDossier): s
     )} ${controlX.toFixed(1)} ${bottom1.toFixed(1)} ${x1} ${bottom1.toFixed(1)} Z"/>`;
   };
 
-  const node = (x: number, y: number, width: number, height: number, variant: SankeyNodeVariant, lines: readonly string[], textSize = 18): string => {
+  const node = (
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    variant: SankeyNodeVariant,
+    lines: readonly string[],
+    textSize = 18,
+  ): string => {
     const lineHeight = textSize + 4;
 
-    const firstY = y + height / 2 - ((lines.length - 1) * lineHeight) / 2 + textSize * 0.34;
+    const firstY =
+      y + height / 2 - ((lines.length - 1) * lineHeight) / 2 + textSize * 0.34;
 
     return `<g class="sankey-node-group sankey-node-group--${variant}">
       <rect
@@ -257,9 +296,9 @@ export function renderBudgetSankey(dossier: Dossier, derived: DerivedDossier): s
         />
         <path
           class="sankey-person-avatar"
-          d="M96 ${(center - 10).toFixed(1)} Q112.5 ${(center - 24).toFixed(1)} 129 ${(center - 10).toFixed(1)} L129 ${(center - 3).toFixed(
-            1,
-          )} L96 ${(center - 3).toFixed(1)} Z"
+          d="M96 ${(center - 10).toFixed(1)} Q112.5 ${(center - 24).toFixed(1)} 129 ${(center - 10).toFixed(1)} L129 ${(
+            center - 3
+          ).toFixed(1)} L96 ${(center - 3).toFixed(1)} Z"
         />
         <text
           class="sankey-person-label"
@@ -398,15 +437,31 @@ export function renderBudgetSankey(dossier: Dossier, derived: DerivedDossier): s
     )
     .join("");
 
-  const percent = (value: number): number => Math.round((value / Math.max(1, disposableIncome)) * 100);
+  const percent = (value: number): number =>
+    Math.round((value / Math.max(1, disposableIncome)) * 100);
 
   const outputs = outputLayouts
     .map((layout) => {
       const lines = layout.insuranceIncluded
-        ? [layout.label, "assurance incluse", `${formatEuro(layout.value)} · ${percent(layout.value)} % du disponible`]
-        : [layout.label, `${formatEuro(layout.value)} · ${percent(layout.value)} % du disponible`];
+        ? [
+            layout.label,
+            "assurance incluse",
+            `${formatEuro(layout.value)} · ${percent(layout.value)} % du disponible`,
+          ]
+        : [
+            layout.label,
+            `${formatEuro(layout.value)} · ${percent(layout.value)} % du disponible`,
+          ];
 
-      return node(975, layout.y, 260, layout.nodeHeight, layout.nodeVariant, lines, layout.textSize);
+      return node(
+        975,
+        layout.y,
+        260,
+        layout.nodeHeight,
+        layout.nodeVariant,
+        lines,
+        layout.textSize,
+      );
     })
     .join("");
 
@@ -415,14 +470,35 @@ export function renderBudgetSankey(dossier: Dossier, derived: DerivedDossier): s
   const dailyLayout = outputLayouts.find((item) => item.id === "daily");
 
   const housingDetails = housingLayout
-    ? detailLines(houseItems, 1235, housingLayout.targetFlowTop, housingLayout.flowHeight, "housing", 356, 28)
+    ? detailLines(
+        houseItems.filter((item) => item.showInSankey),
+        1235,
+        housingLayout.targetFlowTop,
+        housingLayout.flowHeight,
+        "housing",
+        356,
+        28,
+      )
     : "";
 
-  const dailyDetails = dailyLayout ? detailLines(dailyItems, 1235, dailyLayout.targetFlowTop, dailyLayout.flowHeight, "daily", 505, 30) : "";
+  const dailyDetails = dailyLayout
+    ? detailLines(
+        dailyItems.filter((item) => item.showInSankey),
+        1235,
+        dailyLayout.targetFlowTop,
+        dailyLayout.flowHeight,
+        "daily",
+        505,
+        30,
+      )
+    : "";
 
-  const targetPrice = sourceScenario?.priceOverrideCents ?? dossier.project.targetPriceCents;
+  const targetPrice =
+    sourceScenario?.priceOverrideCents ?? dossier.project.targetPriceCents;
 
-  const contribution = sourceScenario?.contributionOverrideCents ?? dossier.project.contributionCents;
+  const contribution =
+    sourceScenario?.contributionOverrideCents ??
+    dossier.project.contributionCents;
 
   const durationYears = Math.round((sourceScenario?.durationMonths ?? 0) / 12);
 
@@ -739,9 +815,16 @@ export function renderBudgetSankey(dossier: Dossier, derived: DerivedDossier): s
   </svg>`;
 }
 
-export function renderRevenueHistoryChart(dossier: Dossier, incomeIds?: ReadonlySet<string>, color = "#1f77b4"): string {
+export function renderRevenueHistoryChart(
+  dossier: Dossier,
+  incomeIds?: ReadonlySet<string>,
+  color = "#1f77b4",
+): string {
   const observed = dossier.revenueHistory.filter(
-    (entry) => entry.observed && entry.turnoverCents > 0 && (!incomeIds || incomeIds.has(entry.incomeStreamId)),
+    (entry) =>
+      entry.observed &&
+      entry.turnoverCents > 0 &&
+      (!incomeIds || incomeIds.has(entry.incomeStreamId)),
   );
 
   if (observed.length === 0) {
@@ -786,14 +869,29 @@ export function renderRevenueHistoryChart(dossier: Dossier, incomeIds?: Readonly
 
 export function renderIndependentComparisonChart(dossier: Dossier): string {
   const people = dossier.household.people.filter((person) =>
-    dossier.incomeStreams.some((income) => income.personId === person.id && ["self-employed", "liberal"].includes(income.kind)),
+    dossier.incomeStreams.some(
+      (income) =>
+        income.personId === person.id &&
+        ["self-employed", "liberal"].includes(income.kind),
+    ),
   );
 
   const colors = ["#1f77b4", "#2f855a", "#7c3aed"];
 
-  const periods = [...new Set(dossier.revenueHistory.filter((entry) => entry.observed).map((entry) => entry.period))].sort();
+  const periods = [
+    ...new Set(
+      dossier.revenueHistory
+        .filter((entry) => entry.observed)
+        .map((entry) => entry.period),
+    ),
+  ].sort();
 
-  const maximum = Math.max(...dossier.revenueHistory.filter((entry) => entry.observed).map((entry) => entry.turnoverCents), 1);
+  const maximum = Math.max(
+    ...dossier.revenueHistory
+      .filter((entry) => entry.observed)
+      .map((entry) => entry.turnoverCents),
+    1,
+  );
 
   const groups = periods
     .map((period, periodIndex) => {
@@ -803,12 +901,21 @@ export function renderIndependentComparisonChart(dossier: Dossier): string {
         .map((person, personIndex) => {
           const ids = new Set(
             dossier.incomeStreams
-              .filter((income) => income.personId === person.id && ["self-employed", "liberal"].includes(income.kind))
+              .filter(
+                (income) =>
+                  income.personId === person.id &&
+                  ["self-employed", "liberal"].includes(income.kind),
+              )
               .map((income) => income.id),
           );
 
           const amount = dossier.revenueHistory
-            .filter((entry) => ids.has(entry.incomeStreamId) && entry.period === period && entry.observed)
+            .filter(
+              (entry) =>
+                ids.has(entry.incomeStreamId) &&
+                entry.period === period &&
+                entry.observed,
+            )
             .reduce((sum, entry) => sum + entry.turnoverCents, 0);
 
           const height = (amount / maximum) * 112;
