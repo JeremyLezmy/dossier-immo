@@ -29,6 +29,7 @@ Sous PowerShell, utiliser `corepack.cmd` si la stratégie d'exécution bloque le
 - export JSON portable, aperçu repliable ou plein écran et PDF de treize pages par défaut, jusqu’à quinze avec les annexes facultatives ;
 - actions et état d'autosauvegarde accessibles sur mobile, tablette et desktop ;
 - accès direct à l'aperçu depuis l'en-tête mobile et thèmes repliés par défaut sur petit écran ;
+- option « Fond blanc pour impression » compatible avec les thèmes, conservant les couleurs des titres et des graphiques ;
 - navigation responsive libellée, progression et erreurs actionnables jusqu'au champ concerné ;
 - écrans métier adaptatifs, dont un comparatif budgétaire empilé sur mobile et tablette ;
 - fiches créées par l'utilisateur repliables avec état mémorisé et duplication contrôlée des scénarios de financement ;

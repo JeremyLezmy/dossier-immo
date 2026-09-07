@@ -109,6 +109,12 @@ export const IncomeStreamSchema = z.strictObject({
   startDate: isoDate.optional(),
   endDate: isoDate.optional(),
   bankingConvention: z.string().optional(),
+  bankingBasis: z
+    .strictObject({
+      referenceYear: z.number().int().min(1901).max(2200),
+      allowanceBasisPoints: z.number().int().min(0).max(10_000),
+    })
+    .optional(),
   monthlyEconomicCents: cents.optional(),
 });
 
@@ -316,6 +322,7 @@ const EditorialContentBaseSchema = z.strictObject({
 });
 
 const PresentationBaseSchema = z.strictObject({
+  whitePaper: z.boolean().optional(),
   theme: z.enum([
     "banking-clean",
     "heritage",
@@ -582,7 +589,8 @@ const DossierCoreSchema = z
         0,
         negotiatedPriceCents +
           feesCents +
-          dossier.project.renovationCents + (dossier.project.financingFeesCents ?? 0) -
+          dossier.project.renovationCents +
+          (dossier.project.financingFeesCents ?? 0) -
           contributionCents,
       );
       const componentTotalCents = scenario.additionalLoanComponents.reduce(
@@ -867,13 +875,15 @@ export const BudgetAssumptionsSchema = z.strictObject({
   beforeTaxIncomeCents: cents.optional(),
   incomePeriodIds: z.array(id).optional(),
   monthlyIncomeTaxCents: cents.optional(),
-  taxProjection: z.strictObject({
-    parts: z.union([z.literal(1), z.literal(2)]),
-    incomePeriodIds: z.array(id).min(1),
-    annualSalaryNetTaxableCents: cents,
-    annualOtherTaxableCents: cents,
-    note: z.string().min(1),
-  }).optional(),
+  taxProjection: z
+    .strictObject({
+      parts: z.union([z.literal(1), z.literal(2)]),
+      incomePeriodIds: z.array(id).min(1),
+      annualSalaryNetTaxableCents: cents,
+      annualOtherTaxableCents: cents,
+      note: z.string().min(1),
+    })
+    .optional(),
 });
 export const BudgetScenarioSchema = z.strictObject({
   id,
@@ -1166,6 +1176,53 @@ export const DossierSchema = DossierObjectSchema.superRefine(
         );
     });
     dossier.incomeStreams.forEach((stream, index) => {
+      if (stream.bankingBasis) {
+        const issue = (message: string) =>
+          context.addIssue({
+            code: "custom",
+            path: ["incomeStreams", index, "bankingBasis"],
+            message,
+          });
+        if (!["self-employed", "liberal"].includes(stream.kind))
+          issue("Le calcul par CA est réservé aux revenus indépendants.");
+        if (stream.monthlyBankCents !== 0 || stream.monthlyPrudentCents !== 0)
+          issue(
+            "En mode calculé, les anciens montants manuels doivent être remis à zéro.",
+          );
+        for (const year of [
+          stream.bankingBasis.referenceYear - 1,
+          stream.bankingBasis.referenceYear,
+        ]) {
+          const coverage = Array<number>(12).fill(0);
+          for (const period of periods.filter(
+            (p) =>
+              p.incomeStreamId === stream.id &&
+              p.status !== "run-rate" &&
+              Number((p.collectionDate ?? p.endDate).slice(0, 4)) === year,
+          )) {
+            if (period.collectionDate)
+              coverage[Number(period.collectionDate.slice(5, 7)) - 1]! += 1;
+            else {
+              if (Number(period.startDate.slice(0, 4)) !== year) {
+                issue(
+                  "Scinder les périodes entre exercices avant de calculer la base bancaire.",
+                );
+                continue;
+              }
+              for (
+                let month = Number(period.startDate.slice(5, 7));
+                month <= Number(period.endDate.slice(5, 7));
+                month++
+              )
+                coverage[month - 1]! += 1;
+            }
+          }
+          if (coverage.some((count) => count !== 1))
+            issue(
+              `L’exercice ${year} doit couvrir douze mois sans doublon, avec réalisé ou prévision explicite.`,
+            );
+        }
+      }
       if (
         stream.startDate &&
         stream.endDate &&
@@ -1224,7 +1281,8 @@ export const DossierSchema = DossierObjectSchema.superRefine(
         });
       if (
         sources.length &&
-        budget.assumptions.monthlyIncomeTaxCents === undefined && !budget.assumptions.taxProjection
+        budget.assumptions.monthlyIncomeTaxCents === undefined &&
+        !budget.assumptions.taxProjection
       )
         context.addIssue({
           code: "custom",
@@ -1238,28 +1296,91 @@ export const DossierSchema = DossierObjectSchema.superRefine(
         });
       const tax = budget.assumptions.taxProjection;
       if (tax) {
-        if (budget.assumptions.monthlyIncomeTaxCents !== undefined || budget.assumptions.afterTaxIncomeCents !== undefined)
-          context.addIssue({code: "custom", path: ["budgetScenarios", index, "assumptions", "taxProjection"], message: "choisir l'estimation fiscale ou une hypothèse manuelle, pas les deux"});
-        if (new Set(tax.incomePeriodIds).size !== tax.incomePeriodIds.length || tax.incomePeriodIds.some(id => !periodIds.has(id)))
-          context.addIssue({code: "custom", path: ["budgetScenarios", index, "assumptions", "taxProjection", "incomePeriodIds"], message: "périodes fiscales inconnues ou dupliquées"});
-        const taxPeriods = (dossier.incomePeriods ?? []).filter(period => tax.incomePeriodIds.includes(period.id));
-        const years = new Set(taxPeriods.map(period => (period.collectionDate ?? period.endDate).slice(0,4)));
-        if (years.size > 1 || taxPeriods.some(period => !period.collectionDate && period.startDate.slice(0,4) !== period.endDate.slice(0,4)))
-          context.addIssue({code:"custom", path:["budgetScenarios",index,"assumptions","taxProjection"], message:"les périodes fiscales doivent porter sur une seule année de référence"});
+        if (
+          budget.assumptions.monthlyIncomeTaxCents !== undefined ||
+          budget.assumptions.afterTaxIncomeCents !== undefined
+        )
+          context.addIssue({
+            code: "custom",
+            path: ["budgetScenarios", index, "assumptions", "taxProjection"],
+            message:
+              "choisir l'estimation fiscale ou une hypothèse manuelle, pas les deux",
+          });
+        if (
+          new Set(tax.incomePeriodIds).size !== tax.incomePeriodIds.length ||
+          tax.incomePeriodIds.some((id) => !periodIds.has(id))
+        )
+          context.addIssue({
+            code: "custom",
+            path: [
+              "budgetScenarios",
+              index,
+              "assumptions",
+              "taxProjection",
+              "incomePeriodIds",
+            ],
+            message: "périodes fiscales inconnues ou dupliquées",
+          });
+        const taxPeriods = (dossier.incomePeriods ?? []).filter((period) =>
+          tax.incomePeriodIds.includes(period.id),
+        );
+        const years = new Set(
+          taxPeriods.map((period) =>
+            (period.collectionDate ?? period.endDate).slice(0, 4),
+          ),
+        );
+        if (
+          years.size > 1 ||
+          taxPeriods.some(
+            (period) =>
+              !period.collectionDate &&
+              period.startDate.slice(0, 4) !== period.endDate.slice(0, 4),
+          )
+        )
+          context.addIssue({
+            code: "custom",
+            path: ["budgetScenarios", index, "assumptions", "taxProjection"],
+            message:
+              "les périodes fiscales doivent porter sur une seule année de référence",
+          });
         const covered = new Set<string>();
         for (const period of taxPeriods) {
-          const start = (period.collectionDate ?? period.startDate).slice(0,7);
-          const end = (period.collectionDate ?? period.endDate).slice(0,7);
-          for (let year = Number(start.slice(0,4)); year <= Number(end.slice(0,4)); year++) for (let month = 1; month <= 12; month++) {
-            const key = `${year}-${String(month).padStart(2,"0")}`;
-            if (key < start || key > end) continue;
-            const token = `${period.incomeStreamId}:${key}`;
-            if (covered.has(token)) context.addIssue({code:"custom", path:["budgetScenarios",index,"assumptions","taxProjection"], message:"les périodes fiscales se chevauchent pour le même revenu"});
-            covered.add(token);
-          }
+          const start = (period.collectionDate ?? period.startDate).slice(0, 7);
+          const end = (period.collectionDate ?? period.endDate).slice(0, 7);
+          for (
+            let year = Number(start.slice(0, 4));
+            year <= Number(end.slice(0, 4));
+            year++
+          )
+            for (let month = 1; month <= 12; month++) {
+              const key = `${year}-${String(month).padStart(2, "0")}`;
+              if (key < start || key > end) continue;
+              const token = `${period.incomeStreamId}:${key}`;
+              if (covered.has(token))
+                context.addIssue({
+                  code: "custom",
+                  path: [
+                    "budgetScenarios",
+                    index,
+                    "assumptions",
+                    "taxProjection",
+                  ],
+                  message:
+                    "les périodes fiscales se chevauchent pour le même revenu",
+                });
+              covered.add(token);
+            }
         }
-        if (taxPeriods.some(period => period.taxAllowanceBasisPoints === undefined))
-          context.addIssue({code: "custom", path: ["budgetScenarios", index, "assumptions", "taxProjection"], message: "chaque période fiscale doit préciser son abattement"});
+        if (
+          taxPeriods.some(
+            (period) => period.taxAllowanceBasisPoints === undefined,
+          )
+        )
+          context.addIssue({
+            code: "custom",
+            path: ["budgetScenarios", index, "assumptions", "taxProjection"],
+            message: "chaque période fiscale doit préciser son abattement",
+          });
       }
       budget.items.forEach((item, itemIndex) => {
         if (item.liabilityId && !liabilityIds.has(item.liabilityId))

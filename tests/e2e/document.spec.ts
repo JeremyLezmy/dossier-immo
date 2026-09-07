@@ -1,7 +1,38 @@
 import { expect, test } from "@playwright/test";
 import { calculateDossier } from "@dossier-immo/calculations";
 import { renderBankDocument } from "@dossier-immo/document";
-import { retiredRentalInvestorDemo } from "@dossier-immo/fixtures";
+import {
+  completeDemoDossier,
+  retiredRentalInvestorDemo,
+} from "@dossier-immo/fixtures";
+
+test("le papier blanc conserve les thèmes et blanchit toutes les pages et le Sankey", async ({
+  page,
+}) => {
+  for (const theme of ["editorial", "burgundy"] as const) {
+    const dossier = structuredClone(completeDemoDossier);
+    dossier.presentation.theme = theme;
+    dossier.presentation.whitePaper = true;
+    await page.setContent(
+      renderBankDocument(dossier, calculateDossier(dossier)),
+    );
+    const backgrounds = await page
+      .locator("section.page")
+      .evaluateAll((elements) =>
+        elements.map((element) => getComputedStyle(element).backgroundColor),
+      );
+    expect(backgrounds.every((color) => color === "rgb(255, 255, 255)")).toBe(
+      true,
+    );
+    await expect(page.locator(".sankey-background")).toHaveCSS(
+      "fill",
+      "rgb(255, 255, 255)",
+    );
+    await expect(page.locator("body")).toHaveClass(
+      new RegExp(`theme-${theme}.*white-paper`),
+    );
+  }
+});
 
 test("le document fictif conserve les treize pages et produit un PDF A4", async ({
   page,

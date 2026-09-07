@@ -1,6 +1,15 @@
-import { useFieldArray, type FieldPath, type UseFormReturn } from "react-hook-form";
+import {
+  useFieldArray,
+  type FieldPath,
+  type UseFormReturn,
+} from "react-hook-form";
 import type { Dossier } from "@dossier-immo/schema";
-import { ArrayCard, SectionIntro, SelectField, TextField } from "../../../components/fields";
+import {
+  ArrayCard,
+  SectionIntro,
+  SelectField,
+  TextField,
+} from "../../../components/fields";
 import { EditorDisclosure } from "../../../components/EditorDisclosure";
 import { CheckboxField, RichTextField } from "./shared";
 
@@ -23,7 +32,8 @@ const themePresets = [
   {
     id: "heritage",
     name: "Héritage discret",
-    description: "Ivoire, bleu encre et bronze pour un rendu patrimonial classique.",
+    description:
+      "Ivoire, bleu encre et bronze pour un rendu patrimonial classique.",
     colors: {
       navy: "#243954",
       blue: "#496a89",
@@ -35,7 +45,8 @@ const themePresets = [
   {
     id: "sage",
     name: "Sauge patrimoniale",
-    description: "Palette calme et contemporaine, verte sans connotation écologique.",
+    description:
+      "Palette calme et contemporaine, verte sans connotation écologique.",
     colors: {
       navy: "#315e52",
       blue: "#527d79",
@@ -47,7 +58,8 @@ const themePresets = [
   {
     id: "slate",
     name: "Ardoise analytique",
-    description: "Tons acier, angles nets et hiérarchie rationnelle pour un rendu technique.",
+    description:
+      "Tons acier, angles nets et hiérarchie rationnelle pour un rendu technique.",
     colors: {
       navy: "#2d4357",
       blue: "#4e7895",
@@ -59,7 +71,8 @@ const themePresets = [
   {
     id: "editorial",
     name: "Éditorial ivoire",
-    description: "Titres serif, corps sans serif et accents cuivre pour un rendu premium.",
+    description:
+      "Titres serif, corps sans serif et accents cuivre pour un rendu premium.",
     colors: {
       navy: "#343c46",
       blue: "#627688",
@@ -71,7 +84,8 @@ const themePresets = [
   {
     id: "monochrome",
     name: "Monochrome institutionnel",
-    description: "Noir, blanc et gris hiérarchisés, optimisés pour l'impression.",
+    description:
+      "Noir, blanc et gris hiérarchisés, optimisés pour l'impression.",
     colors: {
       navy: "#202020",
       blue: "#4a4a4a",
@@ -83,7 +97,8 @@ const themePresets = [
   {
     id: "burgundy",
     name: "Bordeaux privé",
-    description: "Bordeaux sombre, bleu encre et laiton pour un dossier de conseil privé.",
+    description:
+      "Bordeaux sombre, bleu encre et laiton pour un dossier de conseil privé.",
     colors: {
       navy: "#29384b",
       blue: "#7a3048",
@@ -172,16 +187,31 @@ const sections: readonly {
     title: "Pièces justificatives",
     description: "Introduction et conclusion de la liste de suivi.",
   },
-  { key: "financialReview", title: "Repères de revenus, fiscalité et crédit auto", description: "Page facultative pour expliciter les hypothèses de transition et les arbitrages." },
-  { key: "incomeHistoryChart", title: "Évolution mensuelle du CA encaissé", description: "Annexe facultative, fondée sur les historiques mensuels observés." },
+  {
+    key: "financialReview",
+    title: "Repères de revenus, fiscalité et crédit auto",
+    description:
+      "Page facultative pour expliciter les hypothèses de transition et les arbitrages.",
+  },
+  {
+    key: "incomeHistoryChart",
+    title: "Évolution mensuelle du CA encaissé",
+    description:
+      "Annexe facultative, fondée sur les historiques mensuels observés.",
+  },
   {
     key: "independentIncomeAnnex",
     title: "Annexes des revenus indépendants",
-    description: "Présentation nominative et graphique des historiques par emprunteur.",
+    description:
+      "Présentation nominative et graphique des historiques par emprunteur.",
   },
 ];
 
-export function PresentationStep({ form }: { readonly form: UseFormReturn<Dossier> }) {
+export function PresentationStep({
+  form,
+}: {
+  readonly form: UseFormReturn<Dossier>;
+}) {
   const strengths = useFieldArray({
     control: form.control,
     name: "editorial.professionalStabilityItems",
@@ -201,7 +231,12 @@ export function PresentationStep({ form }: { readonly form: UseFormReturn<Dossie
           </div>
         </summary>
         <div className="editor-subsection__content form-grid">
-          <TextField label="Titre interne du dossier" name="metadata.title" register={form.register} wide />
+          <TextField
+            label="Titre interne du dossier"
+            name="metadata.title"
+            register={form.register}
+            wide
+          />
           <SelectField
             label="État du document"
             name="metadata.documentStage"
@@ -214,10 +249,30 @@ export function PresentationStep({ form }: { readonly form: UseFormReturn<Dossie
               ["archived", "Archivé"],
             ]}
           />
-          <TextField label="Ville d'édition" name="metadata.editionCity" register={form.register} help="Utilisée dans l'en-tête de la lettre." />
-          <TextField label="Titre du PDF" name="presentation.title" register={form.register} wide />
-          <TextField label="Sous-titre" name="presentation.subtitle" register={form.register} wide />
-          <TextField label="Pied de page" name="presentation.footer" register={form.register} wide />
+          <TextField
+            label="Ville d'édition"
+            name="metadata.editionCity"
+            register={form.register}
+            help="Utilisée dans l'en-tête de la lettre."
+          />
+          <TextField
+            label="Titre du PDF"
+            name="presentation.title"
+            register={form.register}
+            wide
+          />
+          <TextField
+            label="Sous-titre"
+            name="presentation.subtitle"
+            register={form.register}
+            wide
+          />
+          <TextField
+            label="Pied de page"
+            name="presentation.footer"
+            register={form.register}
+            wide
+          />
           <SelectField
             label="Densité"
             name="presentation.density"
@@ -238,7 +293,11 @@ export function PresentationStep({ form }: { readonly form: UseFormReturn<Dossie
           </div>
         </summary>
         <div className="editor-subsection__content">
-          <div className="theme-picker" role="radiogroup" aria-label="Thème du PDF">
+          <div
+            className="theme-picker"
+            role="radiogroup"
+            aria-label="Thème du PDF"
+          >
             {themePresets.map((theme) => {
               const selected = form.watch("presentation.theme") === theme.id;
               return (
@@ -263,6 +322,15 @@ export function PresentationStep({ form }: { readonly form: UseFormReturn<Dossie
               );
             })}
           </div>
+          <CheckboxField
+            label="Fond blanc pour impression"
+            name="presentation.whitePaper"
+            register={form.register}
+          />
+          <p className="section-note">
+            Conserve la typographie et les accents du thème, avec des pages
+            blanches et des encadrés allégés. Visible aussi dans l’aperçu.
+          </p>
         </div>
       </EditorDisclosure>
 
@@ -297,7 +365,9 @@ export function PresentationStep({ form }: { readonly form: UseFormReturn<Dossie
                 <>
                   <RichTextField
                     label="Introduction"
-                    name={path(`editorial.sectionSlots.${section.key}.introduction`)}
+                    name={path(
+                      `editorial.sectionSlots.${section.key}.introduction`,
+                    )}
                     control={form.control}
                     destination={section.title}
                   />
@@ -309,7 +379,9 @@ export function PresentationStep({ form }: { readonly form: UseFormReturn<Dossie
                   />
                   <RichTextField
                     label="Conclusion"
-                    name={path(`editorial.sectionSlots.${section.key}.conclusion`)}
+                    name={path(
+                      `editorial.sectionSlots.${section.key}.conclusion`,
+                    )}
                     control={form.control}
                     destination={section.title}
                   />
@@ -323,11 +395,23 @@ export function PresentationStep({ form }: { readonly form: UseFormReturn<Dossie
                       <ArrayCard
                         key={strength.id}
                         disclosureId={`strength-${form.watch(`editorial.professionalStabilityItems.${index}.id`)}`}
-                        title={form.watch(`editorial.professionalStabilityItems.${index}.title`) || `Facteur ${index + 1}`}
+                        title={
+                          form.watch(
+                            `editorial.professionalStabilityItems.${index}.title`,
+                          ) || `Facteur ${index + 1}`
+                        }
                         onRemove={() => strengths.remove(index)}
                       >
-                        <TextField label="Titre" name={`editorial.professionalStabilityItems.${index}.title`} register={form.register} />
-                        <RichTextField label="Argument factuel" name={`editorial.professionalStabilityItems.${index}.body`} control={form.control} />
+                        <TextField
+                          label="Titre"
+                          name={`editorial.professionalStabilityItems.${index}.title`}
+                          register={form.register}
+                        />
+                        <RichTextField
+                          label="Argument factuel"
+                          name={`editorial.professionalStabilityItems.${index}.body`}
+                          control={form.control}
+                        />
                       </ArrayCard>
                     ))}
                   </div>
@@ -356,7 +440,10 @@ export function PresentationStep({ form }: { readonly form: UseFormReturn<Dossie
 
 export const previewThemes = themePresets;
 
-export function applyTheme(form: UseFormReturn<Dossier>, theme: (typeof themePresets)[number]) {
+export function applyTheme(
+  form: UseFormReturn<Dossier>,
+  theme: (typeof themePresets)[number],
+) {
   form.setValue("presentation.theme", theme.id, {
     shouldDirty: true,
     shouldValidate: true,

@@ -93,6 +93,7 @@ export interface CashFlowResult {
 }
 
 export interface IncomeSummary {
+  readonly method: "cash" | "normalized";
   readonly incomeStreamId: string;
   readonly label: string;
   readonly sourceIds: readonly string[];
@@ -154,8 +155,16 @@ export function summarizeIncomePeriods(
       });
   }
   return groups.map((group) => {
+    const normalized = group.periods.some(
+      (period) => period.status !== "observed",
+    );
     const values = group.periods.map((period) =>
-      results.find((result) => result.id === period.id)!,
+      normalized
+        ? calculateIncomePeriod(dossier, {
+            ...period,
+            socialContributionsPaidCents: undefined,
+          })
+        : results.find((result) => result.id === period.id)!,
     );
     const sum = (
       key:
@@ -165,13 +174,36 @@ export function summarizeIncomePeriods(
         | "economicIncomeCents",
     ) => values.reduce((total, value) => total + value[key], 0);
     return {
+      method: normalized ? "normalized" : "cash",
       incomeStreamId: group.stream,
-      label: group.periods.every(period => period.status === "run-rate") ? group.label : (() => {
-        const first = group.periods.map(period => period.collectionDate ?? period.startDate).sort()[0]!;
-        const last = group.periods.map(period => period.collectionDate ?? period.endDate).sort().at(-1)!;
-        const months = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
-        return first.slice(5,7) === "01" && last.slice(5,7) === "12" ? group.label : `${group.label} (${months[Number(first.slice(5,7))-1]}–${months[Number(last.slice(5,7))-1]})`;
-      })(),
+      label: group.periods.every((period) => period.status === "run-rate")
+        ? group.label
+        : (() => {
+            const first = group.periods
+              .map((period) => period.collectionDate ?? period.startDate)
+              .sort()[0]!;
+            const last = group.periods
+              .map((period) => period.collectionDate ?? period.endDate)
+              .sort()
+              .at(-1)!;
+            const months = [
+              "janv.",
+              "févr.",
+              "mars",
+              "avr.",
+              "mai",
+              "juin",
+              "juil.",
+              "août",
+              "sept.",
+              "oct.",
+              "nov.",
+              "déc.",
+            ];
+            return first.slice(5, 7) === "01" && last.slice(5, 7) === "12"
+              ? group.label
+              : `${group.label} (${months[Number(first.slice(5, 7)) - 1]}–${months[Number(last.slice(5, 7)) - 1]})`;
+          })(),
       sourceIds: group.periods.map((period) => period.id),
       revenueCents: sum("revenueCents"),
       socialContributionsCents: sum("socialContributionsCents"),
@@ -211,27 +243,53 @@ export function calculateCashFlow(
 }
 
 /** The same dated ledger drives the reserve and the monthly explanation. */
-export function summarizeCashFlow(dossier: Dossier, results: readonly CashFlowResult[], periods: readonly IncomePeriodResult[]) {
-  const months = [...new Set(results.map(item => item.date.slice(0,7)))].sort();
-  return months.map(month => {
-    const rows = results.filter(item => item.date.startsWith(month));
+export function summarizeCashFlow(
+  dossier: Dossier,
+  results: readonly CashFlowResult[],
+  periods: readonly IncomePeriodResult[],
+) {
+  const months = [
+    ...new Set(results.map((item) => item.date.slice(0, 7))),
+  ].sort();
+  return months.map((month) => {
+    const rows = results.filter((item) => item.date.startsWith(month));
     let independentRevenueCents = 0;
     let netIncomeCents = 0;
     let incomeTaxCents = 0;
     let taxProvisionCents = 0;
     let otherOutflowsCents = 0;
     for (const row of rows) {
-      const entry = dossier.cashFlowPlan!.entries.find(item => item.id === row.id)!;
+      const entry = dossier.cashFlowPlan!.entries.find(
+        (item) => item.id === row.id,
+      )!;
       if (entry.direction === "income") {
         netIncomeCents += row.amountCents;
-        const period = dossier.incomePeriods?.find(item => item.id === entry.incomePeriodId);
-        if (period && dossier.incomeStreams.some(stream => stream.id === period.incomeStreamId && ["self-employed","liberal"].includes(stream.kind))) independentRevenueCents += periods.find(item => item.id === period.id)?.revenueCents ?? 0;
+        const period = dossier.incomePeriods?.find(
+          (item) => item.id === entry.incomePeriodId,
+        );
+        if (
+          period &&
+          dossier.incomeStreams.some(
+            (stream) =>
+              stream.id === period.incomeStreamId &&
+              ["self-employed", "liberal"].includes(stream.kind),
+          )
+        )
+          independentRevenueCents +=
+            periods.find((item) => item.id === period.id)?.revenueCents ?? 0;
       } else if (entry.category === "income-tax") {
         if (entry.isProvision) taxProvisionCents -= row.amountCents;
         else incomeTaxCents -= row.amountCents;
-      }
-      else otherOutflowsCents -= row.amountCents;
+      } else otherOutflowsCents -= row.amountCents;
     }
-    return {month, independentRevenueCents, netIncomeCents, incomeTaxCents, taxProvisionCents, otherOutflowsCents, closingCents: rows.at(-1)!.balanceCents};
+    return {
+      month,
+      independentRevenueCents,
+      netIncomeCents,
+      incomeTaxCents,
+      taxProvisionCents,
+      otherOutflowsCents,
+      closingCents: rows.at(-1)!.balanceCents,
+    };
   });
 }
