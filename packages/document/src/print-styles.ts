@@ -1857,6 +1857,25 @@ body[class*=" theme-"] .cover{
   background-image:none;
 }
 
+/* Dense financial pages retain their type size; trim repeated spacing only. */
+.financial-review-page .editorial-conclusion{margin-top:8px;padding:7px 10px;}
+.calculated-income-page .editorial-conclusion{margin-top:8px;padding:8px 12px;}
+.financial-review-page h3{margin-top:9px;}
+.financing-page .callout{margin:10px 0;padding:10px 12px;}
+.financing-page .financing-table th,.financing-page .financing-table td{padding:6px 4px;}
+.financing-page h3{margin-top:10px;}
+.financing-page .financing-note{margin:8px 0;}
+.post-purchase-budget-page th,.post-purchase-budget-page td{padding:4px 7px;}
+.post-purchase-budget-page p{margin-bottom:7px;}
+.post-purchase-budget-page .editorial-conclusion{padding:7px 10px;margin-top:7px;}
+/* Optional white paper keeps the selected typography and colored accents. */
+body.white-paper{
+  --paper:#fff;--cover-background:#fff;--sankey-background:#fff;
+  --surface:#fff;--surface-muted:#fafafa;--annex-kpi-surface:#fff;
+  --annex-note-surface:#fff;--callout-info:#fff;--callout-prudent:#fff;
+  --callout-risk:#fff;--card-shadow:none;
+}
+
 @media print{
   html,body{
     background:#fff;

@@ -1280,6 +1280,10 @@ function PreviewStep({
                 </button>
               ))}
             </aside>
+            <label className="section-note">
+              <input type="checkbox" {...form.register("presentation.whitePaper")} />{" "}
+              Fond blanc pour impression
+            </label>
           </details>
           <DocumentFrame html={html} className="document-preview" zoom={zoom} />
         </div>

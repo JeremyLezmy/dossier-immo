@@ -36,7 +36,13 @@ export function IncomeReadingSummary({
       className="savings-summary income-reading"
       aria-label="Lecture des revenus"
     >
-      <TextField label="Date de référence des revenus proposés à la banque" name="project.bankIncomeReferenceDate" register={form.register} type="date" help="Vide : date d’achat. Une étude préparatoire peut utiliser la situation actuelle ; réactualiser les revenus à l’octroi." />
+      <TextField
+        label="Date de référence des revenus proposés à la banque"
+        name="project.bankIncomeReferenceDate"
+        register={form.register}
+        type="date"
+        help="Vide : date d’achat. Cette date concerne la lecture préparatoire des revenus. Les simulations de financement utilisent toujours les contrats actifs à la date d’achat."
+      />
       <div className="metric-grid">
         {reading.cards.map((card) => (
           <div className="metric-card" key={card.id}>
@@ -46,7 +52,20 @@ export function IncomeReadingSummary({
           </div>
         ))}
       </div>
-      <p className="section-note">Base avec les revenus actifs aujourd’hui : {euro(reading.bankNowCents)} / mois. Même convention historique à l’achat, après fin des contrats : {euro(reading.bankAtPurchaseCents)} / mois. {reading.fiscalCents !== undefined && <>Rythme projeté converti en base fiscale indicative : {euro(reading.fiscalCents)} / mois.</>} Ces lectures ne s’additionnent pas.</p>
+      <p className="section-note">
+        Base avec les contrats actifs à la date de référence :{" "}
+        {euro(reading.bankNowCents)} / mois. Même convention à l’achat, après
+        fin des contrats : {euro(reading.bankAtPurchaseCents)} / mois.{" "}
+        Sensibilité à la référence : {euro(reading.prudentCents)} ; à l’achat :{" "}
+        {euro(reading.prudentAtPurchaseCents)} / mois.{" "}
+        {reading.fiscalCents !== undefined && (
+          <>
+            Rythme projeté converti en base fiscale indicative :{" "}
+            {euro(reading.fiscalCents)} / mois.
+          </>
+        )}{" "}
+        Ces lectures ne s’additionnent pas.
+      </p>
       <p className="section-note">
         Le revenu économique mesure le budget de vie après cotisations et frais
         professionnels, avant impôt. La base fiscale et les conventions
@@ -63,7 +82,7 @@ export function IncomeReadingSummary({
             <p className="section-note" key={row.id}>
               <strong>{stream.label}.</strong>{" "}
               {row.periodLabel && <>Revenu économique : {row.periodLabel}. </>}
-              {stream.bankingConvention ?? stream.note}
+              {row.bankingLabel}
             </p>
           );
         })}
@@ -468,8 +487,21 @@ function DetailedCashFlowFields({
               name="cashFlowPlan.note"
               register={form.register}
             />
-            <MoneyField label="Réserve fiscale conservée pour après l’achat" name="cashFlowPlan.reservedTaxCents" control={form.control} optional help="Somme encore présente dans la trésorerie, mais réservée à un impôt futur. Ce n’est pas une sortie à la date d’achat ; ne pas la déduire aussi dans les flux." />
-            {derived && <p className="section-note">Réserve après apport et installation : {euro(derived.reserveAfterPurchaseCents)} ; libre après enveloppe fiscale : {euro(derived.freeReserveAfterPurchaseCents)}.</p>}
+            <MoneyField
+              label="Réserve fiscale conservée pour après l’achat"
+              name="cashFlowPlan.reservedTaxCents"
+              control={form.control}
+              optional
+              help="Enveloppe complémentaire hors provisions déjà déduites dans les flux. Documenter l’année fiscale, les acomptes/PAS et provisions déjà comptés ; ne jamais réserver deux fois la même somme."
+            />
+            {derived && (
+              <p className="section-note">
+                Disponible après apport et installation :{" "}
+                {euro(derived.reserveAfterPurchaseCents)} ; libre après
+                enveloppe fiscale :{" "}
+                {euro(derived.freeReserveAfterPurchaseCents)}.
+              </p>
+            )}
             <div className="stack">
               {fields.fields.map((field, index) => {
                 const entry = plan.entries[index];
@@ -561,7 +593,16 @@ function DetailedCashFlowFields({
                         control={form.control}
                       />
                     )}
-                    {entry.direction === "expense" && entry.category === "income-tax" && <label><input type="checkbox" {...form.register(path(`${base}.isProvision`))} /> Somme mise de côté (provision fiscale)</label>}
+                    {entry.direction === "expense" &&
+                      entry.category === "income-tax" && (
+                        <label>
+                          <input
+                            type="checkbox"
+                            {...form.register(path(`${base}.isProvision`))}
+                          />{" "}
+                          Somme mise de côté (provision fiscale)
+                        </label>
+                      )}
                     <TextareaField
                       label="Justification du flux"
                       name={path(`${base}.note`)}

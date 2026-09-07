@@ -503,7 +503,7 @@ export function renderBudgetSankey(
   const durationYears = Math.round((sourceScenario?.durationMonths ?? 0) / 12);
 
   const scenarioText =
-    `Scénario central : achat ${formatEuro(targetPrice)}, apport ${formatEuro(contribution)}, durée ${durationYears} ans, taux ${formatRate(
+    `Budget cible annualisé : achat ${formatEuro(targetPrice)}, apport ${formatEuro(contribution)}, durée ${durationYears} ans, taux ${formatRate(
       sourceScenario?.annualRateBasisPoints ?? 0,
     )}, assurance emprunteur ${formatRate(sourceScenario?.insuranceAnnualBasisPoints ?? 0)}` +
     `${liability?.endDate ? `, crédit existant inclus jusqu'au ${formatDate(liability.endDate)}` : ""}`;

@@ -11,6 +11,7 @@ import {
   ArrayCard,
   Field,
   MoneyField,
+  RateField,
   SectionIntro,
   SelectField,
   TextField,
@@ -616,18 +617,106 @@ export function IncomeStep({
                   name={`incomeStreams.${index}.label`}
                   register={form.register}
                 />
-                <MoneyField
-                  label="Revenu mensuel retenu — central"
-                  name={`incomeStreams.${index}.monthlyBankCents`}
-                  control={form.control}
-                  help="Montant net avant impôt retenu dans le scénario bancaire central. Ce n'est pas automatiquement le chiffre d'affaires divisé par douze."
-                />
-                <MoneyField
-                  label="Revenu mensuel retenu — prudent"
-                  name={`incomeStreams.${index}.monthlyPrudentCents`}
-                  control={form.control}
-                  help="Hypothèse minorée utilisée pour mesurer la robustesse du dossier."
-                />
+                {["self-employed", "liberal"].includes(
+                  form.watch(`incomeStreams.${index}.kind`),
+                ) && (
+                  <Field
+                    label="Méthode de base bancaire"
+                    controlId={`bank-method-${index}`}
+                  >
+                    <select
+                      id={`bank-method-${index}`}
+                      value={
+                        form.watch(`incomeStreams.${index}.bankingBasis`)
+                          ? "annual"
+                          : "manual"
+                      }
+                      onChange={(event) => {
+                        if (event.target.value === "annual") {
+                          form.setValue(
+                            `incomeStreams.${index}.monthlyBankCents`,
+                            0,
+                            { shouldDirty: true },
+                          );
+                          form.setValue(
+                            `incomeStreams.${index}.monthlyPrudentCents`,
+                            0,
+                            { shouldDirty: true },
+                          );
+                        }
+                        form.setValue(
+                          `incomeStreams.${index}.bankingBasis`,
+                          event.target.value === "annual"
+                            ? {
+                                referenceYear:
+                                  Number(
+                                    form
+                                      .getValues("project.targetPurchaseDate")
+                                      .slice(0, 4),
+                                  ) - 1,
+                                allowanceBasisPoints: 3400,
+                              }
+                            : undefined,
+                          { shouldDirty: true, shouldValidate: true },
+                        );
+                      }}
+                    >
+                      <option value="manual">
+                        Montants convenus avec la banque
+                      </option>
+                      <option value="annual">
+                        Exercice de référence et moyenne sur deux ans
+                      </option>
+                    </select>
+                  </Field>
+                )}
+                {form.watch(`incomeStreams.${index}.bankingBasis`) ? (
+                  <>
+                    <Field
+                      label="Exercice de référence bancaire"
+                      controlId={`bank-year-${index}`}
+                      help="Base principale : cet exercice. Sensibilité : moyenne avec l’exercice précédent. Douze mois requis par année ; prévisions explicitement signalées."
+                    >
+                      <input
+                        id={`bank-year-${index}`}
+                        type="number"
+                        min="1901"
+                        max="2200"
+                        {...form.register(
+                          `incomeStreams.${index}.bankingBasis.referenceYear`,
+                          { valueAsNumber: true },
+                        )}
+                      />
+                    </Field>
+                    <RateField
+                      label="Abattement de la convention bancaire"
+                      name={`incomeStreams.${index}.bankingBasis.allowanceBasisPoints`}
+                      control={form.control}
+                    />
+                    <p className="section-note">
+                      Les deux bases sont calculées depuis les périodes de CA
+                      ci-dessous. Modifier une prévision actualise les montants.
+                      Changer la date du rendez-vous ne transforme pas une
+                      prévision en réalisé. Pour revenir au mode manuel,
+                      renseignez les montants convenus avec la banque.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <MoneyField
+                      label="Revenu mensuel retenu — central"
+                      name={`incomeStreams.${index}.monthlyBankCents`}
+                      control={form.control}
+                      help="Montant net avant impôt retenu dans le scénario bancaire central. Ce n'est pas automatiquement le chiffre d'affaires divisé par douze."
+                    />
+                    <MoneyField
+                      label="Revenu mensuel retenu — prudent"
+                      name={`incomeStreams.${index}.monthlyPrudentCents`}
+                      control={form.control}
+                      help="Hypothèse minorée utilisée pour mesurer la robustesse du dossier."
+                    />
+                  </>
+                )}
                 <MoneyField
                   label="Revenu économique mensuel avant IR"
                   name={`incomeStreams.${index}.monthlyEconomicCents`}

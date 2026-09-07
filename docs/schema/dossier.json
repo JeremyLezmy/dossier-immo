@@ -755,6 +755,26 @@
           "bankingConvention": {
             "type": "string"
           },
+          "bankingBasis": {
+            "type": "object",
+            "properties": {
+              "referenceYear": {
+                "type": "integer",
+                "minimum": 1901,
+                "maximum": 2200
+              },
+              "allowanceBasisPoints": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000
+              }
+            },
+            "required": [
+              "referenceYear",
+              "allowanceBasisPoints"
+            ],
+            "additionalProperties": false
+          },
           "monthlyEconomicCents": {
             "type": "integer",
             "minimum": 0,
@@ -2128,6 +2148,9 @@
     "presentation": {
       "type": "object",
       "properties": {
+        "whitePaper": {
+          "type": "boolean"
+        },
         "theme": {
           "type": "string",
           "enum": [

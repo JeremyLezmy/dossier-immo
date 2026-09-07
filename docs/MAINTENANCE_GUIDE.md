@@ -2,6 +2,8 @@
 
 ## Règle d’exploitation
 
+La page facultative « Repères pour l’étude bancaire » est rendue après les simulations de financement et avant le Sankey et le budget post-achat. Sa position est couverte par un test d’ordre documentaire ; elle ne modifie pas le nombre de pages.
+
 L’application est entièrement locale. IndexedDB contient seulement un brouillon de confort ; le fichier `.dossier-immo.json` téléchargé par l’utilisateur est la sauvegarde canonique. Aucun compte, serveur applicatif ou envoi de justificatif n’est requis.
 
 Les données réelles restent dans `private/` ou hors du dépôt. `config.example/dossier.json` et `config.example/dossiers/` sont entièrement fictifs et constituent les seuls exemples publiables.
@@ -65,6 +67,8 @@ Le financement multi-prêts repose sur une chronologie mensuelle unique dans `pa
 L’interface peut convertir une saisie en années vers des mois, mais le schéma et le fichier canonique conservent uniquement des mois entiers. Ne jamais ajouter une unité persistée ou un échéancier au dossier pour répondre à un besoin de présentation.
 
 ## Faire évoluer le document
+
+Les textes éditoriaux ne sont jamais tronqués silencieusement. En cas de dépassement, raccourcir explicitement le texte avec son sens préservé, ou revoir la mise en page dans le périmètre autorisé ; contrôler le rendu complet. Les annexes facultatives affichent aussi leurs conclusions éditoriales. Le rapprochement de trésorerie expose apport, installation et enveloppe fiscale complémentaire.
 
 `packages/document` rend jusqu'à treize sections A4 déterministes depuis le dossier validé et le résultat calculé. La fixture complète en produit treize ; une page ou un sous-bloc sans donnée métier doit être omis, sans tableau vide ni mention artificielle « non concerné ». Le CSS écran et le CSS d’impression appartiennent au même renderer. Un changement volontaire suit ce protocole :
 

@@ -15,8 +15,19 @@ describe("étude préparatoire et hypothèses de financement", () => {
     const future = calculateDossier(dossier);
     dossier.project.bankIncomeReferenceDate = dossier.metadata.observationDate;
     const current = calculateDossier(dossier);
-    expect(current.incomeCentralCents).toBe(
+    expect(current.incomeCentralCents).toBe(future.incomeCentralCents);
+    expect(current.incomePresentation.bankCents).toBe(
       future.incomeCentralCents + salary.monthlyBankCents,
+    );
+    expect(current.incomePresentation.prudentCents).toBe(
+      future.incomePrudentCents + salary.monthlyPrudentCents,
+    );
+    expect(
+      current.incomePresentation.cards.find((card) => card.id === "bank")!
+        .valueCents,
+    ).toBe(future.incomeCentralCents + salary.monthlyBankCents);
+    expect(current.financingScenarios[0]!.effortRateCentralBasisPoints).toBe(
+      future.financingScenarios[0]!.effortRateCentralBasisPoints,
     );
     expect(current.incomePresentation.bankAtPurchaseCents).toBe(
       future.incomeCentralCents,
@@ -205,14 +216,33 @@ describe("étude préparatoire et hypothèses de financement", () => {
   it("sépare les prélèvements fiscaux des provisions sans modifier le disponible", () => {
     const dossier = structuredClone(completeDemoDossier);
     const date = dossier.project.targetPurchaseDate;
-    dossier.cashFlowPlan = {note:"Hypothèses fictives",entries:[
-      {id:"tax-payment",date,label:"Acompte",direction:"expense",category:"income-tax",amountCents:80000},
-      {id:"tax-saving",date,label:"Provision",direction:"expense",category:"income-tax",amountCents:60000,isProvision:true},
-    ]};
+    dossier.cashFlowPlan = {
+      note: "Hypothèses fictives",
+      entries: [
+        {
+          id: "tax-payment",
+          date,
+          label: "Acompte",
+          direction: "expense",
+          category: "income-tax",
+          amountCents: 80000,
+        },
+        {
+          id: "tax-saving",
+          date,
+          label: "Provision",
+          direction: "expense",
+          category: "income-tax",
+          amountCents: 60000,
+          isProvision: true,
+        },
+      ],
+    };
     const result = calculateDossier(dossier);
     expect(result.monthlyCashFlow[0]!.incomeTaxCents).toBe(80000);
     expect(result.monthlyCashFlow[0]!.taxProvisionCents).toBe(60000);
-    expect(result.projectedLiquidityAtPurchaseCents).toBe(result.contributionLiquidityCents-140000);
+    expect(result.projectedLiquidityAtPurchaseCents).toBe(
+      result.contributionLiquidityCents - 140000,
+    );
   });
-
 });

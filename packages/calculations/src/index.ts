@@ -1,8 +1,13 @@
+import { calculateBankIncome } from "./bank-income";
 import { calculateTurnoverHistory, type TurnoverHistory } from "./history";
+import { calculateBankReview } from "./bank-review";
 export type { TurnoverHistory } from "./history";
 import { calculateTaxProjections, type TaxProjectionResult } from "./tax";
 import type { Dossier, FinancingScenario } from "@dossier-immo/schema";
-import { calculateIncomePresentation, type IncomePresentation } from "./income-presentation";
+import {
+  calculateIncomePresentation,
+  type IncomePresentation,
+} from "./income-presentation";
 import {
   summarizeIncomePeriods,
   summarizeCashFlow,
@@ -72,11 +77,25 @@ export interface FinancingLoanComponentResult {
 }
 
 export interface DerivedDossier {
+  readonly bankReview: ReturnType<typeof calculateBankReview>;
   readonly incomePresentation: IncomePresentation;
-  readonly bankReadingEffortBasisPoints: { now: number; atPurchase: number; projected: number | undefined };
+  readonly bankReadingEffortBasisPoints: {
+    now: number;
+    prudentReference: number;
+    atPurchase: number;
+    projected: number | undefined;
+  };
   readonly turnoverHistory: TurnoverHistory;
   readonly taxProjections: readonly TaxProjectionResult[];
-  readonly prepaymentComparisons: readonly { liabilityId: string; label: string; settlementCents: number; releasedMonthlyCents: number; reserveCents: number; freeReserveCents: number; effortBasisPoints: number; }[];
+  readonly prepaymentComparisons: readonly {
+    liabilityId: string;
+    label: string;
+    settlementCents: number;
+    releasedMonthlyCents: number;
+    reserveCents: number;
+    freeReserveCents: number;
+    effortBasisPoints: number;
+  }[];
   readonly incomeSummaries: readonly IncomeSummary[];
   readonly incomePeriods: readonly IncomePeriodResult[];
   readonly cashFlow: readonly CashFlowResult[];
@@ -294,7 +313,8 @@ function calculateScenario(
   const totalProjectCostCents =
     netSellerPriceCents +
     acquisitionFeesCents +
-    dossier.project.renovationCents + (dossier.project.financingFeesCents ?? 0);
+    dossier.project.renovationCents +
+    (dossier.project.financingFeesCents ?? 0);
   const principalCents = Math.max(
     0,
     totalProjectCostCents - scenarioContributionCents,
@@ -426,10 +446,13 @@ function calculateScenario(
   return {
     contributionCents: scenarioContributionCents,
     reserveAfterPurchaseCents,
-    freeReserveAfterPurchaseCents: reserveAfterPurchaseCents - (dossier.cashFlowPlan?.reservedTaxCents ?? 0),
+    freeReserveAfterPurchaseCents:
+      reserveAfterPurchaseCents - (dossier.cashFlowPlan?.reservedTaxCents ?? 0),
     reserveShortfallCents: Math.max(
       0,
-      dossier.reservePolicy.minimumCents - reserveAfterPurchaseCents,
+      dossier.reservePolicy.minimumCents -
+        reserveAfterPurchaseCents +
+        (dossier.cashFlowPlan?.reservedTaxCents ?? 0),
     ),
     maximumCombinedMonthlyCreditCents: Math.max(
       0,
@@ -470,20 +493,25 @@ function calculateScenario(
 }
 
 export function calculateDossier(dossier: Dossier): DerivedDossier {
-  const bankDate = dossier.project.bankIncomeReferenceDate ?? dossier.project.targetPurchaseDate;
+  // Financing always uses contracts active at purchase; the preparatory reading
+  // keeps its own reference date in incomePresentation.
+  const incomePeriods = (dossier.incomePeriods ?? []).map((period) =>
+    calculateIncomePeriod(dossier, period),
+  );
+  const bankIncome = calculateBankIncome(dossier, incomePeriods);
+  const bankDate = dossier.project.targetPurchaseDate;
   const includedIncomes = dossier.incomeStreams.filter(
     (income) =>
       income.includedInBorrowingCapacity &&
-      (!income.startDate ||
-        income.startDate <= bankDate) &&
+      (!income.startDate || income.startDate <= bankDate) &&
       (!income.endDate || income.endDate >= bankDate),
   );
   const incomeCentralCents = includedIncomes.reduce(
-    (total, income) => total + income.monthlyBankCents,
+    (total, income) => total + bankIncome[income.id]!.primaryCents,
     0,
   );
   const incomePrudentCents = includedIncomes.reduce(
-    (total, income) => total + income.monthlyPrudentCents,
+    (total, income) => total + bankIncome[income.id]!.prudentCents,
     0,
   );
   const totalAssetsCents = dossier.assets.reduce(
@@ -507,9 +535,6 @@ export function calculateDossier(dossier: Dossier): DerivedDossier {
       dossier.metadata.observationDate,
       dossier.project.targetPurchaseDate,
     ),
-  );
-  const incomePeriods = (dossier.incomePeriods ?? []).map((period) =>
-    calculateIncomePeriod(dossier, period),
   );
   const taxProjections = calculateTaxProjections(dossier, incomePeriods);
   const cashFlow = calculateCashFlow(
@@ -612,7 +637,8 @@ export function calculateDossier(dossier: Dossier): DerivedDossier {
               .reduce(
                 (sum, stream) =>
                   sum +
-                  (stream.monthlyEconomicCents ?? stream.monthlyBankCents),
+                  (stream.monthlyEconomicCents ??
+                    bankIncome[stream.id]!.primaryCents),
                 0,
               ),
       }))
@@ -621,15 +647,20 @@ export function calculateDossier(dossier: Dossier): DerivedDossier {
       ? peopleIncome.reduce((sum, person) => sum + person.value, 0)
       : (budget.assumptions.beforeTaxIncomeCents ??
         peopleIncome.reduce((sum, person) => sum + person.value, 0));
-    const taxProjection = taxProjections.find(item => item.budgetId === budget.id);
-    const incomeCents = sources.length || taxProjection
-      ? Math.max(
-          0,
-          beforeTaxIncomeCents -
-            (taxProjection?.monthlyTaxCents ?? budget.assumptions.monthlyIncomeTaxCents ?? 0),
-        )
-      : (budget.assumptions.afterTaxIncomeCents ??
-        dossier.estimatedHouseholdAfterTaxIncomeCents);
+    const taxProjection = taxProjections.find(
+      (item) => item.budgetId === budget.id,
+    );
+    const incomeCents =
+      sources.length || taxProjection
+        ? Math.max(
+            0,
+            beforeTaxIncomeCents -
+              (taxProjection?.monthlyTaxCents ??
+                budget.assumptions.monthlyIncomeTaxCents ??
+                0),
+          )
+        : (budget.assumptions.afterTaxIncomeCents ??
+          dossier.estimatedHouseholdAfterTaxIncomeCents);
     const current = budget.kind === "current";
     const debtCents =
       current && !budget.items.some((item) => item.liabilityId)
@@ -726,14 +757,69 @@ export function calculateDossier(dossier: Dossier): DerivedDossier {
     }),
   );
 
-  const prepaymentComparisons = dossier.liabilities.filter(item => item.settlementAtPurchaseCents !== undefined && (!item.startDate || item.startDate <= dossier.project.targetPurchaseDate) && (!item.endDate || item.endDate >= dossier.project.targetPurchaseDate)).map(liability => {
-    const settlementCents = liability.settlementAtPurchaseCents!;
-    const comparison = calculateScenario({ ...dossier, liabilities: dossier.liabilities.filter(item => item.id !== liability.id) }, highlighted, incomeCentralCents, incomePrudentCents, Math.max(0, existingMonthlyDebtAtPurchaseCents - liability.monthlyPaymentCents), projectedLiquidityAtPurchaseCents - settlementCents);
-    return {liabilityId: liability.id, label: liability.label, settlementCents, releasedMonthlyCents: liability.monthlyPaymentCents, reserveCents: comparison.reserveAfterPurchaseCents, freeReserveCents: comparison.freeReserveAfterPurchaseCents, effortBasisPoints: comparison.effortRateCentralBasisPoints};
-  });
-  const incomePresentation = calculateIncomePresentation(dossier, incomePeriods, budgetBeforeTaxIncomeCents[dossier.budgetScenarios.find(budget => budget.kind === "central")!.id] ?? 0, budgetIncomeCents[dossier.budgetScenarios.find(budget => budget.kind === "central")!.id] ?? 0);
-  const effortForIncome = (income: number) => income > 0 ? Math.round(Math.max(...highlightedResult.annualCreditChargesCents) / (income * 12) * 10_000) : 0;
-  const bankReadingEffortBasisPoints = { now: effortForIncome(incomePresentation.bankNowCents), atPurchase: effortForIncome(incomePresentation.bankAtPurchaseCents), projected: incomePresentation.fiscalCents === undefined ? undefined : effortForIncome(incomePresentation.fiscalCents) };
+  const prepaymentComparisons = dossier.liabilities
+    .filter(
+      (item) =>
+        item.settlementAtPurchaseCents !== undefined &&
+        (!item.startDate ||
+          item.startDate <= dossier.project.targetPurchaseDate) &&
+        (!item.endDate || item.endDate >= dossier.project.targetPurchaseDate),
+    )
+    .map((liability) => {
+      const settlementCents = liability.settlementAtPurchaseCents!;
+      const comparison = calculateScenario(
+        {
+          ...dossier,
+          liabilities: dossier.liabilities.filter(
+            (item) => item.id !== liability.id,
+          ),
+        },
+        highlighted,
+        incomeCentralCents,
+        incomePrudentCents,
+        Math.max(
+          0,
+          existingMonthlyDebtAtPurchaseCents - liability.monthlyPaymentCents,
+        ),
+        projectedLiquidityAtPurchaseCents - settlementCents,
+      );
+      return {
+        liabilityId: liability.id,
+        label: liability.label,
+        settlementCents,
+        releasedMonthlyCents: liability.monthlyPaymentCents,
+        reserveCents: comparison.reserveAfterPurchaseCents,
+        freeReserveCents: comparison.freeReserveAfterPurchaseCents,
+        effortBasisPoints: comparison.effortRateCentralBasisPoints,
+      };
+    });
+  const incomePresentation = calculateIncomePresentation(
+    dossier,
+    incomePeriods,
+    budgetBeforeTaxIncomeCents[
+      dossier.budgetScenarios.find((budget) => budget.kind === "central")!.id
+    ] ?? 0,
+    budgetIncomeCents[
+      dossier.budgetScenarios.find((budget) => budget.kind === "central")!.id
+    ] ?? 0,
+  );
+  const effortForIncome = (income: number) =>
+    income > 0
+      ? Math.round(
+          (Math.max(...highlightedResult.annualCreditChargesCents) /
+            (income * 12)) *
+            10_000,
+        )
+      : 0;
+  const bankReadingEffortBasisPoints = {
+    now: effortForIncome(incomePresentation.bankNowCents),
+    prudentReference: effortForIncome(incomePresentation.prudentCents),
+    atPurchase: effortForIncome(incomePresentation.bankAtPurchaseCents),
+    projected:
+      incomePresentation.fiscalCents === undefined
+        ? undefined
+        : effortForIncome(incomePresentation.fiscalCents),
+  };
   const budgetProvenance: Record<string, MetricProvenance> = {};
   for (const { budget, financingScenario } of budgetScenarioResults) {
     const usesPeriods = Boolean(budget.assumptions.incomePeriodIds?.length);
@@ -778,6 +864,17 @@ export function calculateDossier(dossier: Dossier): DerivedDossier {
 
   return {
     incomePresentation,
+    bankReview: calculateBankReview(
+      dossier,
+      projectedLiquidityAtPurchaseCents,
+      contributionLiquidityCents,
+      summarizeCashFlow(dossier, cashFlow, incomePeriods).length,
+      budgetIncomeCents,
+      budgetTotalsCents,
+      budgetDebtCents,
+      budgetFinancingPaymentCents,
+      budgetPeopleIncomeCents,
+    ),
     bankReadingEffortBasisPoints,
     turnoverHistory: calculateTurnoverHistory(dossier),
     taxProjections,
@@ -798,7 +895,8 @@ export function calculateDossier(dossier: Dossier): DerivedDossier {
     contributionLiquidityCents,
     projectedLiquidityAtPurchaseCents,
     reserveAfterPurchaseCents,
-    freeReserveAfterPurchaseCents: reserveAfterPurchaseCents - (dossier.cashFlowPlan?.reservedTaxCents ?? 0),
+    freeReserveAfterPurchaseCents:
+      reserveAfterPurchaseCents - (dossier.cashFlowPlan?.reservedTaxCents ?? 0),
     existingMonthlyDebtNowCents,
     existingMonthlyDebtAtPurchaseCents,
     budgetTotalsCents,
@@ -809,12 +907,12 @@ export function calculateDossier(dossier: Dossier): DerivedDossier {
     highlightedScenarioId: highlighted.id,
     provenance: {
       incomeCentralCents: {
-        formula: "Σ revenus bancaires inclus",
+        formula: "Σ revenus bancaires des contrats actifs à la date d’achat",
         sourceIds: includedIncomes.map((income) => income.id),
         observedAt: dossier.metadata.observationDate,
       },
       incomePrudentCents: {
-        formula: "Σ revenus prudents inclus",
+        formula: "Σ revenus prudents des contrats actifs à la date d’achat",
         sourceIds: includedIncomes.map((income) => income.id),
         observedAt: dossier.metadata.observationDate,
       },

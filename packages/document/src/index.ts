@@ -1,5 +1,9 @@
+import { renderCashBridge, renderBudgetSensitivity } from "./bank-review";
 import { renderTurnoverHistory } from "./income-history";
-import { renderFinancialReview, renderRateComparison } from "./financial-review";
+import {
+  renderFinancialReview,
+  renderRateComparison,
+} from "./financial-review";
 import type {
   DerivedDossier,
   FinancingLoanComponentResult,
@@ -109,20 +113,10 @@ function plainNarrative(text: string): string {
     .trim();
 }
 
-function conciseParagraphs(text: string, maximumCharacters: number): string {
-  if (/<\/?(?:p|div|strong|b|em|i|ul|ol|li|font|span|br)\b/i.test(text))
-    return safeRichText(text);
-  const plain = plainNarrative(text);
-  if (plain.length <= maximumCharacters) return paragraphs(plain);
-  const prefix = plain.slice(0, maximumCharacters + 1);
-  const boundary = Math.max(
-    prefix.lastIndexOf(". "),
-    prefix.lastIndexOf("\n"),
-    prefix.lastIndexOf("; "),
-  );
-  return paragraphs(
-    `${prefix.slice(0, boundary > maximumCharacters * 0.55 ? boundary + 1 : maximumCharacters).trim()}…`,
-  );
+function conciseParagraphs(text: string, _maximumCharacters: number): string {
+  // A banking document must never silently discard the end of a user's note.
+  // Overflow is checked by the document layout validator.
+  return paragraphs(text);
 }
 
 function editorial(
@@ -345,7 +339,7 @@ function assetsByOwnerTable(
         sum + (asset.contributionAmountCents ?? asset.amountCents),
       0,
     );
-  return `<table class="compact assets-multiindex"><thead><tr><th>Titulaire</th><th>Support</th><th>Nature</th><th class="num">Valeur</th><th class="num">Mobilisable retenu</th><th>Lecture bancaire</th></tr></thead><tbody>${rows}<tr class="total-row"><th colspan="3">Total patrimoine déclaré</th><td class="num">${formatEuro(total)}</td><td class="num">${formatEuro(mobilisable)}</td><td>Apport central prévu : ${formatEuro(dossier.project.contributionCents)}</td></tr></tbody></table>`;
+  return `<table class="compact assets-multiindex"><thead><tr><th>Titulaire</th><th>Support</th><th>Nature</th><th class="num">Valeur</th><th class="num">Mobilisable retenu</th><th>Lecture bancaire</th></tr></thead><tbody>${rows}<tr class="total-row"><th colspan="3">Total patrimoine brut déclaré</th><td class="num">${formatEuro(total)}</td><td class="num">${formatEuro(mobilisable)}</td><td>Apport central prévu : ${formatEuro(dossier.project.contributionCents)}</td></tr></tbody></table>`;
 }
 
 function searchAreaList(areas: readonly string[]): string {
@@ -405,7 +399,7 @@ export function renderBankDocument(
         `
     <div class="eyebrow">${escapeHtml(dossier.metadata.title)}</div>
     <div><h1>${escapeHtml(dossier.presentation.title)}</h1><p class="lead">${escapeHtml(dossier.presentation.subtitle)}</p>${editorial(dossier, "cover", "introduction")}
-    <div class="meta-grid"><div class="meta"><span>Date d'édition</span><strong>${formatDate(dossier.metadata.updatedAt)}</strong></div><div class="meta"><span>Date cible d'achat</span><strong>${formatDate(dossier.project.targetPurchaseDate)}</strong></div><div class="meta"><span>Budget cible</span><strong>${formatEuro(dossier.project.minimumPriceCents ?? dossier.project.targetPriceCents)} à ${formatEuro(dossier.project.comfortableMaximumPriceCents ?? dossier.project.targetPriceCents)}</strong></div><div class="meta"><span>Plafond exceptionnel</span><strong>${formatEuro(dossier.project.maximumPriceCents)}</strong></div><div class="meta"><span>Liquidités visées</span><strong>${formatEuro(derived.projectedLiquidityAtPurchaseCents)}</strong></div><div class="meta"><span>${derived.incomePresentation.hasEconomicBasis ? escapeHtml(derived.incomePresentation.economicLabel) + " avant IR" : "Base bancaire proposée"}</span><strong>${formatEuro(derived.incomePresentation.hasEconomicBasis ? derived.incomePresentation.beforeTaxCents : derived.incomeCentralCents)} / mois</strong></div><div class="meta"><span>Apport central</span><strong>${formatEuro(dossier.project.contributionCents)}</strong></div><div class="meta"><span>Trésorerie conservée</span><strong>≥ ${formatEuro(dossier.reservePolicy.minimumCents)}</strong></div></div>${editorial(dossier, "cover", "callout")}</div>
+    <div class="meta-grid"><div class="meta"><span>Date d'édition</span><strong>${formatDate(dossier.metadata.updatedAt)}</strong></div><div class="meta"><span>Date cible d'achat</span><strong>${formatDate(dossier.project.targetPurchaseDate)}</strong></div><div class="meta"><span>Budget cible</span><strong>${formatEuro(dossier.project.minimumPriceCents ?? dossier.project.targetPriceCents)} à ${formatEuro(dossier.project.comfortableMaximumPriceCents ?? dossier.project.targetPriceCents)}</strong></div><div class="meta"><span>Plafond exceptionnel</span><strong>${formatEuro(dossier.project.maximumPriceCents)}</strong></div><div class="meta"><span>Disponible budgété à l’achat</span><strong>${formatEuro(derived.projectedLiquidityAtPurchaseCents)}</strong></div><div class="meta"><span>${derived.incomePresentation.hasEconomicBasis ? escapeHtml(derived.incomePresentation.economicLabel) + " avant IR" : "Base bancaire proposée"}</span><strong>${formatEuro(derived.incomePresentation.hasEconomicBasis ? derived.incomePresentation.beforeTaxCents : derived.incomeCentralCents)} / mois</strong></div><div class="meta"><span>Apport central</span><strong>${formatEuro(dossier.project.contributionCents)}</strong></div><div class="meta"><span>Réserve libre estimée</span><strong>${formatEuro(derived.freeReserveAfterPurchaseCents)}</strong></div></div>${editorial(dossier, "cover", "callout")}</div>
     <div>${editorial(dossier, "cover", "conclusion")}<p class="footer-note">Document fondé sur les données observées au ${formatDate(dossier.metadata.observationDate)} ; à actualiser au dépôt.</p></div>
   `,
         "cover",
@@ -442,7 +436,7 @@ export function renderBankDocument(
             (activity) => activity.personId === person.id,
           );
           const professionalCells = hasProfessionalActivities
-            ? `<td>${activities.map((activity) => escapeHtml(activity.occupation)).join("<br>") || "Non renseigné"}</td><td>${activities.map((activity) => escapeHtml(professionalStatusLabels[activity.status])).join("<br>") || "Non renseigné"}</td>`
+            ? `<td>${[...new Set(activities.map((activity) => activity.occupation))].map(escapeHtml).join("<br>") || "Non renseigné"}</td><td>${activities.map((activity) => escapeHtml(professionalStatusLabels[activity.status])).join("<br>") || "Non renseigné"}</td>`
             : "";
           return `<tr><td><strong>${escapeHtml(person.displayName)}</strong><br><span class="small">${escapeHtml(personRoleLabels[person.role])}</span></td><td class="num">${ageAt(person.birthDate, dossier.metadata.observationDate)}</td>${professionalCells}${incomeReading.hasEconomicBasis ? `<td class="num">${incomeReading.people[person.id]?.economicCents === undefined ? "—" : formatEuro(incomeReading.people[person.id]!.economicCents!)}</td>` : ""}<td class="num">${formatEuro(incomeReading.people[person.id]?.bankCents ?? 0)}</td></tr>`;
         })
@@ -455,22 +449,44 @@ export function renderBankDocument(
 
   if (sections.income && dossier.incomeStreams.length > 0) {
     const reading = derived.incomePresentation;
-    pages.push(page(dossier, ++pageNumber, `
+    pages.push(
+      page(
+        dossier,
+        ++pageNumber,
+        `
       <h2>Revenus — budget de vie et lecture bancaire</h2>${editorial(dossier, "income", "introduction")}
-      <div class="kpi-grid">${reading.cards.map(card => `<div class="kpi"><span>${escapeHtml(card.label)}</span><strong>${formatEuro(card.valueCents)}</strong><small>/ mois · ${escapeHtml(card.explanation)}</small></div>`).join("")}</div>
+      <div class="kpi-grid">${reading.cards.map((card) => `<div class="kpi"><span>${escapeHtml(card.label)}</span><strong>${formatEuro(card.valueCents)}</strong><small>/ mois · ${escapeHtml(card.explanation)}</small></div>`).join("")}</div>
       ${editorial(dossier, "income", "callout", "prudent")}
-      ${reading.hasEconomicBasis ? `<h3>${escapeHtml(reading.economicLabel)} — avant IR</h3><p class="small">Recettes moins cotisations et frais réels ou estimés, selon la période. La base fiscale est présentée à titre comparatif et ne représente pas la trésorerie disponible.</p><table class="compact"><thead><tr><th>Revenu et période de référence</th><th class="num">Économique avant IR</th><th class="num">Base fiscale indicative</th></tr></thead><tbody>${reading.rows.filter(row => row.economicCents !== undefined).map(row => {
-        const stream = dossier.incomeStreams.find(income => income.id === row.id)!;
-        return `<tr><td><strong>${escapeHtml(stream.label)}</strong><br><span class="small">${escapeHtml(row.periodLabel ?? "Hypothèse mensuelle déclarée")}</span></td><td class="num"><strong>${formatEuro(row.economicCents!)}</strong></td><td class="num">${row.fiscalCents === undefined ? "—" : formatEuro(row.fiscalCents)}</td></tr>`;
-      }).join("")}<tr class="total-row"><td>Foyer / mois</td><td class="num">${formatEuro(reading.beforeTaxCents)}</td><td class="num">${reading.fiscalCents === undefined ? "—" : formatEuro(reading.fiscalCents)}</td></tr></tbody></table><p class="small"><strong>Budget après IR :</strong> ${formatEuro(reading.afterTaxCents)} / mois, après une provision de ${formatEuro(reading.taxProvisionCents)} / mois. Cette provision est une hypothèse budgétaire à confirmer.</p>` : ""}
-      <h3>Conventions proposées pour l’étude bancaire</h3><table class="compact"><thead><tr><th>Revenu et origine de la base</th><th class="num">Base proposée</th><th class="num">Variante de référence</th></tr></thead><tbody>${reading.rows.map(row => {
-        const income = dossier.incomeStreams.find(stream => stream.id === row.id)!;
-        return `<tr><td><strong>${escapeHtml(income.label)}</strong>${income.endDate ? ` · fin ${formatDate(income.endDate)}` : ""}<br><span class="small">${escapeHtml(row.included ? income.bankingConvention ?? income.note ?? "Montants mensuels déclarés à confirmer avec la banque." : "Non inclus à la date de référence bancaire.")}</span></td><td class="num">${row.included ? formatEuro(row.bankCents) : "—"}</td><td class="num">${row.included ? formatEuro(row.prudentCents) : "—"}</td></tr>`;
-      }).join("")}<tr class="total-row"><td>Foyer / mois</td><td class="num">${formatEuro(derived.incomeCentralCents)}</td><td class="num">${formatEuro(derived.incomePrudentCents)}</td></tr></tbody></table><p class="small">Date de référence bancaire : ${formatDate(reading.bankReferenceDate)}. Les revenus de contrats échus devront être réexaminés lors de l’octroi.</p>${editorial(dossier, "income", "conclusion")}
-    `, "income-page"));
+      ${
+        reading.hasEconomicBasis
+          ? `<h3>${escapeHtml(reading.economicLabel)} — avant IR</h3><p class="small">Recettes moins cotisations et frais réels ou estimés, selon la période. La base fiscale est présentée à titre comparatif et ne représente pas la trésorerie disponible.</p><table class="compact"><thead><tr><th>Revenu et période de référence</th><th class="num">Net avant IR¹</th><th class="num">Base fiscale indicative</th></tr></thead><tbody>${reading.rows
+              .filter((row) => row.economicCents !== undefined)
+              .map((row) => {
+                const stream = dossier.incomeStreams.find(
+                  (income) => income.id === row.id,
+                )!;
+                return `<tr><td><strong>${escapeHtml(stream.label)}</strong><br><span class="small">${escapeHtml(row.periodLabel ?? "Hypothèse mensuelle déclarée")}</span></td><td class="num"><strong>${formatEuro(row.economicCents!)}</strong></td><td class="num">${row.fiscalCents === undefined ? "—" : formatEuro(row.fiscalCents)}</td></tr>`;
+              })
+              .join(
+                "",
+              )}<tr class="total-row"><td>Foyer / mois</td><td class="num">${formatEuro(reading.beforeTaxCents)}</td><td class="num">${reading.fiscalCents === undefined ? "—" : formatEuro(reading.fiscalCents)}</td></tr></tbody></table><p class="small"><strong>Budget après IR :</strong> ${formatEuro(reading.afterTaxCents)} / mois, après une provision de ${formatEuro(reading.taxProvisionCents)} / mois. Cette provision est une hypothèse budgétaire à confirmer.</p>`
+          : ""
+      }
+      <h3>Conventions proposées pour l’étude bancaire</h3><table class="compact"><thead><tr><th>Revenu et origine de la base</th><th class="num">${escapeHtml(reading.primaryLabel)}</th><th class="num">${escapeHtml(reading.automatic ? reading.prudentLabel : "Variante de référence")}</th></tr></thead><tbody>${reading.rows
+        .map((row) => {
+          const income = dossier.incomeStreams.find(
+            (stream) => stream.id === row.id,
+          )!;
+          return `<tr><td><strong>${escapeHtml(income.label)}</strong>${income.endDate ? ` · fin ${formatDate(income.endDate)}` : ""}<br><span class="small">${escapeHtml(row.included ? row.bankingLabel : "Non inclus à la date de référence bancaire.")}</span></td><td class="num">${row.included ? formatEuro(row.bankCents) : "—"}</td><td class="num">${row.included ? formatEuro(row.prudentCents) : "—"}</td></tr>`;
+        })
+        .join(
+          "",
+        )}<tr class="total-row"><td>Foyer / mois</td><td class="num">${formatEuro(reading.bankCents)}</td><td class="num">${formatEuro(reading.prudentCents)}</td></tr></tbody></table><p class="small">Référence : ${formatDate(reading.bankReferenceDate)}, contrats actifs inclus. À l’achat (${formatDate(dossier.project.targetPurchaseDate)}) : ${formatEuro(reading.bankAtPurchaseCents)} / ${formatEuro(reading.prudentAtPurchaseCents)}, contrats échus exclus.</p>${editorial(dossier, "income", "conclusion")}
+    `,
+        `income-page${reading.automatic ? " calculated-income-page" : ""}`,
+      ),
+    );
   }
-
-  if (sections.financialReview) pages.push(page(dossier, ++pageNumber, renderFinancialReview(dossier, derived), "financial-review-page"));
 
   if (
     sections.riskManagement &&
@@ -494,7 +510,7 @@ export function renderBankDocument(
         dossier,
         ++pageNumber,
         `
-    <h2>Patrimoine, liquidités et apport</h2>${editorial(dossier, "assets", "introduction")}<div class="kpi-grid"><div class="kpi"><span>Patrimoine déclaré</span><strong>${formatEuro(derived.totalAssetsCents)}</strong></div><div class="kpi"><span>Liquidités</span><strong>${formatEuro(derived.liquidAssetsCents)}</strong></div><div class="kpi"><span>Mobilisable pour apport</span><strong>${formatEuro(derived.contributionLiquidityCents)}</strong></div></div>
+    <h2>Patrimoine, liquidités et apport</h2>${editorial(dossier, "assets", "introduction")}<div class="kpi-grid"><div class="kpi"><span>Patrimoine brut déclaré</span><strong>${formatEuro(derived.totalAssetsCents)}</strong></div><div class="kpi"><span>Liquidités</span><strong>${formatEuro(derived.liquidAssetsCents)}</strong></div><div class="kpi"><span>Mobilisable pour apport</span><strong>${formatEuro(derived.contributionLiquidityCents)}</strong></div></div>
     ${assetsByOwnerTable(dossier, people)}${editorial(dossier, "assets", "callout", "prudent")}${editorial(dossier, "assets", "conclusion")}
   `,
         "patrimoine-page",
@@ -508,7 +524,7 @@ export function renderBankDocument(
         ++pageNumber,
         `
     <h2>Trésorerie conservée après achat</h2>${editorial(dossier, "cashReserve", "introduction")}${editorial(dossier, "cashReserve", "callout", "prudent") || `<div class="callout prudent reserve-convention">${conciseParagraphs(dossier.editorial.reserveStrategy, 300)}</div>`}
-    ${dossier.reservePolicy.allocations.length > 0 ? `<table><thead><tr><th>Poche</th><th class="num">Cible</th><th>Fonction</th></tr></thead><tbody>${dossier.reservePolicy.allocations.map((allocation) => `<tr><td>${escapeHtml(allocation.label)}</td><td class="num">${formatEuro(allocation.amountCents)}</td><td>${escapeHtml(allocation.note ?? "")}</td></tr>`).join("")}<tr class="total-row"><td>Ventilation cible</td><td class="num">${formatEuro(dossier.reservePolicy.allocations.reduce((total, allocation) => total + allocation.amountCents, 0))}</td><td>Seuil minimal de sécurité : ${formatEuro(dossier.reservePolicy.minimumCents)} · marge : ${formatEuro(Math.max(0, dossier.reservePolicy.targetCents - dossier.reservePolicy.minimumCents))}</td></tr></tbody></table>` : ""}${derived.monthlyCashFlow.length ? `<h3>Encaissements et sorties jusqu’à l’achat</h3><table class="compact"><thead><tr><th>Mois</th><th class="num">CA HT des deux</th><th class="num">Revenus nets¹</th><th class="num">IR prévu²</th>${derived.monthlyCashFlow.some(row => row.taxProvisionCents !== 0) ? `<th class="num">Mis de côté²</th>` : ""}<th class="num">Autres sorties</th><th class="num">Disponible budgété</th></tr></thead><tbody>${derived.monthlyCashFlow.map(month => `<tr><td>${escapeHtml(month.month)}</td><td class="num">${formatEuro(month.independentRevenueCents)}</td><td class="num">${formatEuro(month.netIncomeCents)}</td><td class="num">${formatEuro(month.incomeTaxCents)}</td>${derived.monthlyCashFlow.some(row => row.taxProvisionCents !== 0) ? `<td class="num">${formatEuro(month.taxProvisionCents)}</td>` : ""}<td class="num">${formatEuro(month.otherOutflowsCents)}</td><td class="num"><strong>${formatEuro(month.closingCents)}</strong></td></tr>`).join("")}</tbody></table><p class="small">¹ CA après cotisations et frais provisionnés, plus salaires nets avant IR. Ne pas additionner les colonnes CA et revenus nets. ² IR prévu : acomptes et soldes renseignés. Mis de côté : complément réservé, déduit du disponible budgété, sans être présenté comme un prélèvement fiscal. Les sorties déjà comprises dans les soldes initiaux sont exclues.</p>` : ""}${dossier.cashFlowPlan?.reservedTaxCents ? `<p class="small"><strong>À l’achat :</strong> réserve totale ${formatEuro(derived.reserveAfterPurchaseCents)}, dont ${formatEuro(dossier.cashFlowPlan.reservedTaxCents)} réservés à la régularisation fiscale ultérieure ; <strong>réserve libre ${formatEuro(derived.freeReserveAfterPurchaseCents)}</strong>. Cette enveloppe n’est pas une sortie du mois d’achat.</p>` : ""}${editorial(dossier, "cashReserve", "conclusion")}
+    ${dossier.reservePolicy.allocations.length > 0 && !derived.monthlyCashFlow.length ? `<table><thead><tr><th>Poche</th><th class="num">Cible</th><th>Fonction</th></tr></thead><tbody>${dossier.reservePolicy.allocations.map((allocation) => `<tr><td>${escapeHtml(allocation.label)}</td><td class="num">${formatEuro(allocation.amountCents)}</td><td>${escapeHtml(allocation.note ?? "")}</td></tr>`).join("")}<tr class="total-row"><td>Ventilation cible</td><td class="num">${formatEuro(dossier.reservePolicy.allocations.reduce((total, allocation) => total + allocation.amountCents, 0))}</td><td>Seuil minimal de sécurité : ${formatEuro(dossier.reservePolicy.minimumCents)} · marge : ${formatEuro(Math.max(0, dossier.reservePolicy.targetCents - dossier.reservePolicy.minimumCents))}</td></tr></tbody></table>` : ""}${derived.monthlyCashFlow.length ? `<h3>Encaissements et sorties jusqu’à l’achat</h3><table class="compact"><thead><tr><th>Mois</th><th class="num">CA HT des deux</th><th class="num">Revenus nets¹</th><th class="num">IR prévu²</th>${derived.monthlyCashFlow.some((row) => row.taxProvisionCents !== 0) ? `<th class="num">Complément IR²</th>` : ""}<th class="num">Autres sorties</th><th class="num">Disponible budgété</th></tr></thead><tbody>${derived.monthlyCashFlow.map((month) => `<tr><td>${escapeHtml(month.month)}</td><td class="num">${formatEuro(month.independentRevenueCents)}</td><td class="num">${formatEuro(month.netIncomeCents)}</td><td class="num">${formatEuro(month.incomeTaxCents)}</td>${derived.monthlyCashFlow.some((row) => row.taxProvisionCents !== 0) ? `<td class="num">${formatEuro(month.taxProvisionCents)}</td>` : ""}<td class="num">${formatEuro(month.otherOutflowsCents)}</td><td class="num"><strong>${formatEuro(month.closingCents)}</strong></td></tr>`).join("")}</tbody></table><p class="small">¹ CA après cotisations et frais provisionnés, plus salaires nets avant IR. Ne pas additionner les colonnes CA et revenus nets. ² IR prévu : acomptes et soldes renseignés. Complément IR : enveloppe budgétaire hors acomptes connus, pouvant couvrir un PAS restant à préciser et une provision. Déduite du disponible, elle n’est pas un prélèvement annoncé. Les sorties déjà comprises dans les soldes initiaux sont exclues.</p>` : ""}${derived.monthlyCashFlow.length ? renderCashBridge(dossier, derived) : ""}${editorial(dossier, "cashReserve", "conclusion")}
   `,
       ),
     );
@@ -533,7 +549,7 @@ export function renderBankDocument(
         ++pageNumber,
         `
     <h2>Scénarios de financement</h2>${editorial(dossier, "financing", "introduction")}${editorial(dossier, "financing", "callout", "prudent")}
-    <table class="compact financing-table"><thead><tr><th>Scénario</th><th class="num">Prix</th><th class="num">Frais<br>acquisition</th><th class="num">Apport</th><th class="num">Prêt</th><th class="num">Taux</th><th class="num">Assurance</th><th class="num">Mensualité max.</th><th class="num">Effort<br>base proposée</th><th class="num">Effort<br>variante</th></tr></thead><tbody>${derived.financingScenarios
+    <table class="compact financing-table"><thead><tr><th>Scénario</th><th class="num">Prix</th><th class="num">Frais<br>acquisition</th><th class="num">Apport</th><th class="num">Prêt</th><th class="num">Taux</th><th class="num">Assurance</th><th class="num">Mensualité<br>immo max.</th><th class="num">Effort<br>${escapeHtml(derived.incomePresentation.primaryLabel)}</th><th class="num">Effort<br>${escapeHtml(derived.incomePresentation.prudentLabel)}</th></tr></thead><tbody>${derived.financingScenarios
       .filter(
         (scenario) =>
           dossier.financingScenarios.find((item) => item.id === scenario.id)
@@ -548,15 +564,26 @@ export function renderBankDocument(
         const fees = Math.round(
           (price * dossier.project.acquisitionFeeBasisPoints) / 10_000,
         );
-        return `<tr class="${scenario.id === derived.highlightedScenarioId ? "central-row" : ""}"><td><strong>${escapeHtml(scenario.label)}</strong></td><td class="num">${formatEuro(price)}</td><td class="num">${formatEuro(fees)}</td><td class="num">${formatEuro(scenario.contributionCents)}<br><small>${dossier.cashFlowPlan?.reservedTaxCents ? `Libre ${formatEuro(scenario.freeReserveAfterPurchaseCents)}` : `Reste ${formatEuro(scenario.reserveAfterPurchaseCents)}`}</small></td><td class="num">${formatEuro(scenario.principalCents)}</td><td class="num">${formatRate(source?.annualRateBasisPoints ?? 0)}</td><td class="num">${formatRate(source?.insuranceAnnualBasisPoints ?? 0)}</td><td class="num"><strong>${formatEuro(scenario.maximumMonthlyPaymentIncludingInsuranceCents)}</strong></td><td class="num">${formatRate(scenario.effortRateCentralBasisPoints)}</td><td class="num">${formatRate(scenario.effortRatePrudentBasisPoints)}</td></tr>`;
+        return `<tr class="${scenario.id === derived.highlightedScenarioId ? "central-row" : ""}"><td><strong>${escapeHtml(scenario.label)}</strong></td><td class="num">${formatEuro(price)}</td><td class="num">${formatEuro(fees)}</td><td class="num">${formatEuro(scenario.contributionCents)}<br><small>${dossier.cashFlowPlan?.reservedTaxCents ? `Libre ${formatEuro(scenario.freeReserveAfterPurchaseCents)}${scenario.reserveShortfallCents > 0 ? " *" : ""}` : `Reste ${formatEuro(scenario.reserveAfterPurchaseCents)}`}</small></td><td class="num">${formatEuro(scenario.principalCents)}</td><td class="num">${formatRate(source?.annualRateBasisPoints ?? 0)}</td><td class="num">${formatRate(source?.insuranceAnnualBasisPoints ?? 0)}</td><td class="num"><strong>${formatEuro(scenario.maximumMonthlyPaymentIncludingInsuranceCents)}</strong></td><td class="num">${formatRate(scenario.effortRateCentralBasisPoints)}</td><td class="num">${formatRate(scenario.effortRatePrudentBasisPoints)}</td></tr>`;
       })
       .join(
         "",
-      )}</tbody></table><p class="small financing-note"><strong>Mensualité maximale :</strong> estimation prudente, assurance emprunteur constante incluse. <strong>Effort sur base bancaire proposée :</strong> rapporté à ${formatEuro(derived.incomeCentralCents)}. <strong>Effort sur variante bancaire :</strong> rapporté à ${formatEuro(derived.incomePrudentCents)}. Le crédit existant à la date d'achat est inclus dans les deux ratios.</p>
+      )}</tbody></table><p class="small financing-note"><strong>Mensualité maximale :</strong> estimation prudente, assurance emprunteur constante incluse. <strong>Effort à l’achat, ${escapeHtml(derived.incomePresentation.primaryLabel)} :</strong> rapporté à ${formatEuro(derived.incomeCentralCents)}. <strong>Effort à l’achat, ${escapeHtml(derived.incomePresentation.prudentLabel)} :</strong> rapporté à ${formatEuro(derived.incomePrudentCents)}. Contrats échus exclus ; crédits simultanés inclus. Étude au ${formatDate(derived.incomePresentation.bankReferenceDate)} : ${formatEuro(derived.incomePresentation.bankCents)} / ${formatEuro(derived.incomePresentation.prudentCents)}. ${derived.incomePresentation.hasBankForecast ? "CA prévisionnels inclus." : ""} * Réserve libre sous le minimum choisi : cette variante ne respecte pas l’objectif de sécurité.</p>
     ${financingComposition(dossier, derived)}
     ${renderRateComparison(dossier, derived)}${editorial(dossier, "financing", "conclusion")}
   `,
         "financing-page",
+      ),
+    );
+
+  if (sections.financialReview)
+    pages.push(
+      page(
+        dossier,
+        ++pageNumber,
+        renderFinancialReview(dossier, derived) +
+          editorial(dossier, "financialReview", "conclusion"),
+        "financial-review-page",
       ),
     );
 
@@ -596,7 +623,7 @@ export function renderBankDocument(
           return `<tr><td>${escapeHtml(item.label)}</td><td class="num">${formatEuro(item.amountCents)}</td><td class="num">${formatEuro(stressItem.amountCents)}</td></tr>`;
         })
         .join("")}
-      <tr class="total-row"><td>Total dépenses post-achat estimées</td><td class="num">${formatEuro((derived.budgetTotalsCents[centralBudget.id] ?? 0) + centralDebt)}</td><td class="num">${formatEuro((derived.budgetTotalsCents[stressBudget.id] ?? 0) + stressDebt)}</td></tr><tr><td>Revenu foyer après IR estimé</td><td class="num">${formatEuro(derived.budgetIncomeCents[centralBudget.id] ?? 0)}</td><td class="num">${formatEuro(derived.budgetIncomeCents[stressBudget.id] ?? 0)}</td></tr><tr><td>Épargne résiduelle estimée</td><td class="num">${formatEuro(derived.residualSavingsCents[centralBudget.id] ?? 0)}</td><td class="num">${formatEuro(derived.residualSavingsCents[stressBudget.id] ?? 0)}</td></tr></tbody></table><p class="small"><strong>Capacité totale d'épargne :</strong> ${dossier.budgetScenarios
+      <tr class="total-row"><td>Total dépenses post-achat estimées</td><td class="num">${formatEuro((derived.budgetTotalsCents[centralBudget.id] ?? 0) + centralDebt)}</td><td class="num">${formatEuro((derived.budgetTotalsCents[stressBudget.id] ?? 0) + stressDebt)}</td></tr><tr><td>Revenu foyer après IR estimé</td><td class="num">${formatEuro(derived.budgetIncomeCents[centralBudget.id] ?? 0)}</td><td class="num">${formatEuro(derived.budgetIncomeCents[stressBudget.id] ?? 0)}</td></tr><tr><td>Épargne résiduelle estimée</td><td class="num">${formatEuro(derived.residualSavingsCents[centralBudget.id] ?? 0)}</td><td class="num">${formatEuro(derived.residualSavingsCents[stressBudget.id] ?? 0)}</td></tr></tbody></table><p class="small"><strong>Capacités théoriques d'épargne :</strong> ${dossier.budgetScenarios
         .filter((budget) =>
           ["current", "central", "stress"].includes(budget.kind),
         )
@@ -606,18 +633,9 @@ export function renderBankDocument(
         )
         .join(
           " · ",
-        )}.</p><p class="small"><strong>Évolution à revenus et dépenses constants :</strong> ${(
-        derived.budgetSavingsPhases[centralBudget.id] ?? []
-      )
-        .slice(0, 4)
-        .map(
-          (phase) =>
-            `${formatDate(phase.date)} : ${formatEuro(phase.savingsCents)} d'épargne résiduelle / mois`,
-        )
-        .join(
-          " · ",
-        )}.</p>${editorial(dossier, "postPurchaseBudget", "callout", "prudent")}<div class="budget-hypotheses">${[centralBudget, stressBudget].map(budget => `<div class="small"><strong>${escapeHtml(budget.label)}</strong><ul><li>Revenus : ${escapeHtml(budget.assumptions.note)} Revenu après IR retenu : ${formatEuro(derived.budgetIncomeCents[budget.id] ?? 0)} / mois.</li><li>Dépenses : ${formatEuro(derived.budgetTotalsCents[budget.id] ?? 0)} / mois hors crédits ; financement ${escapeHtml(dossier.financingScenarios.find(s => s.id === budget.assumptions.financingScenarioId)?.label ?? central.label)}. Les crédits suivent leur échéancier.</li></ul></div>`).join("")}</div>
+        )}.</p>${derived.bankReview.monthlyCashGrowthCents === undefined ? "" : `<p class="small">Progression moyenne du disponible avant achat : ${formatEuro(derived.bankReview.monthlyCashGrowthCents)}/mois, après sorties et provisions datées ; distincte de l’épargne théorique.</p>`}${editorial(dossier, "postPurchaseBudget", "callout", "prudent")}<div class="budget-hypotheses">${[centralBudget, stressBudget].map((budget) => `<div class="small"><strong>${escapeHtml(budget.label)}</strong><ul><li>Revenus : ${escapeHtml(budget.assumptions.note)}</li><li>Dépenses : ${formatEuro(derived.budgetTotalsCents[budget.id] ?? 0)} / mois hors crédits ; financement ${escapeHtml(dossier.financingScenarios.find((s) => s.id === budget.assumptions.financingScenarioId)?.label ?? central.label)}. Les crédits suivent leur échéancier.</li></ul></div>`).join("")}</div>${renderBudgetSensitivity(derived)}${editorial(dossier, "postPurchaseBudget", "conclusion")}
     `,
+        "post-purchase-budget-page",
       ),
     );
   }
@@ -720,7 +738,7 @@ export function renderBankDocument(
           .map((document) => document.label);
         const accent = accents[personIndex % accents.length]!;
         if (summaries.length)
-          return `<section class="annex-person" style="--person-accent:${accent}"><header><div><h3>${escapeHtml(person.displayName)}</h3><p>${activities.map((activity) => escapeHtml(activity.occupation)).join(" · ")}</p></div></header><table class="compact annex-person-table"><thead><tr><th>Période / hypothèse</th><th class="num">CA HT</th><th class="num">Cotis. + CFP</th><th class="num">Frais pro</th><th class="num">Économique avant IR</th><th class="num">Base fiscale</th></tr></thead><tbody>${summaries.map((summary) => `<tr><td>${escapeHtml(summary.label)}</td><td class="num">${formatEuro(summary.revenueCents)}</td><td class="num">${formatEuro(summary.socialContributionsCents)}</td><td class="num">${formatEuro(summary.professionalExpensesCents)}</td><td class="num"><strong>${formatEuro(summary.economicIncomeCents)}</strong></td><td class="num">${summary.taxableIncomeCents === undefined ? "—" : formatEuro(summary.taxableIncomeCents)}</td></tr>`).join("")}</tbody></table><p class="small">${incomes.map((income) => escapeHtml(income.bankingConvention ?? income.note ?? "")).join(" · ")}</p></section>`;
+          return `<section class="annex-person" style="--person-accent:${accent}"><header><div><h3>${escapeHtml(person.displayName)}</h3><p>${activities.map((activity) => escapeHtml(activity.occupation)).join(" · ")}</p></div></header><table class="compact annex-person-table"><thead><tr><th>Période / hypothèse</th><th class="num">CA HT</th><th class="num">Cotisations¹</th><th class="num">Frais pro</th><th class="num">Net avant IR¹</th><th class="num">Base fiscale</th></tr></thead><tbody>${summaries.map((summary) => `<tr><td>${escapeHtml(summary.label)}<br><small>${summary.method === "cash" ? "Trésorerie observée" : "Normalisé aux taux renseignés"}</small></td><td class="num">${formatEuro(summary.revenueCents)}</td><td class="num">${formatEuro(summary.socialContributionsCents)}</td><td class="num">${formatEuro(summary.professionalExpensesCents)}</td><td class="num"><strong>${formatEuro(summary.economicIncomeCents)}</strong></td><td class="num">${summary.taxableIncomeCents === undefined ? "—" : formatEuro(summary.taxableIncomeCents)}</td></tr>`).join("")}</tbody></table><p class="small">${incomes.map((income) => escapeHtml(derived.incomePresentation.rows.find((row) => row.id === income.id)?.bankingLabel ?? "")).join(" · ")}</p></section>`;
         return `<section class="annex-person" style="--person-accent:${accent}"><header><div><span>Emprunteur ${personIndex + 1}</span><h3>${escapeHtml(person.displayName)}</h3>${activities.length > 0 ? `<p>${activities.map((activity) => escapeHtml(activity.occupation)).join(" · ")}</p>` : ""}</div><i style="background:${accent}"></i></header><div class="annex-person-kpis"><div><span>Revenu retenu</span><strong>${formatEuro(retained)} / mois</strong></div>${latest ? `<div><span>Dernier CA observé</span><strong>${formatEuro(latest.turnoverCents)}</strong></div><div><span>Dernier résultat</span><strong>${formatEuro(latest.resultCents)}</strong></div>` : ""}${modelMetric ? `<div><span>${escapeHtml(modelMetric.label)}</span><strong>${escapeHtml(modelMetric.value)}</strong></div>` : histories.length > 0 ? `<div><span>Périodes documentées</span><strong>${histories.length}</strong></div>` : ""}</div>${histories.length > 0 ? `<table class="compact annex-person-table"><thead><tr><th>Période</th><th class="num">CA facturé</th><th class="num">Encaissé</th><th class="num">Dépenses</th><th class="num">Résultat</th><th>Lecture bancaire</th></tr></thead><tbody>${histories.map((history) => `<tr><td>${escapeHtml(history.period)}</td><td class="num">${formatEuro(history.turnoverCents)}</td><td class="num">${history.collectedCents == null ? "—" : formatEuro(history.collectedCents)}</td><td class="num">${formatEuro(history.expensesCents)}</td><td class="num"><strong>${formatEuro(history.resultCents)}</strong></td><td>${history.period === "2025" ? "Exercice annuel observé" : "Situation intermédiaire à date"}</td></tr>`).join("")}</tbody></table>` : ""}<div class="annex-person-notes"><p><strong>Convention de revenu.</strong> ${formatEuro(retained)} mensuels avant IR, retenus prudemment au regard des résultats observés et de la continuité d'activité.</p><p><strong>Justificatifs associés.</strong> ${escapeHtml(evidence.join(" · ") || "Pièces suivies dans la section Justificatifs")}</p></div></section>`;
       })
       .join("");
@@ -730,7 +748,7 @@ export function renderBankDocument(
         ++pageNumber,
         `
           <h2>Annexe — revenus indépendants par emprunteur</h2>
-          ${dossier.incomePeriods?.length ? `<p class="small">${escapeHtml(dossier.editorial.independentIncomeIntroduction)}</p>` : ""}
+          ${dossier.incomePeriods?.length ? `<p class="small">${escapeHtml(dossier.editorial.independentIncomeIntroduction)}</p><p class="small">¹ Observé : charges payées, ACRE et décalages possibles. Prévision annuelle : cotisations recalculées sur tout le CA aux taux renseignés, sans mélanger paiements passés et provisions ; ce n’est pas un échéancier URSSAF. Frais selon les périodes saisies.</p>` : ""}
 
           <div class="annex-legend">
             ${independentPeople
@@ -767,10 +785,19 @@ export function renderBankDocument(
     );
   }
 
-  if (sections.incomeHistoryChart && derived.turnoverHistory.length) pages.push(page(dossier, ++pageNumber, renderTurnoverHistory(derived.turnoverHistory), "income-history-page"));
+  if (sections.incomeHistoryChart && derived.turnoverHistory.length)
+    pages.push(
+      page(
+        dossier,
+        ++pageNumber,
+        renderTurnoverHistory(derived.turnoverHistory) +
+          editorial(dossier, "incomeHistoryChart", "conclusion"),
+        "income-history-page",
+      ),
+    );
   const colors = dossier.presentation.colors;
   const colorVariables = `:root{--navy:${colors.navy};--blue:${colors.blue};--green:${colors.green};--gold:${colors.gold};--muted:${colors.muted}}`;
-  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escapeHtml(dossier.metadata.title)}</title><style>${printStyles}${colorVariables}</style></head><body class="theme-${dossier.presentation.theme} density-${dossier.presentation.density}">${pages.join("")}</body></html>`;
+  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escapeHtml(dossier.metadata.title)}</title><style>${printStyles}${colorVariables}</style></head><body class="theme-${dossier.presentation.theme} density-${dossier.presentation.density}${dossier.presentation.whitePaper ? " white-paper" : ""}">${pages.join("")}</body></html>`;
 }
 
 export { formatDate, formatEuro, formatRate } from "./format";

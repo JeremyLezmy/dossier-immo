@@ -1,3 +1,4 @@
+import { calculateBankIncome } from "./bank-income";
 import type { Dossier } from "@dossier-immo/schema";
 import type { IncomePeriodResult } from "./planning";
 
@@ -7,6 +8,21 @@ export function calculateIncomePresentation(
   beforeTaxCents: number,
   afterTaxCents: number,
 ) {
+  const bankIncome = calculateBankIncome(dossier, periods);
+  const referenceYears = [
+    ...new Set(
+      dossier.incomeStreams
+        .filter((s) => s.includedInBorrowingCapacity && s.bankingBasis)
+        .map((s) => s.bankingBasis!.referenceYear),
+    ),
+  ];
+  const automatic = referenceYears.length > 0;
+  const primaryLabel =
+    referenceYears.length === 1 ? `Base ${referenceYears[0]}` : "Base proposée";
+  const prudentLabel =
+    referenceYears.length === 1
+      ? `Moyenne ${referenceYears[0]! - 1}–${referenceYears[0]}`
+      : "Sensibilité historique";
   const budget = dossier.budgetScenarios.find(
     (item) => item.kind === "central",
   )!;
@@ -31,7 +47,10 @@ export function calculateIncomePresentation(
       personId: stream.personId,
       economicCents: sourceIds.length
         ? result?.monthlyEconomicIncomeCents
-        : (!stream.startDate || stream.startDate <= dossier.project.targetPurchaseDate) && (!stream.endDate || stream.endDate >= dossier.project.targetPurchaseDate)
+        : (!stream.startDate ||
+              stream.startDate <= dossier.project.targetPurchaseDate) &&
+            (!stream.endDate ||
+              stream.endDate >= dossier.project.targetPurchaseDate)
           ? stream.monthlyEconomicCents
           : undefined,
       fiscalCents:
@@ -39,8 +58,9 @@ export function calculateIncomePresentation(
           ? undefined
           : Math.round(result.taxableIncomeCents / result.months),
       periodLabel: selected?.label,
-      bankCents: included ? stream.monthlyBankCents : 0,
-      prudentCents: included ? stream.monthlyPrudentCents : 0,
+      bankCents: included ? bankIncome[stream.id]!.primaryCents : 0,
+      bankingLabel: bankIncome[stream.id]!.label,
+      prudentCents: included ? bankIncome[stream.id]!.prudentCents : 0,
       included,
     };
   });
@@ -82,20 +102,45 @@ export function calculateIncomePresentation(
     },
     {
       id: "bank",
-      label: "Base bancaire proposée",
+      label: automatic ? primaryLabel + " — étude" : "Base bancaire proposée",
       valueCents: bankCents,
       explanation:
         "Convention proposée pour l’étude du prêt. Méthode ci-dessous.",
     },
     {
       id: "prudent",
-      label: "Variante bancaire de référence",
+      label: automatic
+        ? prudentLabel + " — étude"
+        : "Variante bancaire de référence",
       valueCents: prudentCents,
       explanation: "Base documentaire alternative. Méthode ci-dessous.",
     },
   ].sort((a, b) => b.valueCents - a.valueCents);
+  const atDate = (target: string, variant: boolean) =>
+    dossier.incomeStreams
+      .filter(
+        (s) =>
+          s.includedInBorrowingCapacity &&
+          (!s.startDate || s.startDate <= target) &&
+          (!s.endDate || s.endDate >= target),
+      )
+      .reduce(
+        (sum, s) =>
+          sum +
+          (variant
+            ? bankIncome[s.id]!.prudentCents
+            : bankIncome[s.id]!.primaryCents),
+        0,
+      );
   return {
+    automatic,
+    primaryLabel,
+    prudentLabel,
+    hasBankForecast: Object.values(bankIncome).some((b) => b.projected),
+    prudentAtPurchaseCents: atDate(dossier.project.targetPurchaseDate, true),
     rows,
+    bankCents,
+    prudentCents,
     bankReferenceDate: date,
     bankAtPurchaseCents: dossier.incomeStreams
       .filter(
@@ -106,17 +151,15 @@ export function calculateIncomePresentation(
           (!stream.endDate ||
             stream.endDate >= dossier.project.targetPurchaseDate),
       )
-      .reduce((sum, stream) => sum + stream.monthlyBankCents, 0),
+      .reduce((sum, stream) => sum + bankIncome[stream.id]!.primaryCents, 0),
     bankNowCents: dossier.incomeStreams
       .filter(
         (stream) =>
           stream.includedInBorrowingCapacity &&
-          (!stream.startDate ||
-            stream.startDate <= dossier.metadata.observationDate) &&
-          (!stream.endDate ||
-            stream.endDate >= dossier.metadata.observationDate),
+          (!stream.startDate || stream.startDate <= date) &&
+          (!stream.endDate || stream.endDate >= date),
       )
-      .reduce((sum, stream) => sum + stream.monthlyBankCents, 0),
+      .reduce((sum, stream) => sum + bankIncome[stream.id]!.primaryCents, 0),
     people,
     cards,
     hasEconomicBasis,

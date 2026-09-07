@@ -1,5 +1,76 @@
 import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
+import { completeDemoDossier } from "@dossier-immo/fixtures";
+
+test("les bases annuelles calculées se mettent à jour depuis les périodes de CA", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("dossier-immo-persistence-mode-v1", "local"),
+  );
+  await page.goto("/");
+  const dossier = structuredClone(completeDemoDossier);
+  const independent = dossier.incomeStreams.find((s) =>
+    ["liberal", "self-employed"].includes(s.kind),
+  )!;
+  dossier.incomeStreams.forEach((s) => {
+    s.includedInBorrowingCapacity = s.id === independent.id;
+  });
+  independent.bankingBasis = {
+    referenceYear: 2026,
+    allowanceBasisPoints: 3400,
+  };
+  independent.monthlyBankCents = independent.monthlyPrudentCents = 0;
+  dossier.incomePeriods = [2025, 2026].map((year) => ({
+    id: `year-${year}`,
+    incomeStreamId: independent.id,
+    label: `Référence annuelle ${year}`,
+    startDate: `${year}-01-01`,
+    endDate: `${year}-12-31`,
+    status: year === 2025 ? "observed" : "forecast",
+    basis: "amount",
+    amountCents: year === 2025 ? 6_000_000 : 9_000_000,
+    socialRateBasisPoints: 2500,
+    trainingRateBasisPoints: 0,
+    professionalExpensesCents: 0,
+    sourceDocumentIds: [],
+  }));
+  await page
+    .getByLabel("Importer un fichier Dossier Immo")
+    .setInputFiles({
+      name: "bases-fictives.dossier-immo.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(dossier)),
+    });
+  await expect(page.getByText("Dossier ouvert.")).toBeVisible();
+  await page
+    .locator(".sidebar")
+    .getByRole("button", { name: /Revenus/ })
+    .click();
+  const summary = page.getByRole("region", { name: "Lecture des revenus" });
+  await expect(
+    summary.locator(".metric-card").filter({ hasText: "Base 2026" }),
+  ).toContainText(/4\s*950/);
+  await expect(
+    summary.locator(".metric-card").filter({ hasText: "Moyenne 2025–2026" }),
+  ).toContainText(/4\s*125/);
+  await expect(summary).toContainText("Prévisions incluses");
+  await page.locator('[data-disclosure-id="income-periods"] > summary').click();
+  const period = page.locator('[data-disclosure-id="item-year-2026"]');
+  await period.locator("summary").click();
+  await period
+    .getByRole("spinbutton", { name: "Recettes HT ou salaire net avant IR" })
+    .fill("102000");
+  await period
+    .getByRole("spinbutton", { name: "Recettes HT ou salaire net avant IR" })
+    .blur();
+  await expect(
+    summary.locator(".metric-card").filter({ hasText: "Base 2026" }),
+  ).toContainText(/5\s*610/);
+  await expect(
+    summary.locator(".metric-card").filter({ hasText: "Moyenne 2025–2026" }),
+  ).toContainText(/4\s*455/);
+});
 
 test("sépare les revenus économiques et bancaires à chaque largeur", async ({
   page,

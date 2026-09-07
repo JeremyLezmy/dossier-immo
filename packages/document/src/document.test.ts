@@ -6,8 +6,46 @@ import {
 } from "@dossier-immo/fixtures";
 import { renderAssetCompositionChart } from "./charts";
 import { renderBankDocument } from "./index";
+import { formatEuro } from "./format";
 
 describe("document bancaire", () => {
+  it("place les repères bancaires après le financement et avant le Sankey", () => {
+    const dossier = structuredClone(completeDemoDossier);
+    dossier.presentation.sections.financialReview = true;
+    const rendered = renderBankDocument(dossier, calculateDossier(dossier));
+    const financing = rendered.indexOf("<h2>Scénarios de financement");
+    const review = rendered.indexOf("<h2>Repères pour l’étude bancaire");
+    const sankey = rendered.indexOf("Budget post-achat — flux mensuels");
+    expect(financing).toBeGreaterThan(0);
+    expect(review).toBeGreaterThan(financing);
+    expect(sankey).toBeGreaterThan(review);
+    expect(rendered.match(/<section class="page/g)).toHaveLength(14);
+  });
+  it("totalise les conventions préparatoires avec le salaire actif et affiche la réserve calculée", () => {
+    const dossier = structuredClone(completeDemoDossier);
+    dossier.incomeStreams.find((stream) => stream.kind === "salary")!.endDate =
+      "2027-03-26";
+    dossier.project.bankIncomeReferenceDate = dossier.metadata.observationDate;
+    const calculated = calculateDossier(dossier);
+    const rendered = renderBankDocument(dossier, calculated);
+    expect(rendered).toContain(
+      `<td>Foyer / mois</td><td class="num">${formatEuro(calculated.incomePresentation.bankCents)}</td><td class="num">${formatEuro(calculated.incomePresentation.prudentCents)}</td>`,
+    );
+    expect(rendered).toContain(
+      `<span>Réserve libre estimée</span><strong>${formatEuro(calculated.freeReserveAfterPurchaseCents)}</strong>`,
+    );
+  });
+  it("conserve la fin des notes bancaires longues et leur échappement", () => {
+    const dossier = structuredClone(completeDemoDossier);
+    dossier.editorial.sectionSlots.project = {
+      conclusion:
+        "Hypothèse documentée. ".repeat(20) +
+        "FIN À CONSERVER <script>indésirable</script>",
+    };
+    const rendered = renderBankDocument(dossier, calculateDossier(dossier));
+    expect(rendered).toContain("FIN À CONSERVER");
+    expect(rendered).not.toContain("<script>");
+  });
   const derived = calculateDossier(completeDemoDossier);
   const html = renderBankDocument(completeDemoDossier, derived);
 

@@ -1,5 +1,5 @@
 import type { TurnoverHistory } from "@dossier-immo/calculations";
-import { escapeHtml, formatEuro } from "./format";
+import { escapeHtml, formatEuro, formatRate } from "./format";
 
 export function renderTurnoverHistory(histories: TurnoverHistory) {
   const months = [
@@ -30,8 +30,14 @@ export function renderTurnoverHistory(histories: TurnoverHistory) {
           ) / 100_000,
         ) * 100_000,
       );
-      const tickStep = Math.max(100_000, Math.ceil(ceiling / 1_500_000) * 100_000);
-      const ticks = Array.from({length: Math.floor(ceiling / tickStep) + 1}, (_, index) => index * tickStep / ceiling);
+      const tickStep = Math.max(
+        100_000,
+        Math.ceil(ceiling / 1_500_000) * 100_000,
+      );
+      const ticks = Array.from(
+        { length: Math.floor(ceiling / tickStep) + 1 },
+        (_, index) => (index * tickStep) / ceiling,
+      );
       if (ticks.at(-1) !== 1) ticks.push(1);
       const colors = ["#64748b", "#237866", "#a76d35"];
       return `<h3>${escapeHtml(history.label)}</h3><svg viewBox="0 0 660 225" style="width:100%;height:auto" role="img" aria-label="${escapeHtml(history.label)} : CA encaissés mensuels comparés"><rect x="0" y="0" width="660" height="225" fill="none"/>${ticks.map((fraction) => `<line x1="60" x2="650" y1="${185 - fraction * 145}" y2="${185 - fraction * 145}" stroke="#d8dee5"/><text x="54" y="${189 - fraction * 145}" text-anchor="end" font-size="8.5" fill="#475569">${formatEuro(ceiling * fraction)}</text>`).join("")}${months.map((month, index) => `<text x="${83 + index * 49}" y="204" text-anchor="middle" font-size="10">${month}</text>`).join("")}${history.series
@@ -50,7 +56,7 @@ export function renderTurnoverHistory(histories: TurnoverHistory) {
         })
         .join(
           "",
-        )}</svg><p class="small"><strong>Réalisé comparé sur ${history.commonMonthCount} mois communs :</strong> ${history.comparableTotals.map((item) => `${item.year} : ${formatEuro(item.cents)}`).join(" ; ")}. Les totaux d’une année incomplète ne sont pas comparés à une année entière.</p>`;
+        )}</svg><p class="small"><strong>Réalisé comparé sur ${history.commonMonthCount} mois communs :</strong> ${history.comparableTotals.map((item) => `${item.year} : ${formatEuro(item.cents)}`).join(" ; ")}. ${history.growthBasisPoints === undefined ? "" : `Évolution : ${formatRate(history.growthBasisPoints)}.`} À période comparable, sans annualisation.</p>`;
     })
     .join(
       "",

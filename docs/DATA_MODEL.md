@@ -2,6 +2,8 @@
 
 ## Format canonique
 
+`presentation.whitePaper` est une option facultative d’impression : pages et fond du Sankey blancs, typographie et accents du thème conservés. Absente ou fausse, elle préserve le rendu existant. L’aperçu et le PDF appliquent le même rendu.
+
 La sauvegarde est un JSON UTF-8 portant `schemaVersion: 3`. Le contrat publié est [dossier.json](schema/dossier.json).
 
 Le modèle couvre notamment :
@@ -31,6 +33,16 @@ Aucun formatage français ne se trouve dans le domaine ; il appartient au docume
 Le schéma rejette notamment les identifiants dupliqués, références orphelines, historiques incohérents, passifs déjà échus, dates d’achat passées, scénarios principaux multiples ou absents, prix mal ordonnés, réserves insuffisantes, allocations excessives, budgets central/stress incomplets et types incorrects.
 
 ## Déclaré, hypothèse et calculé
+
+`incomeStreams[].bankingBasis` active facultativement une convention calculée pour un revenu indépendant : `referenceYear` choisit l’exercice de CA encaissé et `allowanceBasisPoints` l’abattement proposé. La base principale utilise cet exercice / 12 ; la sensibilité utilise sa moyenne avec l’exercice précédent / 12. Les périodes `incomePeriods`, hors rythmes annuels, doivent couvrir douze mois par exercice sans doublon ; `collectionDate` détermine le mois d’encaissement lorsqu’il est précisé. Les prévisions restent signalées jusqu’à leur remplacement explicite par le réalisé. Changer la date d’étude ne change ni l’exercice choisi ni le statut des périodes.
+
+Dans ce mode, `monthlyBankCents` et `monthlyPrudentCents` valent zéro et ne sont pas utilisés : aucun total calculé n’est persisté. Sans `bankingBasis`, ces champs conservent leur rôle de montants manuels, notamment pour une convention arrêtée par la banque. Le champ texte `bankingConvention` reste disponible mais la formule calculée prévaut dans l’aperçu et le PDF. Les cartes et le tableau de revenus utilisent la date de référence bancaire ; le financement utilise la date d’achat. Les deux bases à chacune de ces dates sont exposées pour rendre explicite la fin d’un contrat.
+
+Les ratios de financement utilisent les revenus inclus dont les contrats sont actifs à `targetPurchaseDate`. `bankIncomeReferenceDate` ne change que la lecture préparatoire des revenus. Un CDD présent au rendez-vous mais échu à l’achat reste donc visible dans cette lecture, sans entrer dans les ratios du prêt.
+
+Dans l’annexe, les agrégats uniquement observés utilisent les cotisations payées lorsqu’elles sont renseignées. Un agrégat annuel comprenant des prévisions normalise toutes ses périodes aux taux sociaux et de CFP renseignés, y compris les périodes observées ; il ne constitue pas un échéancier de prélèvements. Les frais restent ceux des périodes. Les périodes individuelles et les flux de trésorerie conservent leur méthode déclarée.
+
+La réserve libre retire les provisions fiscales complémentaires du disponible budgété, après apport et installation. Les provisions mensuelles déjà retirées des flux ne doivent pas être ajoutées une seconde fois à cette enveloppe. La sensibilité d’interruption de revenu est un calcul mécanique de trois mois, avec IR inchangé, distinct d’une prévision de cessation d’activité.
 
 - Déclaré : personnes, revenus, actifs, passifs, budgets, historiques et critères.
 - Hypothèse : taux, assurance, prix, épargne projetée, revenu après impôt et réserve.

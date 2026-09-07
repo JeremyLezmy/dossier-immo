@@ -74,7 +74,14 @@ export function calculateTurnoverHistory(dossier: Dossier) {
     return [
       {
         streamId: stream.id,
-        label: stream.label,
+        label: `${dossier.household.people.find((person) => person.id === stream.personId)?.displayName ?? ""} — ${stream.label}`,
+        growthBasisPoints:
+          comparableTotals.length === 2 && comparableTotals[0]!.cents > 0
+            ? Math.round(
+                (comparableTotals[1]!.cents / comparableTotals[0]!.cents - 1) *
+                  10_000,
+              )
+            : undefined,
         series,
         commonMonthCount: commonMonths.length,
         comparableTotals,
