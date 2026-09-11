@@ -74,3 +74,13 @@ L’audit avant publication a signalé douze avis (dix élevés, deux modérés)
 PDF.js est migré séparément de 5.7.284 vers 6.2.108 pour GHSA-hq66-cqwq-w95j. Dépendance de développement Apache-2.0 du projet Mozilla, uniquement utilisée par tools/pdf-text.mjs, pdf-page.mjs et pdf-audit.mjs. Son moteur exige Node >=22.13 ou >=24, compatible avec le runtime 24.18.0 du dépôt. Le backend de rendu @napi-rs/canvas 1.0.8 (MIT) est déclaré explicitement pour les outils CLI ; voir PDFJS_MIGRATION.md. Vérifier extraction et rendu sur le PDF fictif avec les trois outils ; aucune inclusion de PDF.js dans le bundle applicatif.
 
 Après résolution ciblée et installation figée, pnpm audit ne signale plus de vulnérabilité connue. Les deux transitifs Workbox dépréciés restent inchangés et suivis.
+
+## Migration Vitest du 11 septembre 2026
+
+L’avis [GHSA-82fw-gwwq-j7x9](https://github.com/advisories/GHSA-82fw-gwwq-j7x9), intégré à la base d’audit le 8 septembre, bloque la CI sur Vitest 3.2.7 et `@vitest/mocker`. La migration dédiée verrouille Vitest **4.1.11**, première version stable corrigée ; les branches 3.x ne recevront pas ce correctif selon l’avis officiel. La vulnérabilité concerne les mécanismes de mocks d’un serveur de développement ; les tests de ce dépôt utilisent l’environnement Node, sans serveur de mocks exposé ni mode navigateur Vitest. L’audit complet reste néanmoins bloquant.
+
+Version publiée le 18 août 2026, licence MIT, provenance npm présente et fenêtre de 72 heures respectée. Node 24.18.0 et Vite 7.3.6 satisfont ses prérequis. Le [guide de migration 4.0](https://github.com/vitest-dev/vitest/blob/v4.1.11/docs/guide/migration.md) a été examiné : aucun pool personnalisé, workspace Vitest, mock ou snapshot unitaire ne nécessite d’adaptation. `coverage.include` est déjà explicite ; aucun rapport de couverture n’est annoncé par cette migration.
+
+Les seuls changements de versions concernent Vitest et sa famille transitive : notamment Chai 6, `@standard-schema/spec`, `es-module-lexer`, `obug`, `std-env`, `tinyexec` et `tinyrainbow`. Les licences et hooks d’installation sont examinés ; aucun nouveau script d’installation n’est autorisé. `vite-node` 3.2.4 reste une dépendance directe des outils CLI de contrat et de PDF, indépendamment du nouveau moteur interne de Vitest. Vite, Node, pnpm et le code applicatif ne changent pas.
+
+Le sondage du 11 septembre confirme que les deux exclusions existantes restent nécessaires ; leur échéance du 14 septembre est conservée. Aucun override de sécurité, seuil d’audit, contrôle de provenance ou workflow n’est modifié. Le lockfile unique conserve les intégrités ; installation figée, audit, build et non-régression E2E/PDF doivent passer avant fusion.
