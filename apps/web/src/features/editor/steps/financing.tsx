@@ -57,9 +57,18 @@ function ScenarioCard({
           <strong>
             {euro(result.initialMonthlyPaymentIncludingInsuranceCents)}
           </strong>{" "}
-          · Réserve après apport et installation :{" "}
-          <strong>{euro(result.reserveAfterPurchaseCents)}</strong>
-          {form.watch("cashFlowPlan.reservedTaxCents") ? <small>Libre après réserve fiscale : {euro(result.freeReserveAfterPurchaseCents)}{result.freeReserveAfterPurchaseCents < form.watch("reservePolicy.minimumCents") ? " · sous l’objectif minimal" : ""}</small> : null}
+          · Réserve conservée :{" "}
+          <strong>{euro(result.reserveForObjectiveCents)}</strong>
+          <small>
+            Hors impôts réservés ; installation{" "}
+            {form.watch("reservePolicy.includesInstallation")
+              ? "incluse"
+              : "déduite"}
+            .
+            {result.reserveShortfallCents > 0
+              ? " Sous l’objectif minimal."
+              : ""}
+          </small>
         </p>
       )}
       <TextField

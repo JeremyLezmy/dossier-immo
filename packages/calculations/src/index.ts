@@ -1,3 +1,4 @@
+import { calculateReserve } from "./reserve";
 import { calculateBankIncome } from "./bank-income";
 import { calculateTurnoverHistory, type TurnoverHistory } from "./history";
 import { calculateBankReview } from "./bank-review";
@@ -31,6 +32,7 @@ export interface FinancingScenarioResult {
   readonly contributionCents: number;
   readonly reserveAfterPurchaseCents: number;
   readonly freeReserveAfterPurchaseCents: number;
+  readonly reserveForObjectiveCents: number;
   readonly reserveShortfallCents: number;
   readonly maximumCombinedMonthlyCreditCents: number;
   readonly annualCreditChargesCents: readonly number[];
@@ -94,6 +96,7 @@ export interface DerivedDossier {
     releasedMonthlyCents: number;
     reserveCents: number;
     freeReserveCents: number;
+    reserveForObjectiveCents: number;
     effortBasisPoints: number;
   }[];
   readonly incomeSummaries: readonly IncomeSummary[];
@@ -125,6 +128,7 @@ export interface DerivedDossier {
   readonly projectedLiquidityAtPurchaseCents: number;
   readonly reserveAfterPurchaseCents: number;
   readonly freeReserveAfterPurchaseCents: number;
+  readonly reserveForObjectiveCents: number;
   readonly existingMonthlyDebtNowCents: number;
   readonly existingMonthlyDebtAtPurchaseCents: number;
   readonly budgetTotalsCents: Readonly<Record<string, number>>;
@@ -415,10 +419,6 @@ function calculateScenario(
       debtAtDate(dossier, point.date);
   }
   const maximumAnnualChargesCents = Math.max(0, ...annualCreditChargesCents);
-  const reserveAfterPurchaseCents =
-    projectedLiquidityAtPurchaseCents -
-    scenarioContributionCents -
-    dossier.project.installationCents;
 
   const remainingPrincipalByYearCents = Object.fromEntries(
     [6, 8, 15, 17, 20, 25]
@@ -445,14 +445,10 @@ function calculateScenario(
 
   return {
     contributionCents: scenarioContributionCents,
-    reserveAfterPurchaseCents,
-    freeReserveAfterPurchaseCents:
-      reserveAfterPurchaseCents - (dossier.cashFlowPlan?.reservedTaxCents ?? 0),
-    reserveShortfallCents: Math.max(
-      0,
-      dossier.reservePolicy.minimumCents -
-        reserveAfterPurchaseCents +
-        (dossier.cashFlowPlan?.reservedTaxCents ?? 0),
+    ...calculateReserve(
+      dossier,
+      projectedLiquidityAtPurchaseCents,
+      scenarioContributionCents,
     ),
     maximumCombinedMonthlyCreditCents: Math.max(
       0,
@@ -548,10 +544,6 @@ export function calculateDossier(dossier: Dossier): DerivedDossier {
       contributionLiquidityCents +
         (dossier.project.monthlySavingsProjectionCents ?? 0) *
           projectionMonths);
-  const reserveAfterPurchaseCents =
-    projectedLiquidityAtPurchaseCents -
-    dossier.project.contributionCents -
-    dossier.project.installationCents;
   const existingMonthlyDebtNowCents = debtAtDate(
     dossier,
     dossier.metadata.observationDate,
@@ -790,6 +782,7 @@ export function calculateDossier(dossier: Dossier): DerivedDossier {
         releasedMonthlyCents: liability.monthlyPaymentCents,
         reserveCents: comparison.reserveAfterPurchaseCents,
         freeReserveCents: comparison.freeReserveAfterPurchaseCents,
+        reserveForObjectiveCents: comparison.reserveForObjectiveCents,
         effortBasisPoints: comparison.effortRateCentralBasisPoints,
       };
     });
@@ -894,9 +887,11 @@ export function calculateDossier(dossier: Dossier): DerivedDossier {
     liquidAssetsCents,
     contributionLiquidityCents,
     projectedLiquidityAtPurchaseCents,
-    reserveAfterPurchaseCents,
-    freeReserveAfterPurchaseCents:
-      reserveAfterPurchaseCents - (dossier.cashFlowPlan?.reservedTaxCents ?? 0),
+    ...calculateReserve(
+      dossier,
+      projectedLiquidityAtPurchaseCents,
+      dossier.project.contributionCents,
+    ),
     existingMonthlyDebtNowCents,
     existingMonthlyDebtAtPurchaseCents,
     budgetTotalsCents,

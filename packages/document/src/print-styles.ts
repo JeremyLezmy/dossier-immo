@@ -1860,6 +1860,16 @@ body[class*=" theme-"] .cover{
 /* Dense financial pages retain their type size; trim repeated spacing only. */
 .financial-review-page .editorial-conclusion{margin-top:8px;padding:7px 10px;}
 .calculated-income-page .editorial-conclusion{margin-top:8px;padding:8px 12px;}
+/* Keep the definitions beside their tables, without shrinking the type. */
+.calculated-income-page p,.monthly-cash-page p{margin-bottom:6px;}
+.calculated-income-page table,.monthly-cash-page table{margin:6px 0 8px;}
+.calculated-income-page th,.calculated-income-page td,
+.monthly-cash-page th,.monthly-cash-page td{padding:5px 8px;}
+.calculated-income-page h3,.monthly-cash-page h3{margin-top:8px;}
+.calculated-income-page .kpi-grid{margin:8px 0;}
+.calculated-income-page .kpi{padding:10px 12px;}
+.calculated-income-page .callout{padding:8px 12px;}
+.monthly-cash-page .editorial-conclusion{margin-top:8px;padding:8px 12px;}
 .financial-review-page h3{margin-top:9px;}
 .financing-page .callout{margin:10px 0;padding:10px 12px;}
 .financing-page .financing-table th,.financing-page .financing-table td{padding:6px 4px;}

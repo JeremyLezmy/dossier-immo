@@ -54,7 +54,13 @@ export function ProjectStep({
             ]}
             help="Détermine le vocabulaire employé dans le PDF ; il ne modifie pas automatiquement la fiscalité."
           />
-          <MoneyField label="Frais de garantie et dossier financés" name="project.financingFeesCents" control={form.control} optional help="Hypothèse ajoutée au coût à financer, distincte des frais d’acquisition et de l’installation." />
+          <MoneyField
+            label="Frais de garantie et dossier financés"
+            name="project.financingFeesCents"
+            control={form.control}
+            optional
+            help="Hypothèse ajoutée au coût à financer, distincte des frais d’acquisition et de l’installation."
+          />
           <TextField
             label="Date cible d'achat"
             name="project.targetPurchaseDate"
@@ -114,20 +120,20 @@ export function ProjectStep({
           />
           {!form.watch("cashFlowPlan") && (
             <>
-          <MoneyField
-            label="Liquidités attendues à l'achat"
-            name="project.expectedLiquidityAtPurchaseCents"
-            control={form.control}
-            optional
-            help="Hypothèse explicite. Laissez vide pour laisser le moteur projeter les liquidités depuis l'épargne mensuelle."
-          />
-          <MoneyField
-            label="Épargne mensuelle projetée"
-            name="project.monthlySavingsProjectionCents"
-            control={form.control}
-            optional
-            help="Montant ajouté chaque mois jusqu'à la date cible lorsque les liquidités attendues ne sont pas saisies explicitement."
-          />
+              <MoneyField
+                label="Liquidités attendues à l'achat"
+                name="project.expectedLiquidityAtPurchaseCents"
+                control={form.control}
+                optional
+                help="Hypothèse explicite. Laissez vide pour laisser le moteur projeter les liquidités depuis l'épargne mensuelle."
+              />
+              <MoneyField
+                label="Épargne mensuelle projetée"
+                name="project.monthlySavingsProjectionCents"
+                control={form.control}
+                optional
+                help="Montant ajouté chaque mois jusqu'à la date cible lorsque les liquidités attendues ne sont pas saisies explicitement."
+              />
             </>
           )}
         </div>
@@ -299,12 +305,20 @@ export function ProjectStep({
               label="Réserve minimale"
               name="reservePolicy.minimumCents"
               control={form.control}
+              help="Objectif hors impôts réservés. L’option ci-dessous précise si le budget d’installation est contenu dans cette réserve."
             />
             <MoneyField
               label="Réserve cible de confort"
               name="reservePolicy.targetCents"
               control={form.control}
             />
+            <label>
+              <input
+                type="checkbox"
+                {...form.register("reservePolicy.includesInstallation")}
+              />{" "}
+              Le budget d’installation est inclus dans la réserve
+            </label>
           </div>
           <div className="stack">
             {allocations.fields.map((allocation, index) => (

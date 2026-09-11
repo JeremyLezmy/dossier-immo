@@ -3,6 +3,62 @@ import { completeDemoDossier } from "@dossier-immo/fixtures";
 import { calculateDossier } from "./index";
 
 describe("lecture économique et bancaire des revenus", () => {
+  it("nomme le salaire ajouté aux CA et conserve les exercices qui expliquent les bases", () => {
+    const dossier = structuredClone(completeDemoDossier);
+    const independent = dossier.incomeStreams.find((stream) =>
+      ["liberal", "self-employed"].includes(stream.kind),
+    )!;
+    const salary = dossier.incomeStreams.find(
+      (stream) => stream.kind === "salary",
+    )!;
+    salary.label = "Salaire du CDD de Camille";
+    salary.endDate = "2027-03-31";
+    salary.monthlyBankCents = salary.monthlyPrudentCents = 100_000;
+    dossier.project.bankIncomeReferenceDate = "2026-09-01";
+    dossier.incomeStreams.forEach((stream) => {
+      stream.includedInBorrowingCapacity = [independent.id, salary.id].includes(
+        stream.id,
+      );
+    });
+    independent.bankingBasis = {
+      referenceYear: 2026,
+      allowanceBasisPoints: 3400,
+    };
+    dossier.incomePeriods = [2025, 2026].map((year) => ({
+      id: `example-${year}`,
+      incomeStreamId: independent.id,
+      label: `Exercice fictif ${year}`,
+      startDate: `${year}-01-01`,
+      endDate: `${year}-12-31`,
+      status: year === 2025 ? "observed" : "forecast",
+      basis: "amount",
+      amountCents: year === 2025 ? 6_000_000 : 9_000_000,
+      socialRateBasisPoints: 2500,
+      trainingRateBasisPoints: 0,
+      professionalExpensesCents: 0,
+      sourceDocumentIds: [],
+    }));
+    const reading = calculateDossier(dossier).incomePresentation;
+    expect(reading.bankCents).toBe(595_000);
+    expect(reading.prudentCents).toBe(512_500);
+    expect(reading.rows.find((row) => row.id === independent.id)).toMatchObject(
+      {
+        referenceRevenueCents: 9_000_000,
+        previousRevenueCents: 6_000_000,
+      },
+    );
+    for (const card of reading.cards.filter((card) => card.id !== "economic")) {
+      expect(card.explanation).toContain("+ Salaire du CDD de Camille");
+      expect(card.explanation).not.toContain("autres revenus");
+    }
+    dossier.project.bankIncomeReferenceDate = "2027-05-01";
+    const atPurchase = calculateDossier(dossier).incomePresentation;
+    expect(atPurchase.bankCents).toBe(495_000);
+    expect(
+      atPurchase.cards.find((card) => card.id === "bank")!.explanation,
+    ).not.toContain(salary.label);
+  });
+
   it("présente les montants par ordre décroissant et sépare l'IR du revenu économique", () => {
     const dossier = structuredClone(completeDemoDossier);
     const budget = dossier.budgetScenarios.find(
@@ -36,7 +92,7 @@ describe("lecture économique et bancaire des revenus", () => {
       result.incomePresentation.cards.map((card) => card.valueCents),
     ).toEqual([750_000, 642_000, 617_000]);
     expect(result.incomePresentation.cards[0]!.label).toBe(
-      "Revenu économique projeté",
+      "Revenu net avant impôt — après achat",
     );
     expect(result.incomePresentation.afterTaxCents).toBe(650_000);
     expect(result.incomePresentation.fiscalCents).toBe(660_000);

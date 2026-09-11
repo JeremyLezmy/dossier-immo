@@ -1,3 +1,4 @@
+import { calculateReserve } from "./reserve";
 import type { Dossier } from "@dossier-immo/schema";
 
 /** Diagnostic sensitivities, not forecasts or a lender's credit decision. */
@@ -33,14 +34,19 @@ export function calculateBankReview(
           largest.value,
       )
     : 0;
-  const freeReserveCents =
-    projectedCents -
-    dossier.project.contributionCents -
-    dossier.project.installationCents -
-    (dossier.cashFlowPlan?.reservedTaxCents ?? 0);
+  const reserve = calculateReserve(
+    dossier,
+    projectedCents,
+    dossier.project.contributionCents,
+  );
+  const freeReserveCents = reserve.freeReserveAfterPurchaseCents;
   return {
+    todayAfterContributionCents:
+      openingCents - dossier.project.contributionCents,
+    purchaseAfterContributionCents:
+      projectedCents - dossier.project.contributionCents,
     freeReserveMarginCents:
-      freeReserveCents - dossier.reservePolicy.minimumCents,
+      reserve.reserveForObjectiveCents - dossier.reservePolicy.minimumCents,
     monthlyCashGrowthCents:
       months > 0
         ? Math.round((projectedCents - openingCents) / months)
