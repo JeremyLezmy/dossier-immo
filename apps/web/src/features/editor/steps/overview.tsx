@@ -63,7 +63,18 @@ export function OverviewStep({
       </div>
       {derived && (
         <div className="metric-grid">
-          <Metric label={derived.incomePresentation.hasEconomicBasis ? derived.incomePresentation.economicLabel + " avant IR" : "Base bancaire proposée"} value={derived.incomePresentation.hasEconomicBasis ? derived.incomePresentation.beforeTaxCents : derived.incomeCentralCents} />
+          <Metric
+            label={
+              derived.incomePresentation.hasEconomicBasis
+                ? derived.incomePresentation.economicLabel
+                : "Base bancaire proposée"
+            }
+            value={
+              derived.incomePresentation.hasEconomicBasis
+                ? derived.incomePresentation.beforeTaxCents
+                : derived.incomeCentralCents
+            }
+          />
           <Metric label="Patrimoine" value={derived.totalAssetsCents} />
           <Metric
             label="Liquidités projetées"
@@ -71,9 +82,9 @@ export function OverviewStep({
           />
           <Metric
             label="Réserve après achat"
-            value={derived.reserveAfterPurchaseCents}
+            value={derived.reserveForObjectiveCents}
             tone={
-              derived.reserveAfterPurchaseCents >=
+              derived.reserveForObjectiveCents >=
               dossier.reservePolicy.minimumCents
                 ? "positive"
                 : "warning"

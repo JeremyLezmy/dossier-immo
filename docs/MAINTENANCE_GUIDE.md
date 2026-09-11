@@ -68,6 +68,11 @@ L’interface peut convertir une saisie en années vers des mois, mais le schém
 
 ## Faire évoluer le document
 
+Ligne directrice de lecture bancaire : chaque montant doit annoncer son usage, sa période, les revenus inclus et sa formule dès sa première apparition. Nommer les salaires et revenus concernés, sans « autres revenus ». Expliquer tout changement de période ou de périmètre avant le tableau suivant. Les abattements fiscaux doivent être distingués des charges effectivement payées. Une comparaison avec aujourd’hui doit dater les soldes et ne pas faire passer un solde brut pour une réserve nette après impôts. Les pages calculées de revenus et de trésorerie rapprochent définitions et tableaux en réduisant les espacements, sans réduire la taille du texte ; leur débordement doit être contrôlé avec un dossier complet.
+
+La synthèse foyer présente les profils. La page Revenus définit les lectures de revenus dans les cartes, avant les tableaux, et indique leur date et leur usage. Les fins de revenus sont nommées à partir du libellé du flux, sans noms personnels codés en dur. Les textes du dossier doivent expliciter les hypothèses d’activité dès leur première mention.
+
+
 Les textes éditoriaux ne sont jamais tronqués silencieusement. En cas de dépassement, raccourcir explicitement le texte avec son sens préservé, ou revoir la mise en page dans le périmètre autorisé ; contrôler le rendu complet. Les annexes facultatives affichent aussi leurs conclusions éditoriales. Le rapprochement de trésorerie expose apport, installation et enveloppe fiscale complémentaire.
 
 `packages/document` rend jusqu'à treize sections A4 déterministes depuis le dossier validé et le résultat calculé. La fixture complète en produit treize ; une page ou un sous-bloc sans donnée métier doit être omis, sans tableau vide ni mention artificielle « non concerné ». Le CSS écran et le CSS d’impression appartiennent au même renderer. Un changement volontaire suit ce protocole :

@@ -60,6 +60,8 @@ export function calculateIncomePresentation(
       periodLabel: selected?.label,
       bankCents: included ? bankIncome[stream.id]!.primaryCents : 0,
       bankingLabel: bankIncome[stream.id]!.label,
+      referenceRevenueCents: bankIncome[stream.id]!.referenceRevenueCents,
+      previousRevenueCents: bankIncome[stream.id]!.previousRevenueCents,
       prudentCents: included ? bankIncome[stream.id]!.prudentCents : 0,
       included,
     };
@@ -89,23 +91,57 @@ export function calculateIncomePresentation(
       .every((stream) => stream.monthlyEconomicCents !== undefined);
   const projected = sources.some((period) => period.status !== "observed");
   const economicLabel = projected
-    ? "Revenu économique projeté"
-    : "Revenu économique de référence";
+    ? "Revenu net avant impôt — après achat"
+    : "Revenu net avant impôt — référence";
+  const allowances = [
+    ...new Set(
+      dossier.incomeStreams
+        .filter(
+          (stream) => stream.includedInBorrowingCapacity && stream.bankingBasis,
+        )
+        .map((stream) => stream.bankingBasis!.allowanceBasisPoints / 100),
+    ),
+  ];
+  const allowanceText =
+    allowances.length === 1
+      ? `abattement de ${allowances[0]} %`
+      : "abattements renseignés";
+  const additionalLabels = dossier.incomeStreams
+    .filter(
+      (stream) =>
+        stream.includedInBorrowingCapacity &&
+        isActive(stream) &&
+        !stream.bankingBasis,
+    )
+    .map((stream) => stream.label);
+  const additionalIncome = additionalLabels.length
+    ? ` + ${additionalLabels.join(" + ")}`
+    : "";
+  const endingIncomes = dossier.incomeStreams
+    .filter(
+      (stream) =>
+        stream.includedInBorrowingCapacity &&
+        isActive(stream) &&
+        stream.endDate &&
+        stream.endDate < dossier.project.targetPurchaseDate,
+    )
+    .map((stream) => ({ label: stream.label, endDate: stream.endDate! }));
   const cards = [
     {
       id: "economic",
       label: hasEconomicBasis ? economicLabel : "Budget après IR",
       valueCents: hasEconomicBasis ? beforeTaxCents : afterTaxCents,
       explanation: hasEconomicBasis
-        ? "Après cotisations et frais, avant IR. Période précisée ci-dessous."
+        ? `Recettes − cotisations − frais, avant impôt.${projected ? " Hypothèse d’activité après achat." : " Périodes de référence renseignées."}`
         : "Hypothèse de revenu disponible du budget central, distincte de la convention bancaire.",
     },
     {
       id: "bank",
       label: automatic ? primaryLabel + " — étude" : "Base bancaire proposée",
       valueCents: bankCents,
-      explanation:
-        "Convention proposée pour l’étude du prêt. Méthode ci-dessous.",
+      explanation: automatic
+        ? `CA ${referenceYears.join(" / ")} après ${allowanceText}, / 12${additionalIncome}. Pour l’étude du prêt.`
+        : "Revenu mensuel avant impôt proposé pour calculer le taux d’effort du prêt.",
     },
     {
       id: "prudent",
@@ -113,7 +149,9 @@ export function calculateIncomePresentation(
         ? prudentLabel + " — étude"
         : "Variante bancaire de référence",
       valueCents: prudentCents,
-      explanation: "Base documentaire alternative. Méthode ci-dessous.",
+      explanation: automatic
+        ? `CA moyen des deux exercices, même abattement, / 12${additionalIncome}.`
+        : "Autre hypothèse de revenu mensuel pour mesurer la sensibilité du financement.",
     },
   ].sort((a, b) => b.valueCents - a.valueCents);
   const atDate = (target: string, variant: boolean) =>
@@ -133,6 +171,27 @@ export function calculateIncomePresentation(
         0,
       );
   return {
+    fiscalAllowancePercents: [
+      ...new Set(
+        sources
+          .filter(
+            (period) =>
+              dossier.incomeStreams.find(
+                (stream) => stream.id === period.incomeStreamId,
+              )?.kind !== "salary" &&
+              period.taxAllowanceBasisPoints !== undefined,
+          )
+          .map((period) => period.taxAllowanceBasisPoints! / 100),
+      ),
+    ],
+    economicIncludesSalary: sources.some(
+      (period) =>
+        dossier.incomeStreams.find(
+          (stream) => stream.id === period.incomeStreamId,
+        )?.kind === "salary",
+    ),
+    referenceYears,
+    endingIncomes,
     automatic,
     primaryLabel,
     prudentLabel,

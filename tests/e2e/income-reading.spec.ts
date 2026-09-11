@@ -134,7 +134,7 @@ test("sépare les revenus économiques et bancaires à chaque largeur", async ({
     await expect(summary).toBeVisible();
     const cards = summary.locator(".metric-card");
     await expect(cards).toHaveCount(3);
-    await expect(cards.first()).toContainText("Revenu économique projeté");
+    await expect(cards.first()).toContainText("Revenu net avant impôt — après achat");
     await expect(cards.first()).toContainText(/7\s*500/);
     await expect(summary).toContainText(/Budget après IR : 6\s*500/);
     await expect(summary).toContainText("Rythme annuel projeté fictif");

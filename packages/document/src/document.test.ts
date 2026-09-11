@@ -7,8 +7,89 @@ import {
 import { renderAssetCompositionChart } from "./charts";
 import { renderBankDocument } from "./index";
 import { formatEuro } from "./format";
+import { renderCashBridge } from "./bank-review";
 
 describe("document bancaire", () => {
+  it("définit les deux nets et explique le changement de période avant les conventions", () => {
+    const dossier = structuredClone(completeDemoDossier);
+    const independent = dossier.incomeStreams.find((stream) =>
+      ["liberal", "self-employed"].includes(stream.kind),
+    )!;
+    independent.bankingBasis = {
+      referenceYear: 2026,
+      allowanceBasisPoints: 3400,
+    };
+    dossier.incomePeriods = [2025, 2026, 2027].map((year) => ({
+      id: `example-${year}`,
+      incomeStreamId: independent.id,
+      label: `Exercice fictif ${year}`,
+      startDate: `${year}-01-01`,
+      endDate: `${year}-12-31`,
+      status:
+        year === 2025 ? "observed" : year === 2026 ? "forecast" : "run-rate",
+      basis: "amount",
+      amountCents: 9_000_000,
+      socialRateBasisPoints: 2500,
+      trainingRateBasisPoints: 0,
+      professionalExpensesCents: 120_000,
+      taxAllowanceBasisPoints: 3400,
+      sourceDocumentIds: [],
+    }));
+    dossier.budgetScenarios.find(
+      (budget) => budget.kind === "central",
+    )!.assumptions = {
+      incomePeriodIds: ["example-2027"],
+      monthlyIncomeTaxCents: 100_000,
+    };
+    const rendered = renderBankDocument(dossier, calculateDossier(dossier));
+    const income = rendered.slice(
+      rendered.indexOf("<h2>Revenus —"),
+      rendered.indexOf("<h2>Éléments de stabilité"),
+    );
+    expect(income).toContain("Net avant impôt*");
+    expect(income).toContain("Revenu imposable**");
+    expect(income).toContain(
+      "CA − cotisations URSSAF/CFP − frais professionnels",
+    );
+    expect(income).toContain("CA − 34 % d’abattement (soit CA × 66 %)");
+    expect(income).toContain("10 % de frais forfaitaires");
+    expect(income).toContain("Aucun salaire dans ce premier tableau");
+    expect(income.indexOf("income-definitions")).toBeLessThan(
+      income.indexOf("Conventions proposées"),
+    );
+    expect(income.indexOf("Pourquoi les montants changent")).toBeLessThan(
+      income.indexOf("Revenu et origine de la base"),
+    );
+    expect(income).toContain(
+      `CA 2026 : ${formatEuro(9_000_000)} ; 2025 : ${formatEuro(9_000_000)}`,
+    );
+  });
+
+  it("date les soldes actuels sans les confondre avec une réserve nette à l’achat", () => {
+    const dossier = structuredClone(completeDemoDossier);
+    dossier.reservePolicy.includesInstallation = true;
+    dossier.cashFlowPlan = {
+      note: "Exemple fictif",
+      entries: [],
+      reservedTaxCents: 1_000_000,
+    };
+    const result = calculateDossier(dossier);
+    const bridge = renderCashBridge(dossier, result);
+    expect(result.bankReview.todayAfterContributionCents).toBe(
+      result.contributionLiquidityCents - dossier.project.contributionCents,
+    );
+    expect(result.bankReview.purchaseAfterContributionCents).toBe(
+      result.projectedLiquidityAtPurchaseCents -
+        dossier.project.contributionCents,
+    );
+    expect(bridge).toContain("Aujourd’hui<br><small>Soldes au");
+    expect(bridge).toContain("ce n’est pas une réserve nette");
+    expect(bridge).toContain(
+      `<td>Réserve conservée, installation comprise</td><td class="num">—</td><td class="num">${formatEuro(result.reserveForObjectiveCents)}</td>`,
+    );
+    expect(bridge).not.toContain("Installation, déménagement et équipement");
+  });
+
   it("place les repères bancaires après le financement et avant le Sankey", () => {
     const dossier = structuredClone(completeDemoDossier);
     dossier.presentation.sections.financialReview = true;
@@ -32,7 +113,7 @@ describe("document bancaire", () => {
       `<td>Foyer / mois</td><td class="num">${formatEuro(calculated.incomePresentation.bankCents)}</td><td class="num">${formatEuro(calculated.incomePresentation.prudentCents)}</td>`,
     );
     expect(rendered).toContain(
-      `<span>Réserve libre estimée</span><strong>${formatEuro(calculated.freeReserveAfterPurchaseCents)}</strong>`,
+      `<span>Réserve conservée · après installation</span><strong>${formatEuro(calculated.reserveForObjectiveCents)}</strong>`,
     );
   });
   it("conserve la fin des notes bancaires longues et leur échappement", () => {
@@ -45,6 +126,24 @@ describe("document bancaire", () => {
     const rendered = renderBankDocument(dossier, calculateDossier(dossier));
     expect(rendered).toContain("FIN À CONSERVER");
     expect(rendered).not.toContain("<script>");
+  });
+  it("introduit les définitions sur la page des revenus et garde les profils sans jargon", () => {
+    const dossier = structuredClone(completeDemoDossier);
+    const rendered = renderBankDocument(dossier, calculateDossier(dossier));
+    const household = rendered.slice(
+      rendered.indexOf("<h2>Synthèse foyer"),
+      rendered.indexOf("<h2>Revenus —"),
+    );
+    expect(household).not.toContain("Base bancaire proposée");
+    expect(household).not.toContain("Économique avant IR");
+    const incomes = rendered.slice(
+      rendered.indexOf("<h2>Revenus —"),
+      rendered.indexOf("<h2>Éléments de stabilité"),
+    );
+    expect(incomes).toContain(
+      "Revenu mensuel avant impôt proposé pour calculer le taux d’effort",
+    );
+    expect(incomes).not.toContain("Base documentaire alternative");
   });
   const derived = calculateDossier(completeDemoDossier);
   const html = renderBankDocument(completeDemoDossier, derived);

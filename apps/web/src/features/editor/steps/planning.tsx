@@ -496,10 +496,12 @@ function DetailedCashFlowFields({
             />
             {derived && (
               <p className="section-note">
-                Disponible après apport et installation :{" "}
-                {euro(derived.reserveAfterPurchaseCents)} ; libre après
-                enveloppe fiscale :{" "}
-                {euro(derived.freeReserveAfterPurchaseCents)}.
+                Réserve conservée : {euro(derived.reserveForObjectiveCents)},
+                hors impôts réservés ; installation{" "}
+                {form.watch("reservePolicy.includesInstallation")
+                  ? "incluse"
+                  : "déduite"}
+                .
               </p>
             )}
             <div className="stack">

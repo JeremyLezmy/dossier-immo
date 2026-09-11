@@ -370,6 +370,7 @@ const DossierCoreSchema = z
     financingScenarios: z.array(FinancingScenarioSchema).min(1),
     budgetScenarios: z.array(BudgetScenarioBaseSchema).min(1),
     reservePolicy: z.strictObject({
+      includesInstallation: z.boolean().optional(),
       minimumCents: cents,
       targetCents: cents,
       allocations: z
@@ -700,27 +701,33 @@ const DossierCoreSchema = z
     const reserveAfterPurchase =
       liquidityAtPurchase -
       dossier.project.contributionCents -
-      dossier.project.installationCents;
+      (dossier.reservePolicy.includesInstallation
+        ? 0
+        : dossier.project.installationCents);
     if (reserveAfterPurchase < dossier.reservePolicy.minimumCents) {
       context.addIssue({
         code: "custom",
         path: ["project", "contributionCents"],
         message:
-          "la trésorerie projetée après apport et installation est inférieure à la réserve minimale",
+          "la trésorerie projetée ne préserve pas la réserve minimale selon le périmètre choisi",
       });
     }
     dossier.financingScenarios.forEach((scenario, index) => {
       const contribution =
         scenario.contributionOverrideCents ?? dossier.project.contributionCents;
       if (
-        liquidityAtPurchase - contribution - dossier.project.installationCents <
+        liquidityAtPurchase -
+          contribution -
+          (dossier.reservePolicy.includesInstallation
+            ? 0
+            : dossier.project.installationCents) <
         dossier.reservePolicy.minimumCents
       ) {
         context.addIssue({
           code: "custom",
           path: ["financingScenarios", index, "contributionOverrideCents"],
           message:
-            "l'apport de ce scénario ne préserve pas la réserve minimale après installation",
+            "l'apport de ce scénario ne préserve pas la réserve minimale selon le périmètre choisi",
         });
       }
     });
@@ -1041,6 +1048,7 @@ const DossierObjectSchema = z.strictObject({
   budgetScenarios: z.array(BudgetScenarioSchema).min(2),
   stressCases: z.array(StressCaseSchema).default([]),
   reservePolicy: z.strictObject({
+    includesInstallation: z.boolean().optional(),
     minimumCents: cents,
     targetCents: cents,
     allocations: z

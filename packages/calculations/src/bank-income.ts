@@ -5,7 +5,17 @@ import type { IncomePeriodResult } from "./planning";
 export function calculateBankIncome(
   dossier: Dossier,
   results: readonly IncomePeriodResult[],
-) {
+): Record<
+  string,
+  {
+    primaryCents: number;
+    prudentCents: number;
+    label: string;
+    projected: boolean;
+    referenceRevenueCents?: number;
+    previousRevenueCents?: number;
+  }
+> {
   return Object.fromEntries(
     dossier.incomeStreams.map((stream) => {
       const basis = stream.bankingBasis;
@@ -44,6 +54,8 @@ export function calculateBankIncome(
       return [
         stream.id,
         {
+          referenceRevenueCents: current.revenue,
+          previousRevenueCents: previous.revenue,
           primaryCents: Math.round((current.revenue * retained) / 12),
           prudentCents: Math.round(
             ((current.revenue + previous.revenue) * retained) / 24,

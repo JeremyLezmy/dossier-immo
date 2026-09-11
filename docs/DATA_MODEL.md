@@ -78,7 +78,7 @@ Les ajouts restent facultatifs dans `schemaVersion: 3` : les fichiers antérieur
 
 La capacité totale d’épargne inclut l’épargne déjà affectée à des placements ; l’épargne résiduelle est ce qui reste après tous les postes, y compris ces affectations. Le Sankey consomme le budget central et son financement effectif. Les postes masqués dans le détail restent inclus dans les flux agrégés ; un budget déficitaire affiche explicitement le déséquilibre.
 
-La réserve est contrôlée pour chaque scénario d’apport, après installation. Les totaux, bases fiscales, soldes de trésorerie, moyennes et phases sont dérivés et ne sont pas exportés comme données sources.
+La réserve est contrôlée pour chaque scénario d’apport. `reservePolicy.includesInstallation`, facultatif et faux par défaut, précise si l’installation est contenue dans l’objectif : vrai, la réserve comparée au minimum est la liquidité après apport et enveloppe fiscale ; faux, l’installation est aussi déduite. `reserveForObjectiveCents` porte cette comparaison. Le disponible après affectation à l’installation reste distinct, notamment pour le test d’interruption de revenu. Aucun montant dérivé n’est persisté. Les totaux, bases fiscales, soldes de trésorerie, moyennes et phases sont dérivés et ne sont pas exportés comme données sources.
 
 ## Contrat courant
 
